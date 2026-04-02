@@ -38,6 +38,7 @@ jobs:
           msbuild "${{ env.SOLUTION_FILE }}" `
             /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
             /p:Platform=${{ env.BUILD_PLATFORM }} `
+            /p:PlatformToolset=v143 `
             /p:VisualStudioVersion=17.0 `
             /m `
             /v:minimal
