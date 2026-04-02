@@ -44,6 +44,15 @@ jobs:
             /v:minimal
         shell: pwsh
 
+      - name: Build installer
+        run: |
+          msbuild "Project Files/Source/Thetis-Installer/Thetis-Installer.wixproj" `
+            /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+            /p:Platform=${{ env.BUILD_PLATFORM }} `
+            /p:VisualStudioVersion=17.0 `
+            /v:minimal
+        shell: pwsh
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
