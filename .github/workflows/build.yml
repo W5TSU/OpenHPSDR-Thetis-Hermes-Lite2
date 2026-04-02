@@ -1,0 +1,129 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  SOLUTION_FILE: 'Project Files/Source/Thetis_VS2026.sln'
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: x64
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Install WiX Toolset v3
+        run: choco install wixtoolset --version=3.14.1 -y
+        shell: pwsh
+
+      - name: Restore NuGet packages
+        run: nuget restore "${{ env.SOLUTION_FILE }}"
+
+      - name: Build solution
+        run: |
+          msbuild "${{ env.SOLUTION_FILE }}" `
+            /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+            /p:Platform=${{ env.BUILD_PLATFORM }} `
+            /p:VisualStudioVersion=17.0 `
+            /m `
+            /v:minimal
+        shell: pwsh
+
+      - name: Find build artifacts
+        id: find_artifacts
+        run: |
+          $msi = Get-ChildItem -Path "Project Files/bin/Installers" -Filter "*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($msi) {
+            echo "msi_path=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+            echo "msi_name=$($msi.Name)" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "No MSI found, checking for exe..."
+            $exe = Get-ChildItem -Path "Project Files/Bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}" -Filter "Thetis.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($exe) {
+              echo "msi_path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+              echo "msi_name=$($exe.Name)" >> $env:GITHUB_OUTPUT
+            }
+          }
+        shell: pwsh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Thetis-HL2-${{ env.BUILD_CONFIGURATION }}-${{ env.BUILD_PLATFORM }}
+          path: |
+            Project Files/bin/Installers/*.msi
+            Project Files/Bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}/Thetis.exe
+          if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Install WiX Toolset v3
+        run: choco install wixtoolset --version=3.14.1 -y
+        shell: pwsh
+
+      - name: Restore NuGet packages
+        run: nuget restore "${{ env.SOLUTION_FILE }}"
+
+      - name: Build solution
+        run: |
+          msbuild "${{ env.SOLUTION_FILE }}" `
+            /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
+            /p:Platform=${{ env.BUILD_PLATFORM }} `
+            /p:VisualStudioVersion=17.0 `
+            /m `
+            /v:minimal
+        shell: pwsh
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Thetis HL2 ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            Project Files/bin/Installers/*.msi
+          body: |
+            ## Thetis for Hermes-Lite 2 ${{ steps.version.outputs.version }}
+
+            Built from commit ${{ github.sha }}
+
+            ### Changes
+            See [ReadMe.md](https://github.com/${{ github.repository }}/blob/master/ReadMe.md) for release notes.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
