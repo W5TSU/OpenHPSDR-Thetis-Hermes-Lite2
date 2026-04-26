@@ -5,7 +5,7 @@ This file is part of a program that implements a Software-Defined Radio.
 This code/file can be found on GitHub : https://github.com/ramdor/Thetis
 
 Copyright (C) 2000-2025 Original authors
-Copyright (C) 2020-2025 Richard Samphire MW0LGE
+Copyright (C) 2020-2026 Richard Samphire MW0LGE
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -38,6 +38,10 @@ mw0lge@grange-lane.co.uk
 // its original terms and is not affected by this dual-licensing statement in any way.        //
 // Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk                    //
 //============================================================================================//
+
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
 
 using System;
 using System.Collections.Generic;

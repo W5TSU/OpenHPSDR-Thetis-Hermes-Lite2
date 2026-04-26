@@ -18,13 +18,17 @@
 //
 // You may contact the author via email at: k5kdn@arrl.net
 //=================================================================
-// Continual modifications Copyright (C) 2019-2025 Richard Samphire (MW0LGE)
+// Continual modifications Copyright (C) 2019-2026 Richard Samphire (MW0LGE)
 /*
 Modifications to support the Behringer Midi controllers
 by Chris Codella, W2PA, April 2017.  Indicated by //-W2PA comment lines.
 Added extended CAT commands for APF funtions - May 2017.
 */
 //=================================================================
+
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
 
 using System;
 using System.Diagnostics;

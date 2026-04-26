@@ -22,7 +22,7 @@ The author can be reached by email at:  midi2cat@cametrix.com
 
 Modifications to support the Behringer Midi controllers
 by Chris Codella, W2PA, April 2017.  Indicated by //-W2PA comment lines.
-// Modfied - Copyright (C) 2019-2025 Richard Samphire (MW0LGE)
+// Modfied - Copyright (C) 2019-2026 Richard Samphire (MW0LGE)
 
  */
 //
@@ -38,6 +38,10 @@ by Chris Codella, W2PA, April 2017.  Indicated by //-W2PA comment lines.
 // its original terms and is not affected by this dual-licensing statement in any way.        //
 // Richard Samphire can be reached by email at :  mw0lge@grange-lane.co.uk                    //
 //============================================================================================//
+
+//////////////
+// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
+//////////////
 
 using Midi2Cat;
 using Midi2Cat.Data; 
