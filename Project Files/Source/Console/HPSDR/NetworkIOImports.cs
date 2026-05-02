@@ -1,8 +1,4 @@
-﻿//////////////
-// 2023-26 : modified by MI0BOT for HL2 support. Please see any code commented with my callsign for details
-//////////////
-
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
