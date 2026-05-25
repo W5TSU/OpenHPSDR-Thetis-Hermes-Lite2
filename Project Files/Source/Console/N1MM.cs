@@ -45,8 +45,6 @@ using System.Xml;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using System.Diagnostics;
-using SharpDX.Direct2D1;
 
 namespace Thetis
 {
@@ -161,6 +159,24 @@ namespace Thetis
                 }
             }
         }
+        private static bool _cw_shift_enable = false;
+        public static bool CWShiftEnable
+        {
+            set
+            {
+                bool old = _cw_shift_enable;
+                _cw_shift_enable = value;
+                if (old != _cw_shift_enable)
+                {
+                    Resize(1);
+                    Resize(2);
+                }
+            }
+            get
+            {
+                return _cw_shift_enable;
+            }
+        }
         public static void Resize(int rx)
         {
             if (!Display.IsDX2DSetup) return;
@@ -186,33 +202,37 @@ namespace Thetis
                 double dH = Math.Round(centreFrequency + ((bandWidth / 2) * 1e-6), 6);
 
                 // MW0LGE [2.9.0.7] fix issue where spectrum is offset by cwpitch
+                // MW0LGE [2.10.3.15] added option to disable cw shift. N1mm seemingly does not require this, but added for backwards compatibility
                 int nPitch = 0;
-                switch (rx)
+                if (_cw_shift_enable)
                 {
-                    case 1:
-                        {
-                            if (Display.RX1DSPMode == DSPMode.CWL)
+                    switch (rx)
+                    {
+                        case 1:
                             {
-                                nPitch = Display.CWPitch;
+                                if (Display.RX1DSPMode == DSPMode.CWL)
+                                {
+                                    nPitch = -Display.CWPitch;
+                                }
+                                else if (Display.RX1DSPMode == DSPMode.CWU)
+                                {
+                                    nPitch = Display.CWPitch;
+                                }
                             }
-                            else if (Display.RX1DSPMode == DSPMode.CWU)
+                            break;
+                        case 2:
+                            if (Display.RX2DSPMode == DSPMode.CWL)
                             {
                                 nPitch = -Display.CWPitch;
                             }
-                        }
-                        break;
-                    case 2:
-                        if (Display.RX2DSPMode == DSPMode.CWL)
-                        {
-                            nPitch = Display.CWPitch;
-                        }
-                        else if (Display.RX2DSPMode == DSPMode.CWU)
-                        {
-                            nPitch = -Display.CWPitch;
-                        }
-                        break;
+                            else if (Display.RX2DSPMode == DSPMode.CWU)
+                            {
+                                nPitch = Display.CWPitch;
+                            }
+                            break;
+                    }
+                    //
                 }
-                //
 
                 dL += nPitch * 1e-6;
                 dH += nPitch * 1e-6;

@@ -4538,6 +4538,7 @@
             this.radioButtonTS6 = new System.Windows.Forms.RadioButtonTS();
             this.tmrCheckStorageSpace = new System.Windows.Forms.Timer(this.components);
             this.btnCFCConfig = new System.Windows.Forms.ButtonTS();
+            this.chkN1mm_include_cw_shift = new System.Windows.Forms.CheckBoxTS();
             tpAlexAntCtrl = new System.Windows.Forms.TabPage();
             numericUpDownTS3 = new System.Windows.Forms.NumericUpDownTS();
             numericUpDownTS4 = new System.Windows.Forms.NumericUpDownTS();
@@ -58924,9 +58925,9 @@
             // 
             this.panelTS15.AutoScrollMargin = new System.Drawing.Size(0, 0);
             this.panelTS15.AutoScrollMinSize = new System.Drawing.Size(0, 0);
-            this.panelTS15.Location = new System.Drawing.Point(361, 298);
+            this.panelTS15.Location = new System.Drawing.Point(361, 310);
             this.panelTS15.Name = "panelTS15";
-            this.panelTS15.Size = new System.Drawing.Size(23, 89);
+            this.panelTS15.Size = new System.Drawing.Size(26, 77);
             this.panelTS15.TabIndex = 115;
             // 
             // lblToggleToUseTCI
@@ -59547,6 +59548,7 @@
             // 
             // groupBoxTS16
             // 
+            this.groupBoxTS16.Controls.Add(this.chkN1mm_include_cw_shift);
             this.groupBoxTS16.Controls.Add(this.lblN1MM_ids_warning);
             this.groupBoxTS16.Controls.Add(this.labelTS643);
             this.groupBoxTS16.Controls.Add(this.txtN1MM_ID_RX_2);
@@ -59564,7 +59566,7 @@
             this.groupBoxTS16.Controls.Add(this.chkN1MMEnableRX1);
             this.groupBoxTS16.Location = new System.Drawing.Point(393, 153);
             this.groupBoxTS16.Name = "groupBoxTS16";
-            this.groupBoxTS16.Size = new System.Drawing.Size(323, 139);
+            this.groupBoxTS16.Size = new System.Drawing.Size(323, 159);
             this.groupBoxTS16.TabIndex = 57;
             this.groupBoxTS16.TabStop = false;
             this.groupBoxTS16.Text = "N1MM+ WaterfallBandmap";
@@ -59799,9 +59801,9 @@
             this.groupBoxTS69.Controls.Add(this.labelTS661);
             this.groupBoxTS69.Controls.Add(this.chkTCISwapIQ);
             this.groupBoxTS69.Controls.Add(this.chkTCIAlwaysStreamIQ);
-            this.groupBoxTS69.Location = new System.Drawing.Point(386, 298);
+            this.groupBoxTS69.Location = new System.Drawing.Point(386, 310);
             this.groupBoxTS69.Name = "groupBoxTS69";
-            this.groupBoxTS69.Size = new System.Drawing.Size(330, 99);
+            this.groupBoxTS69.Size = new System.Drawing.Size(330, 86);
             this.groupBoxTS69.TabIndex = 99;
             this.groupBoxTS69.TabStop = false;
             // 
@@ -71931,6 +71933,20 @@
             this.btnCFCConfig.UseVisualStyleBackColor = true;
             this.btnCFCConfig.Click += new System.EventHandler(this.btnCFCConfig_Click);
             // 
+            // chkN1mm_include_cw_shift
+            // 
+            this.chkN1mm_include_cw_shift.AutoSize = true;
+            this.chkN1mm_include_cw_shift.Image = null;
+            this.chkN1mm_include_cw_shift.Location = new System.Drawing.Point(22, 136);
+            this.chkN1mm_include_cw_shift.Name = "chkN1mm_include_cw_shift";
+            this.chkN1mm_include_cw_shift.Size = new System.Drawing.Size(104, 17);
+            this.chkN1mm_include_cw_shift.TabIndex = 76;
+            this.chkN1mm_include_cw_shift.Text = "Include CW shift";
+            this.toolTip1.SetToolTip(this.chkN1mm_include_cw_shift, "Include the cw frequency shift. This is not normally required but if frequency is" +
+        " off\r\ncompared to signal in N1MM spectrum then try enabling. (default off)");
+            this.chkN1mm_include_cw_shift.UseVisualStyleBackColor = true;
+            this.chkN1mm_include_cw_shift.CheckedChanged += new System.EventHandler(this.chkN1mm_include_cw_shift_CheckedChanged);
+            // 
             // Setup
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -77883,5 +77899,6 @@
         private LabelTS labelTS663;
         private NumericUpDownTS nudRecording_monoPlaybackGain;
         private CheckBoxTS chkWaterfall_smear;
+        private CheckBoxTS chkN1mm_include_cw_shift;
     }
 }

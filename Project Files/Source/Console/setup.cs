@@ -38462,6 +38462,11 @@ namespace Thetis
         {
             Display.AllowWaterfallSmear = chkWaterfall_smear.Checked;
         }
+
+        private void chkN1mm_include_cw_shift_CheckedChanged(object sender, EventArgs e)
+        {
+            N1MM.CWShiftEnable = chkN1mm_include_cw_shift.Checked;
+        }
     }
 
     #region FormLoactionHelper

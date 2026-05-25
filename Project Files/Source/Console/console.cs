@@ -1121,81 +1121,11 @@ namespace Thetis
             LogTool.Completed("THET");
             LogTool.Finish();
 
-
             //_spectrumProcessor = new clsSpectrumProcessor(this);
-            //_spectrumProcessor.AddReceiver(0, 1024, 15, 8192);
-            //_spectrumProcessor.AddReceiver(1, 128, 15, 8192);
-            ////_spectrumProcessor.SetReceiverFrameRate(0, 60);
-            ////_spectrumProcessor.SetReceiverFrameRate(1, 60);
+            //_spectrumProcessor.AddReceiver(0, 720, 30, 262144);
+            ////_spectrumProcessor.AddReceiver(1, 128, 15, 8192);
             //_rx1SpectrumTestForm = _spectrumProcessor.ShowReceiverTestForm(0, -130, -40);
-            //_rx2SpectrumTestForm = _spectrumProcessor.ShowReceiverTestForm(1, -130, -40);
-
-            //test full auto
-            //x = maximum ADC magnitude seen during the last 200ms period, from 0 to 32768
-            //U = upper threshold where protective action begins, 25000(configurable)
-            //L = lower threshold where it is safe to start reducing attenuation again, say 15000(configurable)
-            //- if overload or x > U then apply +3dB attenuation
-            //-f_old = (0.9 * f_old) + (0.1 * x)
-            //- if f_old < L then remove 1dB attenuation
-            //-otherwise hold current attenuation
-
-            //void timerTick_RX1_FullAutoAtt(object state)
-            //{       
-            //    if(this.IsDisposed || this.Disposing || !this.IsHandleCreated) return;
-
-            //    if (this.InvokeRequired)
-            //    {
-            //        this.Invoke((Action)(() => timerTick_RX1_FullAutoAtt(state)));
-            //        return;
-            //    }
-
-            //    if (!chkTestAtt.Checked) return;
-
-            //    int adc_oload_num = 0;
-            //    bool got_oload_info;
-            //    try
-            //    {
-            //        adc_oload_num = NetworkIO.getAndResetADC_Overload();
-            //        got_oload_info = true;
-            //    }
-            //    catch
-            //    {
-            //        got_oload_info = false;
-            //    }
-
-            //    bool overloaded = false;
-            //    if (got_oload_info)
-            //    {
-            //        for (int i = 0; i < 1; i++)
-            //        {
-            //            overloaded |= ((adc_oload_num >> i) & 1) != 0;
-            //        }
-            //    }
-
-            //    ushort adcMag = NetworkIO.getADCmaxMagnitude(0);
-
-            //    bool atted = false;
-            //    int satt = RX1AttenuatorData;
-            //    int tmpatt = satt;
-
-            //    if (adcMag > 25000 || overloaded)
-            //    {
-            //        tmpatt += 3;
-            //        atted = true;
-            //    }
-
-            //    _full_auto_att_running_mag = ((1.0f - _full_auto_att_alpha) * _full_auto_att_running_mag) + (_full_auto_att_alpha * adcMag);
-
-            //    if (!atted && _full_auto_att_running_mag < 15000) tmpatt--;
-
-            //    if (tmpatt < 0) tmpatt = 0;
-            //    if (tmpatt > 31) tmpatt = 31;
-
-            //    if (tmpatt != satt) RX1AttenuatorData = tmpatt;
-            //}
-
-            //_full_auto_att_timer = new System.Threading.Timer(timerTick_RX1_FullAutoAtt, null, 0, 200);
-            ////
+            ////_rx2SpectrumTestForm = _spectrumProcessor.ShowReceiverTestForm(1, -130, -40);
         }
         private clsSpectrumProcessor _spectrumProcessor;
         private Form _rx1SpectrumTestForm;
