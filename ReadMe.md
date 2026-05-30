@@ -1,7 +1,16 @@
 There are a number of people working on Thetis.
 
 MW0LGE  here  https://github.com/ramdor/Thetis
+
+Richie has "a few tweaks and changes to a ... Thetis..." I'm interested in the work he is doing on remote access.
+
 MI0BOT  here  https://github.com/mi0bot/OpenHPSDR-Thetis
+
+Reid has created "Radio Model" code for HERMES Lite. 
+
+ON7OFF  here  https://github.com/ON7OFF/Thetis
+
+Kurt has "... been working extremely hard on the Android remote software to control your Hermes Lite 2".
 
 Each of these developers is working on different parts of the code for their own purpose. And I think them.
 
