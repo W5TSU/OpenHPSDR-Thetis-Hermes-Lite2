@@ -6885,7 +6885,7 @@
             this.labelRXAntControl.Name = "labelRXAntControl";
             this.labelRXAntControl.Size = new System.Drawing.Size(115, 16);
             this.labelRXAntControl.TabIndex = 215;
-            this.labelRXAntControl.Text = "  RX1   RX2   XVTR";
+            this.labelRXAntControl.Text = "  Alt Rx  Rx2   XVTR";
             this.labelRXAntControl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // label5
