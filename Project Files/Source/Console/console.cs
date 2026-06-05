@@ -25718,7 +25718,9 @@ namespace Thetis
         private AutoTuneState auto_tuning = AutoTuneState.Disabled; // MI0BOT: Holds state when the Auto TUN button is active
         private int tune_timeout = 0;                               // MI0BOT: Auto tune timeout
         private int fault_timeout = 0;                              
-        const byte TIMEOUT = 50;
+        const byte TUNE_TIMEOUT = 125;
+        const byte FAULT_TIMEOUT = 50;
+
         bool AutoTuningHL2(ProtocolEvent protocolEvent)
         {
             bool returnCode = false;
@@ -25753,7 +25755,7 @@ namespace Thetis
                             break;
 
                         case AutoTuneState.Fault:                  // Auto tune has had a fault time out the message
-                            if (fault_timeout++ >= TIMEOUT)
+                            if (fault_timeout++ >= FAULT_TIMEOUT)
                             {
                                 infoBar.Warning("");
                                 auto_tuning = AutoTuneState.Idle;
@@ -25762,7 +25764,7 @@ namespace Thetis
                             break;
 
                         default: 
-                            tune_timeout = TIMEOUT;
+                            tune_timeout = TUNE_TIMEOUT;
                             break;
                     }
                     break;
@@ -25775,7 +25777,7 @@ namespace Thetis
                             break;
 
                         default: 
-                            tune_timeout = TIMEOUT;
+                            tune_timeout = TUNE_TIMEOUT;
                             break;
                     }
                     break;
@@ -25793,7 +25795,7 @@ namespace Thetis
                             break;
 
                         default: 
-                            tune_timeout = TIMEOUT;
+                            tune_timeout = TUNE_TIMEOUT;
                             break;
                     }
                     break;
@@ -25808,11 +25810,11 @@ namespace Thetis
                         infoBar.Warning("I/O Board: Auto Tune Fault Code 0x" + ((byte)protocolEvent).ToString("X"));
                     }
                     
-                    tune_timeout = TIMEOUT;
+                    tune_timeout = TUNE_TIMEOUT;
                     break;
             }
 
-            if (tune_timeout >= TIMEOUT)
+            if (tune_timeout >= TUNE_TIMEOUT)
             {                                       // Time out 
                 tune_timeout = 0;
                 ioBoard.writeRequest(IOBoard.Registers.REG_ANTENNA_TUNER, (int)ProtocolEvent.Idle);

@@ -6236,73 +6236,133 @@ namespace Thetis
                 chkAlex10R1.Enabled = value;
 
                 radAlexR1_160.Enabled = false;    // Switch off the aerial select, as it's not supported at the minute  
+                radAlexR1_160.Checked = true;    
                 radAlexR1_80.Enabled = false;
+                radAlexR1_80.Checked = true;    
                 radAlexR1_60.Enabled = false;
+                radAlexR1_60.Checked = true;    
                 radAlexR1_40.Enabled = false;
+                radAlexR1_40.Checked = true;    
                 radAlexR1_30.Enabled = false;
+                radAlexR1_30.Checked = true;    
                 radAlexR1_20.Enabled = false;
+                radAlexR1_20.Checked = true;    
                 radAlexR1_17.Enabled = false;
+                radAlexR1_17.Checked = true;    
                 radAlexR1_15.Enabled = false;
+                radAlexR1_15.Checked = true;    
                 radAlexR1_12.Enabled = false;
+                radAlexR1_12.Checked = true;    
                 radAlexR1_10.Enabled = false;
+                radAlexR1_10.Checked = true;    
 
                 radAlexR2_160.Enabled = false;
+                radAlexR2_160.Checked = false;    
                 radAlexR2_80.Enabled = false;
+                radAlexR2_80.Checked = false;    
                 radAlexR2_60.Enabled = false;
+                radAlexR2_60.Checked = false;    
                 radAlexR2_40.Enabled = false;
+                radAlexR2_40.Checked = false;    
                 radAlexR2_30.Enabled = false;
+                radAlexR2_30.Checked = false;    
                 radAlexR2_20.Enabled = false;
+                radAlexR2_20.Checked = false;    
                 radAlexR2_17.Enabled = false;
+                radAlexR2_17.Checked = false;    
                 radAlexR2_15.Enabled = false;
+                radAlexR2_15.Checked = false;    
                 radAlexR2_12.Enabled = false;
+                radAlexR2_12.Checked = false;    
                 radAlexR2_10.Enabled = false;
+                radAlexR2_10.Checked = false;    
 
                 radAlexR3_160.Enabled = false;
+                radAlexR3_160.Checked = false;    
                 radAlexR3_80.Enabled = false;
+                radAlexR3_80.Checked = false;    
                 radAlexR3_60.Enabled = false;
+                radAlexR3_60.Checked = false;    
                 radAlexR3_40.Enabled = false;
+                radAlexR3_40.Checked = false;    
                 radAlexR3_30.Enabled = false;
+                radAlexR3_30.Checked = false;    
                 radAlexR3_20.Enabled = false;
+                radAlexR3_20.Checked = false;    
                 radAlexR3_17.Enabled = false;
+                radAlexR3_17.Checked = false;    
                 radAlexR3_15.Enabled = false;
+                radAlexR3_15.Checked = false;    
                 radAlexR3_12.Enabled = false;
+                radAlexR3_12.Checked = false;    
                 radAlexR3_10.Enabled = false;
+                radAlexR3_10.Checked = false;    
 
                 radAlexT1_160.Enabled = false;
+                radAlexT1_160.Checked = true;    
                 radAlexT1_80.Enabled = false;
+                radAlexT1_80.Checked = true;    
                 radAlexT1_60.Enabled = false;
+                radAlexT1_60.Checked = true;    
                 radAlexT1_40.Enabled = false;
+                radAlexT1_40.Checked = true;    
                 radAlexT1_30.Enabled = false;
+                radAlexT1_30.Checked = true;    
                 radAlexT1_20.Enabled = false;
+                radAlexT1_20.Checked = true;    
                 radAlexT1_17.Enabled = false;
+                radAlexT1_17.Checked = true;    
                 radAlexT1_15.Enabled = false;
+                radAlexT1_15.Checked = true;    
                 radAlexT1_12.Enabled = false;
+                radAlexT1_12.Checked = true;    
                 radAlexT1_10.Enabled = false;
+                radAlexT1_10.Checked = true;    
 
                 radAlexT2_160.Enabled = false;
+                radAlexT2_160.Checked = false;    
                 radAlexT2_80.Enabled = false;
+                radAlexT2_80.Checked = false;    
                 radAlexT2_60.Enabled = false;
+                radAlexT2_60.Checked = false;    
                 radAlexT2_40.Enabled = false;
+                radAlexT2_40.Checked = false;    
                 radAlexT2_30.Enabled = false;
+                radAlexT2_30.Checked = false;    
                 radAlexT2_20.Enabled = false;
+                radAlexT2_20.Checked = false;    
                 radAlexT2_17.Enabled = false;
+                radAlexT2_17.Checked = false;    
                 radAlexT2_15.Enabled = false;
+                radAlexT2_15.Checked = false;    
                 radAlexT2_12.Enabled = false;
+                radAlexT2_12.Checked = false;    
                 radAlexT2_10.Enabled = false;
+                radAlexT2_10.Checked = false;    
 
                 radAlexT3_160.Enabled = false;
+                radAlexT3_160.Checked = false;    
                 radAlexT3_80.Enabled = false;
+                radAlexT3_80.Checked = false;    
                 radAlexT3_60.Enabled = false;
+                radAlexT3_60.Checked = false;    
                 radAlexT3_40.Enabled = false;
+                radAlexT3_40.Checked = false;    
                 radAlexT3_30.Enabled = false;
+                radAlexT3_30.Checked = false;    
                 radAlexT3_20.Enabled = false;
+                radAlexT3_20.Checked = false;    
                 radAlexT3_17.Enabled = false;
+                radAlexT3_17.Checked = false;    
                 radAlexT3_15.Enabled = false;
+                radAlexT3_15.Checked = false;    
                 radAlexT3_12.Enabled = false;
+                radAlexT3_12.Checked = false;    
                 radAlexT3_10.Enabled = false;
+                radAlexT3_10.Checked = false;    
 
-                chkBlockTxAnt2.Enabled = value;
-                chkBlockTxAnt3.Enabled = value;
+                chkBlockTxAnt2.Enabled = false;
+                chkBlockTxAnt3.Enabled = false;
 
                 console.AlexAntCtrlEnabled = value;
 
@@ -21738,19 +21798,19 @@ namespace Thetis
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        public void EnableCl1_10MHz()
+        async public Task EnableCl1_10MHz()
         {
-            WriteVersaClockAsync(clockRegisterData10MhzEnable);
+            await WriteVersaClockAsync(clockRegisterData10MhzEnable);
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        public void DisableCl1_10MHz()
+        async public Task DisableCl1_10MHz()
         {
-            WriteVersaClockAsync(clockRegisterData10MhzDisable);
+            await WriteVersaClockAsync(clockRegisterData10MhzDisable);
         }
 
         // MI0BOT: Support for HL2 Cl2 clock output
-        public void ControlCl2(bool enable)
+        async public Task ControlCl2(bool enable)
         {
             Decimal vco = (Decimal)1305.6;
 
@@ -21776,13 +21836,13 @@ namespace Thetis
                     clockRegisterDataCl2[15] = (Byte)((intFrac >> 6) & 0xff);
                     clockRegisterDataCl2[17] = (Byte)((intFrac << 2) & 0xf6);
 
-                    WriteVersaClockAsync(clockRegisterDataCl2);
+                    await WriteVersaClockAsync(clockRegisterDataCl2);
                 }
             }
             else
             {
                 udCl2Freq.Enabled = false;
-                WriteVersaClockAsync(clockRegisterDataCl2Off);
+                await WriteVersaClockAsync(clockRegisterDataCl2Off);
             }
         }
 
@@ -21799,18 +21859,18 @@ namespace Thetis
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        private void chkExt10MHz_CheckedChanged(object sender, EventArgs e)
+        async private void chkExt10MHz_CheckedChanged(object sender, EventArgs e)
         {
             if (chkExt10MHz.Checked)
             {
-                EnableCl1_10MHz();
+                await EnableCl1_10MHz();
             }
             else
             {
-                DisableCl1_10MHz();
+                await DisableCl1_10MHz();
             }
 
-            ControlCl2(chkCl2Enable.Checked);
+            await ControlCl2(chkCl2Enable.Checked);
         }
 
         private void chkDataLineGradient_CheckedChanged(object sender, EventArgs e)
