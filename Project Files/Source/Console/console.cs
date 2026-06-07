@@ -2130,6 +2130,10 @@ namespace Thetis
                 udRX2StepAttData.Enabled = false;
                 lblRX2Preamp.Enabled = false;
 
+                // MI0BOT: Swich of aerial selection from console
+                toolStripStatusLabelRXAnt.Enabled = false;
+                toolStripStatusLabelTXAnt.Enabled = false;
+
                 // MI0BOT: Remove items from main menu that are currently not used
 
                 this.menuStrip1.Items.Remove(pIToolStripMenuItem);
