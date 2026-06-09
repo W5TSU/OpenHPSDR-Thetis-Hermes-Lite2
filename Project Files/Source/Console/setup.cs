@@ -20323,6 +20323,8 @@ namespace Thetis
                     udHermesStepAttenuatorDataRX2.Minimum = (decimal)-28;
                     udHermesStepAttenuatorData.Maximum = 31;
                     udHermesStepAttenuatorDataRX2.Maximum = 31;
+                    chkAlexPresent_CheckedChanged(this, EventArgs.Empty);
+                    chkAlexAntCtrl_CheckedChanged(this, EventArgs.Empty);
                     chkAutoPACalibrate.Checked = false;
                     chkAutoPACalibrate.Visible = false;
                     labelRXAntControl.Text = "  RX1   RX2    XVTR";
