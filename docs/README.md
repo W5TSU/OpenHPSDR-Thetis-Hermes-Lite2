@@ -12,6 +12,7 @@ of the program does, which source files implement it, and how the files relate t
 | [`CODE_OUTLINE.md`](CODE_OUTLINE.md) | The starting point. Maps the program's **18 functional areas** (main console, HPSDR network protocol, HL2 I/O board, spectrum display, the wdsp DSP engine, ChannelMaster audio routing, CAT control, CW keying, MIDI, and more) to the source files that implement each, with a 1–2 sentence role per file. |
 | [`files/`](files/README.md) | **One page per source file** (281 pages, indexed in `files/README.md`). Each page gives the file's role, a graph-derived summary of how it is used — which files call into it, which files it calls, and its most externally-referenced symbols — and an outline of its classes, methods, and functions. Every function entry carries its source line number, signature, a short description, and how it is called (its callers from the graph, P/Invoke linkage into the C DLLs, or event wiring). |
 | [`tools/gen_file_docs.py`](tools/gen_file_docs.py) | The generator that produces everything under `files/` from the knowledge graph and `CODE_OUTLINE.md`. |
+| [`NR3.md`](NR3.md) | Deep dive: the RNNoise neural-network noise reduction (NR3) — architecture across all layers, how to use it, how models are loaded/validated, and how to train new models with the bundled RNNoise toolchain. |
 
 Documentation covers the six first-party subprojects under `Project Files/Source/` — Console,
 wdsp, ChannelMaster, cmASIO, Midi2Cat, and RawInput (~473 source files). Vendored third-party
