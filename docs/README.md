@@ -1,0 +1,66 @@
+# Code Documentation
+
+This directory documents the source code of **Thetis for the Hermes-Lite 2** — this repository's
+fork of the [mi0bot/OpenHPSDR-Thetis](https://github.com/mi0bot/OpenHPSDR-Thetis) SDR console,
+adapted for the Hermes-Lite 2 radio. It is reference documentation for developers: what each part
+of the program does, which source files implement it, and how the files relate to each other.
+
+## What is here
+
+| Item | Contents |
+|------|----------|
+| [`CODE_OUTLINE.md`](CODE_OUTLINE.md) | The starting point. Maps the program's **18 functional areas** (main console, HPSDR network protocol, HL2 I/O board, spectrum display, the wdsp DSP engine, ChannelMaster audio routing, CAT control, CW keying, MIDI, and more) to the source files that implement each, with a 1–2 sentence role per file. |
+| [`files/`](files/README.md) | **One page per source file** (281 pages, indexed in `files/README.md`). Each page gives the file's role, a graph-derived summary of how it is used — which files call into it, which files it calls, and its most externally-referenced symbols — and an outline of its classes, methods, and functions with source line numbers. |
+| [`tools/gen_file_docs.py`](tools/gen_file_docs.py) | The generator that produces everything under `files/` from the knowledge graph and `CODE_OUTLINE.md`. |
+
+Documentation covers the six first-party subprojects under `Project Files/Source/` — Console,
+wdsp, ChannelMaster, cmASIO, Midi2Cat, and RawInput (~473 source files). Vendored third-party
+libraries (`Project Files/lib/`, the bundled ASIO SDK) and generated `*.Designer.cs` files are
+intentionally excluded.
+
+## How it was made
+
+The documentation was produced in July 2026 by **Claude Code** (Anthropic's Claude, Fable 5
+model), directed by Mark Grennan (W5TSU), using
+**[graphify](https://graphify.net)** to build a knowledge graph of the source tree:
+
+1. graphify parsed every first-party source file with tree-sitter (C, C#, and C++ grammars) —
+   deterministic AST extraction, no LLM involved — producing a graph of **15,492 nodes and
+   36,536 edges** (classes, methods, functions, and their `calls` / `references` / `contains` /
+   `imports` relationships), clustered into 434 communities.
+2. The functional areas in `CODE_OUTLINE.md` were derived from those graph communities plus the
+   graph's "god node" and cross-community analysis, then written up by Claude with spot-checks
+   against the actual source.
+3. `tools/gen_file_docs.py` generated the per-file pages mechanically from the graph: symbol
+   outlines and line numbers come straight from the AST extraction; each page's role text comes
+   from its `CODE_OUTLINE.md` table row.
+
+The graph itself lives in `graphify-out/` at the repository root. It is **not committed**
+(gitignored — the 19 MB `graph.json` is fully rebuildable), but once built it can be queried
+directly:
+
+```bash
+graphify query "How does the console send TX frequency to the HL2 I/O board?"
+graphify explain "IoBoardHl2"
+graphify path "CATCommands" "NetworkIO"
+```
+
+## Regenerating after code changes
+
+```bash
+graphify update "Project Files/Source"        # incremental graph rebuild (no LLM needed)
+python docs/tools/gen_file_docs.py            # regenerate docs/files/ from the graph
+```
+
+`CODE_OUTLINE.md` is hand-written prose and only needs editing when files are added, removed, or
+change purpose.
+
+## Caveats
+
+- **Line numbers drift.** They were captured from the source at generation time; regenerate after
+  significant changes rather than trusting stale numbers.
+- **Extraction is structural, not semantic.** A few symbols tree-sitter could not place
+  structurally appear at file level instead of inside their class, and cross-file counts miss
+  calls made through P/Invoke, delegates, events, or reflection.
+- **Per-function descriptions are not included** — only per-file roles. The code itself (and its
+  header comments) remains the authority on individual function behavior.
