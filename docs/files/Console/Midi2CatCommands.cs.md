@@ -1,0 +1,276 @@
+# `Console/Midi2CatCommands.cs`
+
+**Functional area:** [12. MIDI control (Midi2Cat)](../../CODE_OUTLINE.md#12-midi-control-midi2cat)
+
+**Role:** The bridge: exposes console operations (tune, volume, filters, PTT…) as commands a MIDI control can bind to (256-edge god node).
+
+## How this file is used
+
+- Used by (incoming references from other files):
+  - `Console/console.cs` (references ×1)
+- Uses (outgoing references to other files):
+  - `Console/CAT/CATCommands.cs` (calls ×273, references ×1)
+  - `Midi2Cat/Midi2Cat.IO/MidiDevice.cs` (references ×241, calls ×12)
+  - `Midi2Cat/Midi2Cat.Data/Enums.cs` (references ×69)
+  - `Midi2Cat/MidiMessageManager.cs` (calls ×3, references ×1)
+  - `Console/Andromeda/Andromeda.cs` (references ×1)
+  - `Console/CAT/CATParser.cs` (references ×1)
+  - `Midi2Cat/Midi2Cat.Data/CatCmdDb.cs` (references ×1)
+
+## Outline
+
+### Types
+
+#### `Midi2CatCommands` (type, L54)
+
+- `.OpenMidi2Cat()` — L73
+- `.CloseMidi2Cat()` — L78
+- `.SendUpdateToMidi()` — L97
+- `.MultiRxOnOff()` — L109
+- `.Rx1ModeNext()` — L134
+- `.Rx1ModePrev()` — L147
+- `.Rx1FilterWider()` — L159
+- `.Rx1FilterNarrower()` — L172
+- `.VfoAtoB()` — L185
+- `.VfoBtoA()` — L201
+- `.VfoSwap()` — L216
+- `.XIT()` — L233
+- `.RIT()` — L252
+- `.IsBehringerCMD()` — L280
+- `.RIT_inc()` — L286
+- `.XIT_inc()` — L322
+- `.RIT_clear()` — L377
+- `.XIT_clear()` — L388
+- `.TuningStepUp()` — L399
+- `.TuningStepDown()` — L410
+- `.VolumeVfoA()` — L423
+- `.VolumeVfoA_inc()` — L441
+- `.VolumeVfoB()` — L465
+- `.VolumeVfoB_inc()` — L485
+- `.RX2Volume()` — L509
+- `.RX2Pan()` — L526
+- `.FilterBandwidth()` — L544
+- `.FilterShift()` — L565
+- `.RatioMainSubRx()` — L585
+- `.AutoNotchOnOff()` — L605
+- `.Rx1NoiseBlanker1OnOff()` — L629
+- `.Rx2NoiseBlanker1OnOff()` — L654
+- `.Rx1Noiseblanker2OnOff()` — L684
+- `.Rx2Noiseblanker2OnOff()` — L714
+- `.LockVFOOnOff()` — L745
+- `.LockVFOAOnOff()` — L768
+- `.LockVFOBOnOff()` — L791
+- `.RitOnOff()` — L814
+- `.XitOnOff()` — L837
+- `.SetAFGain()` — L860
+- `.DiversityFormOpen()` — L868
+- `.DiversityEnable()` — L891
+- `.DiversityPhase()` — L914
+- `.DiversityGain()` — L944
+- `.DiversityReference()` — L974
+- `.DiversitySource()` — L997
+- `.StringToFreq()` — L1037
+- `.MidiMessagesPerTuneStepUp()` — L1129
+- `.MidiMessagesPerTuneStepDown()` — L1133
+- `.MidiMessagesPerTuneStepToggle()` — L1137
+- `.ProcessStdMIDIWheelAsVFO()` — L1173
+- `.ProcessBehringerMainWheelAsVFO()` — L1377
+- `.ChangeFreqVfoA()` — L1577
+- `.SnapTune()` — L1748
+- `.ChangeFreqVfoB()` — L1887
+- `.BinauralOnOff()` — L1963
+- `.MuteOnOff()` — L1986
+- `.SpurReductionOnOff()` — L2009
+- `.NoiseReduction4Amount()` — L2032
+- `.NoiseReductionOnOff()` — L2049
+- `.NoiseReduction2OnOff()` — L2072
+- `.NoiseReduction3OnOff()` — L2094
+- `.NoiseReduction4OnOff()` — L2116
+- `.Rx2NoiseReduction4Amount()` — L2138
+- `.Rx2NoiseReductionOnOff()` — L2155
+- `.Rx2NoiseReduction2OnOff()` — L2177
+- `.Rx2NoiseReduction3OnOff()` — L2199
+- `.Rx2NoiseReduction4OnOff()` — L2221
+- `.Rx2PreAmpOnOff()` — L2243
+- `.VfoSyncOnOff()` — L2273
+- `.SplitOnOff()` — L2296
+- `.MOXOnOff()` — L2319
+- `.VOXOnOff()` — L2342
+- `.CompanderOnOff()` — L2365
+- `.StereoDiversityOnOff()` — L2388
+- `.DEXPOnOff()` — L2411
+- `.RX2OnOff()` — L2434
+- `.StartOnOff()` — L2463
+- `.TunerOnOff()` — L2494
+- `.TunOnOff()` — L2524
+- `.TwoToneOnOff()` — L2554
+- `.TunerBypassOnOff()` — L2583
+- `.ZeroBeatPress()` — L2614
+- `.BandUp()` — L2625
+- `.BandDown()` — L2644
+- `.Rx2BandUp()` — L2663
+- `.Rx2BandDown()` — L2682
+- `.PreAmpSettingsKnob()` — L2701
+- `.CWBreakIn()` — L2825
+- `.CWQSK()` — L2848
+- `.CWSpeed()` — L2871
+- `.CWSpeed_inc()` — L2893
+- `.APFFreq()` — L2917
+- `.APFBandwidth()` — L2943
+- `.APFGain()` — L2961
+- `.AGCLevel()` — L2978
+- `.AGCLevel_inc()` — L3009
+- `.RX2AGCLevel()` — L3046
+- `.RX2AGCLevel_inc()` — L3077
+- `.MicGain()` — L3115
+- `.SquelchControl()` — L3143
+- `.CPDRLevel()` — L3160
+- `.VOXGain()` — L3203
+- `.DEXPThreshold()` — L3220
+- `.TXAFMonitor()` — L3245
+- `.DriveLevel()` — L3262
+- `.DriveLevel_inc()` — L3279
+- `.RXEQOnOff()` — L3334
+- `.TXEQOnOff()` — L3357
+- `.SquelchOnOff()` — L3380
+- `.AGCModeKnob()` — L3410
+- `.AGCModeUp()` — L3450
+- `.AGCModeDown()` — L3475
+- `.PreampFlex5000()` — L3500
+- `.DisplayAverage()` — L3531
+- `.DisplayPeak()` — L3560
+- `.DisplayTxFilter()` — L3589
+- `.VACOnOff()` — L3618
+- `.VAC2OnOff()` — L3648
+- `.IQtoVAC()` — L3678
+- `.IQtoVACRX2()` — L3707
+- `.DisplayModePrev()` — L3739
+- `.DisplayModeNext()` — L3771
+- `.ZoomDec()` — L3796
+- `.ZoomInc()` — L3840
+- `.ZoomSliderInc()` — L3890
+- `.PanSliderInc()` — L3918
+- `.PanSlider()` — L3945
+- `.SpectralNoiseBlankerOnOff()` — L3963
+- `.SpectralNoiseBlankerRx2OnOff()` — L3986
+- `.QuickModeSave()` — L4009
+- `.CWXMacro1()` — L4028
+- `.CWXMacro2()` — L4047
+- `.CWXMacro3()` — L4066
+- `.CWXMacro4()` — L4085
+- `.CWXMacro5()` — L4104
+- `.CWXMacro6()` — L4123
+- `.CWXMacro7()` — L4142
+- `.CWXMacro8()` — L4161
+- `.CWXMacro9()` — L4180
+- `.CWXStop()` — L4199
+- `.MONOnOff()` — L4218
+- `.PanCenter()` — L4241
+- `.QuickModeRestore()` — L4260
+- `.ZoomSliderFix()` — L4279
+- `.FilterHigh()` — L4296
+- `.FilterLow()` — L4394
+- `.VACGainRX()` — L4493
+- `.VACGainTX()` — L4511
+- `.VAC2GainRX()` — L4530
+- `.VAC2GainTX()` — L4548
+- `.CTunOnOff()` — L4590
+- `.ESCFormOnOff()` — L4613
+- `.WaterfallLowLimit()` — L4636
+- `.WaterfallHighLimit()` — L4655
+- `.MuteRX2OnOff()` — L4674
+- `.Band160m()` — L4697
+- `.Band80m()` — L4716
+- `.Band60m()` — L4735
+- `.Band40m()` — L4754
+- `.Band30m()` — L4773
+- `.Band20m()` — L4792
+- `.Band17m()` — L4812
+- `.Band15m()` — L4831
+- `.Band12m()` — L4850
+- `.Band10m()` — L4869
+- `.Band6m()` — L4888
+- `.Band2m()` — L4907
+- `.Band160mRX2()` — L4926
+- `.Band80mRX2()` — L4945
+- `.Band60mRX2()` — L4964
+- `.Band40mRX2()` — L4984
+- `.Band30mRX2()` — L5003
+- `.Band20mRX2()` — L5022
+- `.Band17mRX2()` — L5042
+- `.Band15mRX2()` — L5061
+- `.Band12mRX2()` — L5080
+- `.Band10mRX2()` — L5099
+- `.Band6mRX2()` — L5118
+- `.Band2mRX2()` — L5137
+- `.ModeSSB()` — L5156
+- `.ModeLSB()` — L5192
+- `.ModeUSB()` — L5210
+- `.ModeDSB()` — L5229
+- `.ModeCW()` — L5248
+- `.ModeCWL()` — L5267
+- `.ModeCWU()` — L5286
+- `.ModeFM()` — L5305
+- `.ModeAM()` — L5324
+- `.ModeDIGU()` — L5343
+- `.ModeSPEC()` — L5363
+- `.ModeDIGL()` — L5382
+- `.ModeSAM()` — L5401
+- `.ModeDRM()` — L5421
+- `.MoveVFOADown100Khz()` — L5440
+- `.MoveVFOAUp100Khz()` — L5459
+- `.APF_OnOff()` — L5478
+- `.ToggleVFOWheel()` — L5501
+- `.Rx2ModeNext()` — L5528
+- `.Rx2ModePrev()` — L5540
+- `.Rx2FilterWider()` — L5552
+- `.Rx2FilterNarrower()` — L5564
+- `.RX2AutoNotchOnOff()` — L5576
+- `.ToggleTX()` — L5599
+- `.TUNPowerLevel()` — L5622
+- `.RX2AGCModeKnob()` — L5639
+- `.RX2AGCModeUp()` — L5679
+- `.RX2AGCModeDown()` — L5704
+- `.RX2CTunOnOff()` — L5729
+- `.PSOnOff()` — L5752
+- `.RX2ModeSSB()` — L5775
+- `.RX2ModeLSB()` — L5811
+- `.RX2ModeUSB()` — L5829
+- `.RX2ModeDSB()` — L5848
+- `.RX2ModeCW()` — L5867
+- `.RX2ModeCWL()` — L5886
+- `.RX2ModeCWU()` — L5905
+- `.RX2ModeFM()` — L5924
+- `.RX2ModeAM()` — L5943
+- `.RX2ModeDIGU()` — L5962
+- `.RX2ModeSPEC()` — L5982
+- `.RX2ModeDIGL()` — L6001
+- `.RX2ModeSAM()` — L6020
+- `.RX2ModeDRM()` — L6040
+- `.MoveVFOBDown100Khz()` — L6059
+- `.MoveVFOBUp100Khz()` — L6078
+- `.CloseConsole()` — L6097
+- `.RX2SquelchOnOff()` — L6116
+- `.RX2SquelchControl()` — L6146
+- `.TXFilterHigh()` — L6165
+- `.TXFilterLow()` — L6262
+- `.ExternalPAOnOff()` — L6362
+- `.CWXKey()` — L6385
+- `.CWXPTT()` — L6399
+- `.ZoomToBandRecall()` — L6414
+- `.ZoomToBandStore()` — L6432
+- `.RX1AutoAGC()` — L6451
+- `.RX2AutoAGC()` — L6473
+- `.SwapVFOWheels()` — L6495
+- `.QuickSplitOnOff()` — L6518
+- `.QuickSplitOnOffandSplitOnOff()` — L6540
+- `.QuickPlayOnOff()` — L6574
+- `.QuickRecOnOff()` — L6603
+- `.AudioAmpOnOff()` — L6632
+- `.APFType_doublepole()` — L6654
+- `.APFType_matched()` — L6668
+- `.APFType_gaussian()` — L6682
+- `.APFType_biquad()` — L6696
+
+---
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/Midi2CatCommands.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

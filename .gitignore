@@ -408,3 +408,7 @@ Project Files/lib/NR_Algorithms_x64/src/libspecbleach/build
 Project Files/lib/NR_Algorithms_x64/src/libspecbleach/old.git
 Project Files/lib/NR_Algorithms_x64/src/libspecbleach/old.github
 
+
+# graphify knowledge-graph outputs and caches
+graphify-out/
+*.swp

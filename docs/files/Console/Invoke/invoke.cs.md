@@ -1,0 +1,197 @@
+# `Console/Invoke/invoke.cs`
+
+**Functional area:** [17. Thread-safe UI plumbing and shared controls](../../../CODE_OUTLINE.md#17-thread-safe-ui-plumbing-and-shared-controls)
+
+**Role:** Core invoke helpers — run any control update on the UI thread.
+
+## How this file is used
+
+- Used by (incoming references from other files): none found in the graph (file-local or reached via P/Invoke, delegates, or reflection).
+- Uses (outgoing references to other files): none found in the graph (file-local or reached via P/Invoke, delegates, or reflection).
+
+## Outline
+
+### Types
+
+#### `UI` (type, L33)
+
+- `.CallObjectEquals()` — L46
+- `.CallObjectGetHashCode()` — L51
+- `.CallObjectGetType()` — L56
+- `.CallObjectToString()` — L61
+- `.CallMarshalByRefObjectGetLifetimeService()` — L77
+- `.CallMarshalByRefObjectInitializeLifetimeService()` — L82
+- `.SetControlAccessibleDefaultActionDescription()` — L93
+- `.SetControlAccessibleDescription()` — L98
+- `.SetControlAccessibleName()` — L103
+- `.SetControlAccessibleRole()` — L108
+- `.SetControlAllowDrop()` — L113
+- `.SetControlAnchor()` — L118
+- `.SetControlBackColor()` — L123
+- `.SetControlBackgroundImage()` — L128
+- `.SetControlBindingContext()` — L133
+- `.SetControlBounds()` — L138
+- `.SetControlCapture()` — L143
+- `.SetControlCausesValidation()` — L148
+- `.SetControlClientSize()` — L153
+- `.SetControlContextMenuStrip()` — L158
+- `.SetControlCursor()` — L163
+- `.SetControlDock()` — L168
+- `.SetControlEnabled()` — L173
+- `.SetControlFont()` — L178
+- `.SetControlForeColor()` — L183
+- `.SetControlHeight()` — L188
+- `.SetControlImeMode()` — L193
+- `.SetControlIsAccessible()` — L198
+- `.SetControlLeft()` — L203
+- `.SetControlLocation()` — L208
+- `.SetControlName()` — L213
+- `.SetControlParent()` — L218
+- `.SetControlRegion()` — L223
+- `.SetControlRightToLeft()` — L228
+- `.SetControlSite()` — L233
+- `.SetControlSize()` — L238
+- `.SetControlTabIndex()` — L243
+- `.SetControlTabStop()` — L248
+- `.SetControlTag()` — L253
+- `.SetControlText()` — L258
+- `.SetControlTop()` — L263
+- `.SetControlVisible()` — L268
+- `.SetControlWidth()` — L273
+- `.CallControlContains()` — L282
+- `.CallControlCreateGraphics()` — L287
+- `.CallControlDoDragDrop()` — L292
+- `.CallControlFindForm()` — L297
+- `.CallControlFocus()` — L302
+- `.CallControlGetChildAtPoint()` — L307
+- `.CallControlGetContainerControl()` — L312
+- `.CallControlGetNextControl()` — L317
+- `.CallControlInvalidate()` — L322
+- `.CallControlPerformLayout()` — L344
+- `.CallControlPointToClient()` — L349
+- `.CallControlPointToScreen()` — L354
+- `.CallControlPreProcessMessage()` — L359
+- `.CallControlRectangleToClient()` — L365
+- `.CallControlRectangleToScreen()` — L370
+- `.CallControlResumeLayout()` — L375
+- `.CallControlScale()` — L380
+- `.CallControlSelectNextControl()` — L386
+- `.CallControlSetBounds()` — L392
+- `.SetScrollableControlAutoScroll()` — L409
+- `.SetScrollableControlAutoScrollMargin()` — L414
+- `.SetScrollableControlAutoScrollMinSize()` — L419
+- `.SetScrollableControlAutoScrollPosition()` — L424
+- `.CallScrollableControlScrollControlIntoView()` — L433
+- `.CallScrollableControlSetAutoScrollMargin()` — L438
+- `.SetContainerControlActiveControl()` — L451
+- `.CallContainerControlValidate()` — L460
+- `.SetUpDownBaseBorderStyle()` — L473
+- `.SetUpDownBaseInterceptArrowKeys()` — L478
+- `.SetUpDownBaseReadOnly()` — L483
+- `.SetUpDownBaseTextAlign()` — L488
+- `.SetUpDownBaseUpDownAlign()` — L493
+- `.CallUpDownBaseSelect()` — L502
+- `.SetTextBoxBaseAcceptsTab()` — L516
+- `.SetTextBoxBaseAutoSize()` — L521
+- `.SetTextBoxBaseBackColor()` — L526
+- `.SetTextBoxBaseBorderStyle()` — L531
+- `.SetTextBoxBaseForeColor()` — L536
+- `.SetTextBoxBaseHideSelection()` — L541
+- `.SetTextBoxBaseLines()` — L546
+- `.SetTextBoxBaseMaxLength()` — L551
+- `.SetTextBoxBaseModified()` — L556
+- `.SetTextBoxBaseMultiline()` — L561
+- `.SetTextBoxBaseReadOnly()` — L566
+- `.SetTextBoxBaseSelectedText()` — L571
+- `.SetTextBoxBaseSelectionStart()` — L576
+- `.SetTextBoxBaseWordWrap()` — L581
+- `.CallTextBoxBaseAppendText()` — L590
+- `.CallTextBoxBaseSelect()` — L595
+- `.SetListControlDataSource()` — L608
+- `.SetListControlDisplayMember()` — L613
+- `.SetListControlSelectedValue()` — L618
+- `.CallListControlGetItemText()` — L627
+- `.SetButtonBaseFlatStyle()` — L640
+- `.SetButtonBaseImage()` — L645
+- `.SetButtonBaseImageAlign()` — L650
+- `.SetButtonBaseImageIndex()` — L655
+- `.SetButtonBaseImageList()` — L660
+- `.SetButtonBaseImeMode()` — L665
+- `.SetButtonBaseTextAlign()` — L670
+- `.SetButtonDialogResult()` — L683
+- `.CallButtonNotifyDefault()` — L692
+- `.SetComboBoxBackColor()` — L705
+- `.SetComboBoxDrawMode()` — L710
+- `.SetComboBoxDropDownStyle()` — L715
+- `.SetComboBoxDropDownWidth()` — L720
+- `.SetComboBoxDroppedDown()` — L725
+- `.SetComboBoxForeColor()` — L730
+- `.SetComboBoxIntegralHeight()` — L735
+- `.SetComboBoxMaxDropDownItems()` — L740
+- `.SetComboBoxMaxLength()` — L745
+- `.SetComboBoxSelectedIndex()` — L750
+- `.SetComboBoxSelectedItem()` — L755
+- `.SetComboBoxSelectedText()` — L760
+- `.SetComboBoxSelectionLength()` — L765
+- `.SetComboBoxSelectionStart()` — L770
+- `.SetComboBoxSorted()` — L775
+- `.SetComboBoxText()` — L780
+- `.SetComboBoxValueMember()` — L785
+- `.CallComboBoxFindString()` — L794
+- `.CallComboBoxFindStringExact()` — L802
+- `.CallComboBoxGetItemHeight()` — L810
+- `.SetTextBoxAcceptsReturn()` — L823
+- `.SetTextBoxCharacterCasing()` — L828
+- `.SetTextBoxPasswordChar()` — L833
+- `.SetTextBoxScrollBars()` — L838
+- `.SetTextBoxSelectionLength()` — L843
+- `.SetTextBoxText()` — L848
+- `.SetTextBoxTextAlign()` — L853
+- `.SetCheckBoxAppearance()` — L866
+- `.SetCheckBoxAutoCheck()` — L871
+- `.SetCheckBoxCheckAlign()` — L876
+- `.SetCheckBoxChecked()` — L881
+- `.SetCheckBoxCheckState()` — L886
+- `.SetCheckBoxThreeState()` — L891
+- `.SetRadioButtonAppearance()` — L904
+- `.SetRadioButtonAutoCheck()` — L909
+- `.SetRadioButtonCheckAlign()` — L914
+- `.SetRadioButtonChecked()` — L919
+- `.SetRadioButtonTextAlign()` — L924
+- `.SetNumericUpDownDecimalPlaces()` — L937
+- `.SetNumericUpDownHexadecimal()` — L942
+- `.SetNumericUpDownIncrement()` — L947
+- `.SetNumericUpDownMaximum()` — L952
+- `.SetNumericUpDownMinimum()` — L957
+- `.SetNumericUpDownText()` — L962
+- `.SetNumericUpDownThousandsSeparator()` — L967
+- `.SetNumericUpDownValue()` — L972
+- `.SetTrackBarAutoSize()` — L985
+- `.SetTrackBarLargeChange()` — L990
+- `.SetTrackBarMaximum()` — L995
+- `.SetTrackBarMinimum()` — L1000
+- `.SetTrackBarOrientation()` — L1005
+- `.SetTrackBarSmallChange()` — L1010
+- `.SetTrackBarTickFrequency()` — L1015
+- `.SetTrackBarTickStyle()` — L1020
+- `.SetTrackBarValue()` — L1025
+- `.CallTrackBarSetRange()` — L1034
+- `.SetLabelAutoSize()` — L1047
+- `.SetLabelBorderStyle()` — L1052
+- `.SetLabelFlatStyle()` — L1057
+- `.SetLabelImage()` — L1062
+- `.SetLabelImageAlign()` — L1067
+- `.SetLabelImageIndex()` — L1072
+- `.SetLabelImageList()` — L1077
+- `.SetLabelText()` — L1082
+- `.SetLabelTextAlign()` — L1087
+- `.SetLabelUseMnemonic()` — L1092
+- `.SetGroupBoxAllowDrop()` — L1105
+- `.SetGroupBoxFlatStyle()` — L1110
+- `.SetGroupBoxText()` — L1115
+- `.SetPanelBorderStyle()` — L1128
+- `.SetPanelTabStop()` — L1133
+- `.SetPanelText()` — L1138
+
+---
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/Invoke/invoke.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

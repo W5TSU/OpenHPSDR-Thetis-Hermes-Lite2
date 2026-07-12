@@ -1,0 +1,161 @@
+# `ChannelMaster/netInterface.c`
+
+**Functional area:** [8. ChannelMaster — audio and network routing](../../CODE_OUTLINE.md#8-channelmaster--audio-and-network-routing)
+
+**Role:** HPSDR Protocol-1 UDP implementation: socket setup, packet build/parse, EP2/EP4/EP6 endpoint handling, sequence tracking.
+
+## How this file is used
+
+- Used by (incoming references from other files):
+  - `ChannelMaster/networkproto1.c` (calls ×6)
+  - `ChannelMaster/network.c` (calls ×4)
+- Uses (outgoing references to other files):
+  - `ChannelMaster/network.c` (calls ×64)
+  - `ChannelMaster/sidetone.c` (calls ×5)
+  - `ChannelMaster/cmasio.c` (calls ×2)
+  - `ChannelMaster/cmaster.c` (calls ×2)
+  - `ChannelMaster/obbuffs.c` (calls ×2)
+  - `ChannelMaster/bandwidth_monitor.c` (calls ×1)
+  - `ChannelMaster/network.h` (imports ×1)
+  - `ChannelMaster/obbuffs.h` (imports ×1)
+  - `ChannelMaster/networkproto1.c` (calls ×1)
+  - `wdsp/utilities.c` (calls ×1)
+- Most-referenced symbols from other files: `PrintTimeHack()` (×4), `PeakFwdPower()` (×3), `PeakRevPower()` (×3)
+
+## Outline
+
+### Functions
+
+- `StartAudioNative()` — L35
+- `StopAudio()` — L100
+- `nativeGetDotDashPTT()` — L123
+- `getAndResetADC_Overload()` — L131
+- `getAndResetADCmaxMagnitudeAtOverload()` — L148
+- `getADCmaxMagnitude()` — L162
+- `getOOO()` — L172
+- `getSeqInDelta()` — L211
+- `GetPLLLock()` — L238
+- `getUserI01()` — L248
+- `getUserI02()` — L254
+- `getUserI03()` — L260
+- `getUserI04()` — L266
+- `getUserI04_p2()` — L279
+- `getUserI05_p2()` — L285
+- `getUserI06_p2()` — L291
+- `getUserI08_p2()` — L297
+- `getUserI02_p2()` — L302
+- `getExciterPower()` — L309
+- `getFwdPower()` — L316
+- `getRevPower()` — L323
+- `getUserADC0()` — L330
+- `getUserADC1()` — L337
+- `getUserADC2()` — L344
+- `getUserADC3()` — L351
+- `getHermesDCVoltage()` — L358
+- `SetPttOut()` — L365
+- `SetTRXrelay()` — L377
+- `EnableEClassModulation()` — L391
+- `SetOCBits()` — L402
+- `SetOCExtraBits()` — L413
+- `SetAlexAtten()` — L424
+- `SetADCDither()` — L438
+- `SetADCRandom()` — L450
+- `SetAntBits()` — L462
+- `SetVFOfreq()` — L505
+- `SetOutputPowerFactor()` — L528
+- `SetMicBoost()` — L539
+- `SetMicXlr()` — L550
+- `SetLineIn()` — L561
+- `EnableApolloFilter()` — L572
+- `EnableApolloTuner()` — L581
+- `EnableApolloAutoTune()` — L590
+- `SelectApolloFilter()` — L599
+- `SetAlexHPFBits()` — L608
+- `DisablePA()` — L627
+- `SetAlex2HPFBits()` — L641
+- `SetBPF2Gnd()` — L660
+- `SetAlex3HPFBits()` — L671
+- `SetAlex4HPFBits()` — L677
+- `SetAlexLPFBits()` — L688
+- `SetAlex2LPFBits()` — L735
+- `SetAlex3LPFBits()` — L741
+- `SetAlex4LPFBits()` — L747
+- `SetRX1Preamp()` — L753
+- `SetRX2Preamp()` — L765
+- `SetMicTipRing()` — L776
+- `SetMicBias()` — L787
+- `SetMicPTT()` — L798
+- `SetLineBoost()` — L809
+- `SetResetOnDisconnect()` — L820
+- `SwapAudioChannels()` — L829
+- `SetPureSignal()` — L839
+- `SetUserOut0()` — L850
+- `SetUserOut1()` — L856
+- `SetUserOut2()` — L862
+- `SetUserOut3()` — L868
+- `SetADC1StepAttenData()` — L874
+- `SetADC2StepAttenData()` — L885
+- `SetADC3StepAttenData()` — L896
+- `ReversePaddles()` — L907
+- `SetCWKeyerSpeed()` — L918
+- `SetCWKeyerMode()` — L930
+- `SetCWKeyerWeight()` — L941
+- `EnableCWKeyerSpacing()` — L952
+- `SetCWEdgeLength()` — L963
+- `SetADC_cntrl1()` — L974
+- `GetADC_cntrl1()` — L990
+- `SetADC_cntrl2()` — L996
+- `GetADC_cntrl2()` — L1011
+- `SetADC_cntrl_P1()` — L1018
+- `GetADC_cntrl_P1()` — L1024
+- `SetTxAttenData()` — L1031
+- `EnableCWKeyer()` — L1047
+- `SetCWSidetoneVolume()` — L1059
+- `SetCWPTTDelay()` — L1071
+- `SetCWHangTime()` — L1082
+- `SetCWSidetoneFreq()` — L1093
+- `SetEERPWMmin()` — L1105
+- `SetEERPWMmax()` — L1116
+- `SetAudioAmpEnable()` — L1128
+- `SetCWSidetone()` — L1142
+- `SetCWIambic()` — L1153
+- `SetCWBreakIn()` — L1164
+- `SetCWDash()` — L1175
+- `SetCWDot()` — L1186
+- `SetCWX()` — L1197
+- `SetCWXPTT()` — L1219
+- `getHaveSync()` — L1230
+- `getControlByteIn()` — L1236
+- `EnableRx()` — L1246
+- `EnableRxs()` — L1257
+- `EnableRxSync()` — L1286
+- `Protocol1DDCConfig()` — L1295
+- `SetDDCRate()` — L1304
+- `SetRxADC()` — L1361
+- `SetWBPacketsPerFrame()` — L1373
+- `SetWBUpdateRate()` — L1381
+- `SetWBEnable()` — L1389
+- `SendHighPriority()` — L1398
+- `SetWatchdogTimer()` — L1410
+- `SetMKIIBPF()` — L1421
+- `SetXVTREnable()` — L1427
+- `ATU_Tune()` — L1438
+- `getLEDs()` — L1449
+- `LRAudioSwap()` — L1455
+- `SetTxLatency()` — L1462
+- `SetPttHang()` — L1468
+- `I2CReadInitiate()` — L1474
+- `I2CWriteInitiate()` — L1505
+- `I2CWrite()` — L1539
+- `I2CResponse()` — L1570
+- `create_rnet()` — L1594
+- `clearSnapshots()` — L1769
+- `destroy_rnet()` — L1788
+- `PrintTimeHack()` — L1817
+- `PeakFwdPower()` — L1824
+- `PeakRevPower()` — L1832
+- `UpdateRadioProtocolSampleSize()` — L1840
+- `SetCATPort()` — L1865
+
+---
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/ChannelMaster/netInterface.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

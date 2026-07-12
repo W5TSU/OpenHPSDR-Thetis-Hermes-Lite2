@@ -1,0 +1,16 @@
+# `Console/VersionInfo.cs`
+
+**Functional area:** [1. Application core and main window](../../CODE_OUTLINE.md#1-application-core-and-main-window)
+
+**Role:** Version identification, release notes, and About box.
+
+## How this file is used
+
+- Used by (incoming references from other files): none found in the graph (file-local or reached via P/Invoke, delegates, or reflection).
+- Uses (outgoing references to other files): none found in the graph (file-local or reached via P/Invoke, delegates, or reflection).
+
+## Outline
+
+_No symbols extracted for this file (it may be data-only, generated, or vendored)._
+---
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/VersionInfo.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

@@ -1,0 +1,293 @@
+# `Console/dsp.cs`
+
+**Functional area:** [6. DSP control from the console](../../CODE_OUTLINE.md#6-dsp-control-from-the-console)
+
+**Role:** Central DSP settings hub: creates wdsp RX/TX channels and pushes every DSP parameter (NR, NB, AGC, filters, TX processing) down via P/Invoke.
+
+## How this file is used
+
+- Used by (incoming references from other files): none found in the graph (file-local or reached via P/Invoke, delegates, or reflection).
+- Uses (outgoing references to other files):
+  - `Console/enums.cs` (references ×3)
+  - `Console/MeterManager.cs` (references ×2)
+
+## Outline
+
+### Types
+
+#### `WDSP` (type, L45)
+
+- `.OpenChannel()` — L50
+- `.CloseChannel()` — L53
+- `.SetInputBuffsize()` — L56
+- `.SetDSPBuffsize()` — L59
+- `.SetInputSamplerate()` — L62
+- `.SetDSPSamplerate()` — L65
+- `.SetOutputSamplerate()` — L68
+- `.SetAllRates()` — L71
+- `.SetChannelState()` — L74
+- `.SetChannelTDelayUp()` — L77
+- `.SetChannelTSlewUp()` — L80
+- `.SetChannelTDelayDown()` — L83
+- `.SetChannelTSlewDown()` — L86
+- `.SetTXAuSlewTime()` — L89
+- `.SetRXAMode()` — L92
+- `.SetTXAMode()` — L95
+- `.fexchange0()` — L98
+- `.fexchange2()` — L101
+- `.SetRXAAGCMode()` — L104
+- `.SetRXAAGCFixed()` — L107
+- `.GetRXAAGCTop()` — L110
+- `.SetRXAAGCTop()` — L113
+- `.SetRXAAGCAttack()` — L116
+- `.SetRXAAGCDecay()` — L119
+- `.SetRXAAGCHang()` — L122
+- `.SetRXAAGCSlope()` — L125
+- `.GetRXAAGCHangThreshold()` — L128
+- `.SetRXAAGCHangThreshold()` — L131
+- `.GetRXAAGCThresh()` — L134
+- `.SetRXAAGCThresh()` — L137
+- `.GetRXAAGCHangLevel()` — L140
+- `.SetRXAAGCHangLevel()` — L143
+- `.SetTXAALCDecay()` — L146
+- `.SetTXAALCMaxGain()` — L149
+- `.SetRXAAMDSBMode()` — L152
+- `.SetRXAAMDFadeLevel()` — L155
+- `.SetRXAAMSQRun()` — L158
+- `.SetRXAAMSQThreshold()` — L161
+- `.SetRXAAMSQMaxTail()` — L164
+- `.SetTXAAMCarrierLevel()` — L167
+- `.SetRXAANFRun()` — L170
+- `.SetRXAANFVals()` — L173
+- `.SetRXAANFTaps()` — L176
+- `.SetRXAANFDelay()` — L179
+- `.SetRXAANFGain()` — L182
+- `.SetRXAANFLeakage()` — L185
+- `.SetRXAANFPosition()` — L188
+- `.SetRXAANRRun()` — L191
+- `.SetRXAANRVals()` — L194
+- `.SetRXAANRTaps()` — L197
+- `.SetRXAANRDelay()` — L200
+- `.SetRXAANRGain()` — L203
+- `.SetRXAANRLeakage()` — L206
+- `.SetRXAANRPosition()` — L209
+- `.SetRXABandpassFreqs()` — L212
+- `.SetRXABandpassWindow()` — L215
+- `.SetTXABandpassFreqs()` — L218
+- `.SetTXABandpassWindow()` — L221
+- `.SetRXACBLRun()` — L224
+- `.SetRXACBLPosition()` — L227
+- `.SetTXACFIRRun()` — L231
+- `.SetTXACompressorRun()` — L234
+- `.SetTXACompressorGain()` — L237
+- `.SetTXAosctrlRun()` — L240
+- `.SetRXAEMNRRun()` — L243
+- `.SetRXARNNRRun()` — L247
+- `.SetRXARNNRPosition()` — L250
+- `.RNNRloadModel()` — L253
+- `.SetRXARNNRUseDefaultGain()` — L256
+- `.SetRXASBNRRun()` — L261
+- `.SetRXASBNRPosition()` — L264
+- `.SetRXASBNRreductionAmount()` — L267
+- `.SetRXASBNRsmoothingFactor()` — L270
+- `.SetRXASBNRwhiteningFactor()` — L273
+- `.SetRXASBNRnoiseRescale()` — L276
+- `.SetRXASBNRpostFilterThreshold()` — L279
+- `.SetRXASBNRnoiseScalingType()` — L282
+- `.SetRXAEMNRPosition()` — L286
+- `.SetRXAEMNRgainMethod()` — L289
+- `.SetRXAEMNRnpeMethod()` — L292
+- `.SetRXAEMNRaeRun()` — L296
+- `.SetRXAEMNRpost2Run()` — L299
+- `.SetRXAEMNRpost2Nlevel()` — L302
+- `.SetRXAEMNRpost2Factor()` — L305
+- `.SetRXAEMNRpost2Rate()` — L308
+- `.SetRXAEMNRpost2Taper()` — L311
+- `.SetRXAEMNRtrainZetaThresh()` — L315
+- `.SetRXAEMNRtrainT2()` — L318
+- `.SetRXAEQRun()` — L321
+- `.SetTXAEQRun()` — L324
+- `.SetRXAGrphEQ()` — L327
+- `.SetTXAGrphEQ()` — L330
+- `.SetRXAGrphEQ10()` — L333
+- `.SetTXAGrphEQ10()` — L336
+- `.SetRXAFMDeviation()` — L339
+- `.SetRXAFMSQRun()` — L342
+- `.SetRXAFMSQThreshold()` — L345
+- `.SetRXAFMLimRun()` — L348
+- `.SetRXAFMLimGain()` — L351
+- `.SetRXAFMAFFilter()` — L354
+- `.SetTXAFMAFFilter()` — L357
+- `.SetTXAFMDeviation()` — L360
+- `.SetTXAFMEmphPosition()` — L363
+- `.SetTXACTCSSRun()` — L366
+- `.SetTXACTCSSFreq()` — L369
+- `.SetRXACTCSSRun()` — L372
+- `.SetRXACTCSSFreq()` — L375
+- `.SetTXALevelerTop()` — L378
+- `.SetTXALevelerDecay()` — L381
+- `.SetTXALevelerSt()` — L384
+- `.GetRXAMeter()` — L387
+- `.GetTXAMeter()` — L390
+- `.SetRXAPanelRun()` — L393
+- `.SetRXAPanelSelect()` — L396
+- `.SetRXAPanelGain1()` — L399
+- `.SetRXAPanelPan()` — L402
+- `.SetRXAPanelBinaural()` — L405
+- `.SetTXAPanelRun()` — L408
+- `.SetTXAPanelGain1()` — L411
+- `.SetRXAShiftFreq()` — L414
+- `.SetRXASpectrum()` — L417
+- `.TXAGetSpecF1()` — L420
+- `.RXAGetaSipF()` — L423
+- `.RXAGetaSipF1()` — L426
+- `.TXASetSipPosition()` — L429
+- `.TXASetSipMode()` — L432
+- `.TXASetSipDisplay()` — L435
+- `.TXAGetaSipF()` — L438
+- `.TXAGetaSipF1()` — L441
+- `.create_resampleFV()` — L444
+- `.xresampleFV()` — L447
+- `.destroy_resampleFV()` — L450
+- `.WDSPwisdom()` — L453
+- `.SetRXAPreGenRun()` — L456
+- `.SetRXAPreGenMode()` — L459
+- `.SetRXAPreGenToneMag()` — L462
+- `.SetRXAPreGenToneFreq()` — L465
+- `.SetRXAPreGenNoiseMag()` — L468
+- `.SetRXAPreGenSweepMag()` — L471
+- `.SetRXAPreGenSweepFreq()` — L474
+- `.SetRXAPreGenSweepRate()` — L477
+- `.SetTXAPreGenRun()` — L480
+- `.SetTXAPreGenMode()` — L483
+- `.SetTXAPreGenToneMag()` — L486
+- `.SetTXAPreGenToneFreq()` — L489
+- `.SetTXAPreGenNoiseMag()` — L492
+- `.SetTXAPreGenSweepMag()` — L495
+- `.SetTXAPreGenSweepFreq()` — L498
+- `.SetTXAPreGenSweepRate()` — L501
+- `.SetTXAPreGenSawtoothMag()` — L504
+- `.SetTXAPreGenSawtoothFreq()` — L507
+- `.SetTXAPreGenTriangleMag()` — L510
+- `.SetTXAPreGenTriangleFreq()` — L513
+- `.SetTXAPreGenPulseMag()` — L516
+- `.SetTXAPreGenPulseFreq()` — L519
+- `.SetTXAPreGenPulseDutyCycle()` — L522
+- `.SetTXAPreGenPulseToneFreq()` — L525
+- `.SetTXAPreGenPulseTransition()` — L528
+- `.SetTXAPostGenRun()` — L531
+- `.SetTXAPostGenMode()` — L534
+- `.SetTXAPostGenToneFreq()` — L537
+- `.SetTXAPostGenToneMag()` — L540
+- `.SetTXAPostGenTTMag()` — L543
+- `.SetTXAPostGenTTFreq()` — L546
+- `.SetTXAPostGenSweepMag()` — L549
+- `.SetTXAPostGenSweepFreq()` — L552
+- `.SetTXAPostGenSweepRate()` — L555
+- `.SetTXAPostGenPulseMag()` — L559
+- `.SetTXAPostGenPulseFreq()` — L562
+- `.SetTXAPostGenPulseDutyCycle()` — L565
+- `.SetTXAPostGenPulseToneFreq()` — L568
+- `.SetTXAPostGenPulseTransition()` — L571
+- `.SetTXAPostGenPulseIQout()` — L574
+- `.SetTXAPostGenTTPulseMag()` — L579
+- `.SetTXAPostGenTTPulseFreq()` — L582
+- `.SetTXAPostGenTTPulseDutyCycle()` — L585
+- `.SetTXAPostGenTTPulseToneFreq()` — L588
+- `.SetTXAPostGenTTPulseTransition()` — L591
+- `.SetTXAPostGenTTPulseIQout()` — L594
+- `.GetWDSPVersion()` — L598
+- `.create_divEXT()` — L603
+- `.destroy_divEXT()` — L606
+- `.SetEXTDIVRun()` — L609
+- `.SetEXTDIVNr()` — L612
+- `.SetEXTDIVOutput()` — L615
+- `.SetEXTDIVRotate()` — L618
+- `.create_eerEXT()` — L623
+- `.destroy_eerEXT()` — L626
+- `.xeerEXTF()` — L629
+- `.SetEERRun()` — L632
+- `.SetEERAMIQ()` — L635
+- `.SetEERMgain()` — L638
+- `.SetEERPgain()` — L641
+- `.SetEERRunDelays()` — L644
+- `.SetEERMdelay()` — L647
+- `.SetEERPdelay()` — L650
+- `.SetEERSize()` — L653
+- `.SetEERSamplerate()` — L656
+- `.SetRXASPCWRun()` — L661
+- `.SetRXASPCWFreq()` — L664
+- `.SetRXASPCWBandwidth()` — L667
+- `.SetRXASPCWGain()` — L670
+- `.SetRXASPCWSelection()` — L673
+- `.SetRXAmpeakRun()` — L678
+- `.SetRXAmpeakFilFreq()` — L681
+- `.SetRXAmpeakFilBw()` — L684
+- `.SetRXAmpeakFilGain()` — L687
+- `.SetRXASNBARun()` — L692
+- `.SetRXASNBAk1()` — L695
+- `.SetRXASNBAk2()` — L698
+- `.RXANBPAddNotch()` — L703
+- `.RXANBPGetNotch()` — L706
+- `.RXANBPDeleteNotch()` — L709
+- `.RXANBPEditNotch()` — L712
+- `.RXANBPGetNumNotches()` — L715
+- `.RXANBPSetTuneFrequency()` — L718
+- `.RXANBPSetShiftFrequency()` — L721
+- `.RXANBPSetNotchesRun()` — L724
+- `.RXANBPSetFreqs()` — L727
+- `.RXANBPSetWindow()` — L730
+- `.RXANBPGetMinNotchWidth()` — L733
+- `.RXANBPSetAutoIncrease()` — L736
+- `.SetRXASNBAOutputBandwidth()` — L739
+- `.RXASetMP()` — L742
+- `.TXASetMP()` — L745
+- `.RXASetNC()` — L748
+- `.TXASetNC()` — L751
+- `.SetTXACFCOMPRun()` — L755
+- `.SetTXACFCOMPprofile()` — L758
+- `.SetTXACFCOMPPosition()` — L761
+- `.SetTXACFCOMPPrecomp()` — L764
+- `.SetTXACFCOMPPeqRun()` — L767
+- `.SetTXACFCOMPPrePeq()` — L770
+- `.SetTXAPHROTRun()` — L774
+- `.SetTXAPHROTCorner()` — L777
+- `.SetTXAPHROTNstages()` — L780
+- `.SetTXAPHROTReverse()` — L783
+- `.SetTXAEQProfile()` — L787
+- `.SetRXAEQProfile()` — L791
+- `.GetTXACFCOMPGainAndMask()` — L795
+- `.GetTXACFCOMPDisplayCompression()` — L799
+- `.SetRXASSQLThreshold()` — L803
+- `.SetRXASSQLRun()` — L806
+- `.SetRXASSQLTauMute()` — L809
+- `.SetRXASSQLTauUnMute()` — L812
+- `.create_bfcu()` — L816
+- `.getFilterCorners()` — L819
+- `.getFilterCurve()` — L822
+- `.destroy_bfcu()` — L825
+- `.save_impulse_cache()` — L829
+- `.read_impulse_cache()` — L832
+- `.use_impulse_cache()` — L835
+- `.init_impulse_cache()` — L838
+- `.destroy_impulse_cache()` — L841
+- `.SetupDetectMaxBin()` — L846
+- `.GetDetectMaxBin()` — L849
+- `.id()` — L926
+- `.CalculateRXMeter()` — L947
+- `.CalculateTXMeter()` — L992
+
+#### `MeterType` (type, L857)
+
+_No extracted members._
+
+#### `rxaMeterType` (type, L887)
+
+_No extracted members._
+
+#### `txaMeterType` (type, L899)
+
+_No extracted members._
+
+---
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/dsp.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._
