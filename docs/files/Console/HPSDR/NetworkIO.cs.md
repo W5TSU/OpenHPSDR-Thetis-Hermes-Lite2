@@ -14,15 +14,24 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `NetworkIO` (type, L10)
 
-- `.InitRadio()` — L26
-- `.SetOutputPower()` — L199
-- `.VFOfreq()` — L215
-- `.FreqCorrectionChanged()` — L237
-- `.Freq2PhaseWord()` — L249
+- **`.InitRadio()`** — L26 — `public static int InitRadio()`
+  Inits radio.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.SetOutputPower()`** — L199 — `public static void SetOutputPower(float f)`
+  Sets output power.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.VFOfreq()`** — L215 — `unsafe public static void VFOfreq(int id, double f, int tx)`
+  Called by: `.FreqCorrectionChanged()` (same file)
+- **`.FreqCorrectionChanged()`** — L237 — `public static void FreqCorrectionChanged()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Freq2PhaseWord()`** — L249 — `public static int Freq2PhaseWord(int freq)`
+  Called by: `.VFOfreq()` (same file)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/HPSDR/NetworkIO.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

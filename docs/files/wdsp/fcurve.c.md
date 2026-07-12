@@ -18,10 +18,15 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `fc_impulse()` — L29
-- `fc_mults()` — L185
+- **`fc_impulse()`** — L29 — `double* fc_impulse (int nc, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale, int ctfmode, int wintype)`
+  Called by: `fc_mults()` (same file), `create_emphp()` (`wdsp/emph.c`), `setSamplerate_emphp()` (`wdsp/emph.c`), `setSize_emphp()` (`wdsp/emph.c`), `SetTXAFMEmphNC()` (`wdsp/emph.c`), `SetTXAFMPreEmphFreqs()` (`wdsp/emph.c`) — and 5 more
+- **`fc_mults()`** — L185 — `double* fc_mults (int size, double f0, double f1, double g0, double g1, int curve, double samplerate, double scale, int ctfmode, int wintype)`
+  generate mask for Overlap-Save Filter
+  Called by: `calc_emph()` (`wdsp/emph.c`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/fcurve.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

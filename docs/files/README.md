@@ -1,6 +1,6 @@
 # Per-file source documentation
 
-One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the file's role, how it is used (graph-derived callers/callees), and an outline of its classes, methods, and functions with line numbers.
+One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the file's role, how it is used (graph-derived callers/callees), and an outline of its classes, methods, and functions — each with line number, signature, description, and callers.
 
 ## 1. Application core and main window
 

@@ -12,9 +12,13 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `GetCMasioVersion()` — L10
+- **`GetCMasioVersion()`** — L10 — `__declspec(dllexport)`
+  Returns cmasio version — API getter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/cmASIO/version.cpp`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

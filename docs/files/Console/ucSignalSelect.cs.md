@@ -12,15 +12,26 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `ucSignalSelect` (type, L53)
 
-- `.radSig_CheckedChanged()` — L72
-- `.radSigAvg_CheckedChanged()` — L81
-- `.getSignalTypeFromSelection()` — L90
-- `.onSignalTypeChanged()` — L98
-- `.radSigMaxBin_CheckedChanged()` — L130
+- **`.radSig_CheckedChanged()`** — L72 — `private void radSig_CheckedChanged(object sender, EventArgs e)`
+  WinForms event handler: runs when `radSig` checked state changes.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.radSigAvg_CheckedChanged()`** — L81 — `private void radSigAvg_CheckedChanged(object sender, EventArgs e)`
+  WinForms event handler: runs when `radSigAvg` checked state changes.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.getSignalTypeFromSelection()`** — L90 — `private Reading getSignalTypeFromSelection()`
+  Returns signal type from selection.
+  Called by: `.radSig_CheckedChanged()` (same file), `.radSigAvg_CheckedChanged()` (same file), `.radSigMaxBin_CheckedChanged()` (same file)
+- **`.onSignalTypeChanged()`** — L98 — `private void onSignalTypeChanged(Reading signalType)`
+  Called by: `.radSig_CheckedChanged()` (same file), `.radSigAvg_CheckedChanged()` (same file), `.radSigMaxBin_CheckedChanged()` (same file)
+- **`.radSigMaxBin_CheckedChanged()`** — L130 — `private void radSigMaxBin_CheckedChanged(object sender, EventArgs e)`
+  WinForms event handler: runs when `radSigMaxBin` checked state changes.
+  Called by: WinForms event wiring at runtime (no static call sites).
 
 #### `SignalTypeChangedEventArgs` (type, L55)
 

@@ -23,27 +23,61 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `create_spc0()` — L32
-- `destroy_spc0()` — L69
-- `create_pipe()` — L79
-- `destroy_pipe()` — L119
-- `xplaywave()` — L133
-- `xrecordwave()` — L142
-- `xscope()` — L151
-- `xpipe()` — L160
-- `SendCBCreateScope()` — L257
-- `SendCBScope()` — L263
-- `SetScopeRun()` — L269
-- `SendCBCreateWRecord()` — L275
-- `SendCBWaveRecorder()` — L281
-- `SetWaveRecorderRun()` — L287
-- `SendCBCreateWPlay()` — L293
-- `SendCBWavePlayer()` — L299
-- `SetWavePlayerRun()` — L305
-- `SetTopPan3Run()` — L311
-- `SetTXVAC()` — L317
+- **`create_spc0()`** — L32 — `void create_spc0()`
+  Constructor for the `spc0` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `create_pipe()` (same file)
+- **`destroy_spc0()`** — L69 — `void destroy_spc0()`
+  Destroys the `spc0` block, freeing its allocated buffers.
+  Called by: `destroy_pipe()` (same file)
+- **`create_pipe()`** — L79 — `void create_pipe()`
+  Constructor for the `pipe` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `CreateRadio()` (`ChannelMaster/cmsetup.c`)
+- **`destroy_pipe()`** — L119 — `void destroy_pipe()`
+  Destroys the `pipe` block, freeing its allocated buffers.
+  Called by: `DestroyRadio()` (`ChannelMaster/cmsetup.c`)
+- **`xplaywave()`** — L133 — `void xplaywave(int rx, int state, double* data)`
+  Runs the `playwave` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xpipe()` (same file)
+- **`xrecordwave()`** — L142 — `void xrecordwave(int rx, int state, int pos, double* data)`
+  Runs the `recordwave` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xpipe()` (same file)
+- **`xscope()`** — L151 — `void xscope(int rx, int state, double* data)`
+  Runs the `scope` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xpipe()` (same file)
+- **`xpipe()`** — L160 — `void xpipe (int stream, int pos, double** buffs)`
+  Runs the `pipe` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xcmaster()` (`ChannelMaster/cmaster.c`)
+- **`SendCBCreateScope()`** — L257 — `PORT void SendCBCreateScope (void (__stdcall *create_Scope)(int id))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SendCBScope()`** — L263 — `PORT void SendCBScope (int id, void (__stdcall *xscope)(int state, double* data))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetScopeRun()`** — L269 — `PORT void SetScopeRun(int id, int run)`
+  Sets scope run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SendCBCreateWRecord()`** — L275 — `PORT void SendCBCreateWRecord (void (__stdcall *create_WaveRecord)(int id))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SendCBWaveRecorder()`** — L281 — `PORT void SendCBWaveRecorder (int id, void (__stdcall *xrecordwave)(int state, int pos, double* data))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetWaveRecorderRun()`** — L287 — `PORT void SetWaveRecorderRun(int id, int run)`
+  Sets wave recorder run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SendCBCreateWPlay()`** — L293 — `PORT void SendCBCreateWPlay (void (__stdcall *create_WavePlay)(int id))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SendCBWavePlayer()`** — L299 — `PORT void SendCBWavePlayer (int id, void (__stdcall *xplaywave)(int state, double* data))`
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetWavePlayerRun()`** — L305 — `PORT void SetWavePlayerRun(int id, int run)`
+  Sets wave player run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetTopPan3Run()`** — L311 — `PORT void SetTopPan3Run (int run)`
+  Sets top pan3 run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetTXVAC()`** — L317 — `PORT void SetTXVAC (int txid, int txvac)`
+  Sets txvac — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/ChannelMaster/pipe.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

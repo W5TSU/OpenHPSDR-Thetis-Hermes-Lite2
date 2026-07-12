@@ -20,16 +20,30 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `start_cmthread()` — L29
-- `create_cmbuffs()` — L35
-- `destroy_cmbuffs()` — L60
-- `flush_cmbuffs()` — L78
-- `Inbound()` — L88
-- `cmdata()` — L123
-- `cm_main()` — L151
-- `SetCMRingOutsize()` — L170
+- **`start_cmthread()`** — L29 — `void start_cmthread (int id)`
+  Called by: `create_cmbuffs()` (same file), `SetCMRingOutsize()` (same file)
+- **`create_cmbuffs()`** — L35 — `void create_cmbuffs (int id, int accept, int max_insize, int max_outsize, int outsize)`
+  Constructor for the `cmbuffs` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `create_cmaster()` (`ChannelMaster/cmaster.c`)
+- **`destroy_cmbuffs()`** — L60 — `void destroy_cmbuffs (int id)`
+  Destroys the `cmbuffs` block, freeing its allocated buffers.
+  Called by: `destroy_cmaster()` (`ChannelMaster/cmaster.c`)
+- **`flush_cmbuffs()`** — L78 — `void flush_cmbuffs (int id)`
+  Flushes (zeroes) the `cmbuffs` block’s internal buffers/state.
+  Called by: `SetCMRingOutsize()` (same file)
+- **`Inbound()`** — L88 — `PORT void Inbound (int id, int nsamples, double* in)`
+  Called by: `ReadThreadMainLoop()` (`ChannelMaster/network.c`), `MetisReadThreadMainLoop()` (`ChannelMaster/networkproto1.c`), `MetisReadThreadMainLoop_HL2()` (`ChannelMaster/networkproto1.c`), `xrouter()` (`ChannelMaster/router.c`), `InboundBlock()` (`ChannelMaster/sync.c`)
+- **`cmdata()`** — L123 — `void cmdata (int id, double* out)`
+  Called by: `cm_main()` (same file)
+- **`cm_main()`** — L151 — `void cm_main (void *pargs)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`SetCMRingOutsize()`** — L170 — `void SetCMRingOutsize (int id, int size)`
+  Sets cmring outsize — API setter, typically called from the console via P/Invoke.
+  Called by: `SetXcmInrate()` (`ChannelMaster/cmaster.c`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/ChannelMaster/cmbuffs.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

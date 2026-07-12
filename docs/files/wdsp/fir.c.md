@@ -28,17 +28,29 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `fftcv_mults()` — L29
-- `get_fsamp_window()` — L44
-- `fir_fsamp_odd()` — L83
-- `fir_fsamp()` — L127
-- `fir_bandpass()` — L187
-- `fir_read()` — L288
-- `analytic()` — L330
-- `mp_imp()` — L357
-- `zff_impulse()` — L442
+- **`fftcv_mults()`** — L29 — `double* fftcv_mults (int NM, double* c_impulse)`
+  Called by: `calc_bps()` (`wdsp/bandpass.c`), `eq_mults()` (`wdsp/eq.c`), `fc_mults()` (`wdsp/fcurve.c`)
+- **`get_fsamp_window()`** — L44 — `double* get_fsamp_window(int N, int wintype)`
+  Called by: `fir_fsamp_odd()` (same file), `fir_fsamp()` (same file)
+- **`fir_fsamp_odd()`** — L83 — `double* fir_fsamp_odd (int N, double* A, int rtype, double scale, int wintype)`
+  Called by: `eq_impulse()` (`wdsp/eq.c`), `fc_impulse()` (`wdsp/fcurve.c`)
+- **`fir_fsamp()`** — L127 — `double* fir_fsamp (int N, double* A, int rtype, double scale, int wintype)`
+  Called by: `cfir_impulse()` (`wdsp/cfir.c`), `eq_impulse()` (`wdsp/eq.c`), `fc_impulse()` (`wdsp/fcurve.c`), `icfir_impulse()` (`wdsp/icfir.c`)
+- **`fir_bandpass()`** — L187 — `double* fir_bandpass (int N, double f_low, double f_high, double samplerate, int wintype, int rtype, double scale)`
+  Called by: `calc_bps()` (`wdsp/bandpass.c`), `create_bandpass()` (`wdsp/bandpass.c`), `setSamplerate_bandpass()` (`wdsp/bandpass.c`), `setSize_bandpass()` (`wdsp/bandpass.c`), `setGain_bandpass()` (`wdsp/bandpass.c`), `CalcBandpassFilter()` (`wdsp/bandpass.c`) — and 27 more
+- **`fir_read()`** — L288 — `double *fir_read (int N, const char *filename, int rtype, double scale)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`analytic()`** — L330 — `void analytic (int N, double* in, double* out)`
+  Called by: `mp_imp()` (same file), `build_doublepole_1sided()` (`wdsp/doublepole.c`)
+- **`mp_imp()`** — L357 — `void mp_imp (int N, double* fir, double* mpfir, int pfactor, int polarity)`
+  Called by: `calc_fircore()` (`wdsp/firmin.c`), `analyze_bandpass_filter()` (`wdsp/utilities.c`)
+- **`zff_impulse()`** — L442 — `double* zff_impulse(int nc, double scale)`
+  impulse response of a zero frequency filter comprising a cascade of two resonators, each followed by a detrending filter
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/fir.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

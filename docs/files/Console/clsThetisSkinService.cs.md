@@ -13,6 +13,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `ThetisSkin` (type, L54)
@@ -41,19 +43,35 @@ _No extracted members._
 
 #### `ThetisSkinService` (type, L125)
 
-- `.GetThetisSkinsData()` — L140
-- `.GetSkinServers()` — L200
-- `.SubscribeForSkinData()` — L247
-- `.UnsubscribeFromSkinData()` — L252
-- `.SubscribeForSkinServerData()` — L256
-- `.UnsubscribeFromSkinServerData()` — L261
-- `.SubscribeForImageLoaded()` — L265
-- `.UnsubscribeFromImageLoaded()` — L270
-- `.SubscribeForDownload()` — L274
-- `.UnsubscribeFromDownload()` — L279
-- `.LoadImageFromUrl()` — L283
-- `.DownloadFile()` — L337
-- `.CancelDownload()` — L427
+- **`.GetThetisSkinsData()`** — L140 — `public static async void GetThetisSkinsData(string jsonUrl)`
+  Returns thetis skins data.
+  Called by: `.btnRefreshSkinsForServer_Click()` (`Console/setup.cs`)
+- **`.GetSkinServers()`** — L200 — `public static async void GetSkinServers(string jsonUrl)`
+  Returns skin servers.
+  Called by: `.getSkinServers()` (`Console/setup.cs`)
+- **`.SubscribeForSkinData()`** — L247 — `public static void SubscribeForSkinData(EventHandler<SkinsData> eventHandler)`
+  Called by: `.addDelegates()` (`Console/setup.cs`)
+- **`.UnsubscribeFromSkinData()`** — L252 — `public static void UnsubscribeFromSkinData(EventHandler<SkinsData> eventHandler)`
+  Called by: `.RemoveDelegates()` (`Console/setup.cs`)
+- **`.SubscribeForSkinServerData()`** — L256 — `public static void SubscribeForSkinServerData(EventHandler<SkinServersData> eventHandler)`
+  Called by: `.addDelegates()` (`Console/setup.cs`)
+- **`.UnsubscribeFromSkinServerData()`** — L261 — `public static void UnsubscribeFromSkinServerData(EventHandler<SkinServersData> eventHandler)`
+  Called by: `.RemoveDelegates()` (`Console/setup.cs`)
+- **`.SubscribeForImageLoaded()`** — L265 — `public static void SubscribeForImageLoaded(EventHandler<SkinHttpImage> eventHandler)`
+  Called by: `.addDelegates()` (`Console/setup.cs`)
+- **`.UnsubscribeFromImageLoaded()`** — L270 — `public static void UnsubscribeFromImageLoaded(EventHandler<SkinHttpImage> eventHandler)`
+  Called by: `.RemoveDelegates()` (`Console/setup.cs`)
+- **`.SubscribeForDownload()`** — L274 — `public static void SubscribeForDownload(EventHandler<SkinFileDownload> eventHandler)`
+  Called by: `.addDelegates()` (`Console/setup.cs`)
+- **`.UnsubscribeFromDownload()`** — L279 — `public static void UnsubscribeFromDownload(EventHandler<SkinFileDownload> eventHandler)`
+  Called by: `.RemoveDelegates()` (`Console/setup.cs`)
+- **`.LoadImageFromUrl()`** — L283 — `public static async void LoadImageFromUrl(string imageUrl, string sID)`
+  Loads image from url.
+  Called by: `.updateSelectedSkin()` (`Console/setup.cs`)
+- **`.DownloadFile()`** — L337 — `public static async void DownloadFile(string fileUrl, string savePath, bool bypassFolderCheck, bool isMeterSkin)`
+  Called by: `.downloadSkin()` (`Console/setup.cs`)
+- **`.CancelDownload()`** — L427 — `public static void CancelDownload()`
+  Called by: `.Hide()` (`Console/setup.cs`), `.tcAppearance_SelectedIndexChanged()` (`Console/setup.cs`), `.downloadSkin()` (`Console/setup.cs`), `.lstAvailableSkins_SelectedIndexChanged()` (`Console/setup.cs`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/clsThetisSkinService.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

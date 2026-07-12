@@ -11,11 +11,15 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `frmFilterManager` (type, L53)
 
-- `.btnMore_Click()` — L61
+- **`.btnMore_Click()`** — L61 — `private void btnMore_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnMore` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/frmFilterManager.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

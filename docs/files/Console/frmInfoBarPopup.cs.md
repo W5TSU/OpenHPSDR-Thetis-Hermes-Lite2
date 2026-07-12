@@ -12,14 +12,24 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `frmInfoBarPopup` (type, L53)
 
-- `.SetStates()` — L75
-- `.getCheckboxesDictionary()` — L120
-- `.chkButton1_MouseUp()` — L133
-- `.GetPopupButton()` — L155
+- **`.SetStates()`** — L75 — `public void SetStates(Dictionary<ucInfoBar.ActionTypes, ucInfoBar.ActionState> states, ucInfoBar.ActionState b1, ucInfoBar.ActionState b2)`
+  Sets states.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.getCheckboxesDictionary()`** — L120 — `private Dictionary<string, CheckBoxTS> getCheckboxesDictionary()`
+  Returns checkboxes dictionary.
+  Called by: `.SetStates()` (same file), `.GetPopupButton()` (same file)
+- **`.chkButton1_MouseUp()`** — L133 — `private void chkButton1_MouseUp(object sender, MouseEventArgs e)`
+  WinForms event handler: runs when `chkButton1` receives a mouse-up.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.GetPopupButton()`** — L155 — `public CheckBoxTS GetPopupButton(int index)`
+  Returns popup button.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 #### `PopupActionSelected` (type, L55)
 

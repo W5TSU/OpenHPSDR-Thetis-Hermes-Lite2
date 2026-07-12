@@ -20,6 +20,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `Midi2Cat.Data` (namespace, L41)
@@ -28,7 +30,8 @@ _No extracted members._
 
 #### `CatCmdDb` (type, L43)
 
-- `.Get()` — L45
+- **`.Get()`** — L45 — `public static CatCommandAttribute Get(CatCmd Id)`
+  Called by: `.GetMappings()` (`Midi2Cat/Midi2Cat.Data/Database.cs`), `.PopulateMapping()` (`Midi2Cat/Midi2Cat.Data/Database.cs`), `.AddCatCmds()` (`Midi2Cat/Midi2Cat.Data/EnumsDB.cs`), `.OnMidiInput()` (`Midi2Cat/Midi2Cat.IO/MidiDeviceSetup.cs`), `.LoadNonDataBoundControls()` (`Midi2Cat/Midi2Cat.IO/MidiDeviceSetup.cs`), `.mapControlToCommandGrid_CellEndEdit()` (`Midi2Cat/Midi2Cat.IO/MidiDeviceSetup.cs`)
 
 #### `CatCmd` (type, L56)
 

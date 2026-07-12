@@ -15,19 +15,32 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `TimeOutTimerManager` (type, L53)
 
-- `.Initialise()` — L77
-- `.Shutdown()` — L100
-- `.SetCallback()` — L110
-- `.RemoveCallback()` — L115
-- `.PingTimeOut()` — L119
-- `.MoxTimeOut()` — L128
-- `.startSecondTicker()` — L136
-- `.onMox()` — L146
-- `.tickLoop()` — L159
+- **`.Initialise()`** — L77 — `public static void Initialise(Console c)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Shutdown()`** — L100 — `public static void Shutdown()`
+  Called by: `.Console_Closing()` (`Console/console.cs`)
+- **`.SetCallback()`** — L110 — `public static void SetCallback(ToTOccured cb)`
+  Sets callback.
+  Called by: `.addDelegates()` (`Console/console.cs`)
+- **`.RemoveCallback()`** — L115 — `public static void RemoveCallback(ToTOccured cb)`
+  Removes callback.
+  Called by: `.removeDelegates()` (`Console/console.cs`)
+- **`.PingTimeOut()`** — L119 — `public static void PingTimeOut(string hostAddress, int timeOutSeconds, bool enabled)`
+  Called by: `.chkToTPing_CheckedChanged()` (`Console/setup.cs`)
+- **`.MoxTimeOut()`** — L128 — `public static void MoxTimeOut(int timeOutSeconds, bool enabled)`
+  Called by: `.chkToTMox_CheckedChanged()` (`Console/setup.cs`)
+- **`.startSecondTicker()`** — L136 — `private static void startSecondTicker()`
+  Called by: `.Initialise()` (same file)
+- **`.onMox()`** — L146 — `public static void onMox(int rx, bool oldMox, bool newMox)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.tickLoop()`** — L159 — `private static void tickLoop()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/TimeOutTimerManager.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

@@ -15,20 +15,41 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `PrettyTrackBar` (type, L52)
 
-- `.UpdateHeadRectPos()` — L85
-- `.UpdateLimitBar()` — L127
-- `.ConstrainAValue()` — L267
-- `.OnEnabledChanged()` — L330
-- `.OnMouseDown()` — L336
-- `.OnMouseMove()` — L446
-- `.OnMouseUp()` — L575
-- `.OnPaint()` — L594
-- `.OnScroll()` — L706
-- `.OnMouseWheel()` — L715
+- **`.UpdateHeadRectPos()`** — L85 — `private void UpdateHeadRectPos()`
+  Updates head rect pos.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.UpdateLimitBar()`** — L127 — `private void UpdateLimitBar()`
+  Updates limit bar.
+  Called by: `.OnMouseDown()` (same file), `.OnMouseMove()` (same file)
+- **`.ConstrainAValue()`** — L267 — `public int ConstrainAValue(int value)`
+  Called by: `.SetPowerUsingTargetDBM()` (`Console/console.cs`)
+- **`.OnEnabledChanged()`** — L330 — `protected override void OnEnabledChanged(EventArgs e)`
+  Handles/raises the enabled changed event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnMouseDown()`** — L336 — `protected override void OnMouseDown(MouseEventArgs e)`
+  Handles/raises the mouse down event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnMouseMove()`** — L446 — `protected override void OnMouseMove(MouseEventArgs e)`
+  Handles/raises the mouse move event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnMouseUp()`** — L575 — `protected override void OnMouseUp(MouseEventArgs e)`
+  Handles/raises the mouse up event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnPaint()`** — L594 — `protected override void OnPaint(PaintEventArgs pe)`
+  Handles/raises the paint event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnScroll()`** — L706 — `protected virtual void OnScroll(object sender, EventArgs e)`
+  Handles/raises the scroll event.
+  Called by: `.OnMouseDown()` (same file), `.OnMouseMove()` (same file), `.OnMouseWheel()` (same file)
+- **`.OnMouseWheel()`** — L715 — `protected override void OnMouseWheel(MouseEventArgs e)`
+  Handles/raises the mouse wheel event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 #### `LimitConstraint` (type, L64)
 

@@ -12,6 +12,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `MappedCommand` (type, L29)
@@ -20,7 +22,9 @@ _No extracted members._
 
 #### `MappedCommands` (type, L59)
 
-- `.GetDeviceMappings()` — L76
+- **`.GetDeviceMappings()`** — L76 — `private int GetDeviceMappings(MappedCommand mappedCmd, DataTable controllerDT)`
+  Returns device mappings.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Midi2Cat/Midi2Cat.Data/MappedCommands.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

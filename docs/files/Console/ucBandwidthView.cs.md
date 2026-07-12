@@ -11,23 +11,39 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `ucBandwidthView` (type, L48)
 
-- `.Reset()` — L188
-- `.PushSample()` — L211
-- `.OnPaint()` — L261
-- `.drawGrid()` — L301
-- `.drawAxisLeft()` — L327
-- `.drawLine()` — L366
-- `.drawOverlay()` — L410
-- `.formatOverlayLine()` — L440
-- `.formatAxisValue()` — L452
-- `.toDisplayUnits()` — L464
-- `.updateScale()` — L472
-- `.resizeBuffers()` — L526
-- `.resetSmoothing()` — L545
+- **`.Reset()`** — L188 — `public void Reset()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PushSample()`** — L211 — `public void PushSample(double inbound_bps, double outbound_bps)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnPaint()`** — L261 — `protected override void OnPaint(PaintEventArgs e)`
+  Handles/raises the paint event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.drawGrid()`** — L301 — `private void drawGrid(Graphics g, Rectangle plot)`
+  Called by: `.OnPaint()` (same file)
+- **`.drawAxisLeft()`** — L327 — `private void drawAxisLeft(Graphics g, Rectangle plot, double max_display)`
+  Called by: `.OnPaint()` (same file)
+- **`.drawLine()`** — L366 — `private void drawLine(Graphics g, Rectangle plot, double[] buf, int count, int head, double max_display, Color color, float width)`
+  Called by: `.OnPaint()` (same file)
+- **`.drawOverlay()`** — L410 — `private void drawOverlay(Graphics g, Rectangle plot)`
+  Called by: `.OnPaint()` (same file)
+- **`.formatOverlayLine()`** — L440 — `private string formatOverlayLine(string prefix, double value_display, string unit)`
+  Called by: `.drawOverlay()` (same file)
+- **`.formatAxisValue()`** — L452 — `private string formatAxisValue(double value_display)`
+  Called by: `.drawAxisLeft()` (same file)
+- **`.toDisplayUnits()`** — L464 — `private double toDisplayUnits(double bytes_per_second)`
+  Called by: `.drawLine()` (same file), `.drawOverlay()` (same file), `.updateScale()` (same file)
+- **`.updateScale()`** — L472 — `private void updateScale()`
+  Called by: `.Reset()` (same file), `.PushSample()` (same file)
+- **`.resizeBuffers()`** — L526 — `private void resizeBuffers(int seconds)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.resetSmoothing()`** — L545 — `private void resetSmoothing()`
+  Called by: `.Reset()` (same file), `.resizeBuffers()` (same file)
 
 #### `BandwidthUnits` (type, L50)
 

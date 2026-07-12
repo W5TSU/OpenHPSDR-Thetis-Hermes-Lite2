@@ -13,12 +13,17 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `SingleInstance` (type, L47)
 
-- `.CheckAndPrompt()` — L54
-- `.Release()` — L97
+- **`.CheckAndPrompt()`** — L54 — `public static bool CheckAndPrompt()`
+  Checks and prompt.
+  Called by: `.Main()` (`Console/console.cs`)
+- **`.Release()`** — L97 — `public static void Release()`
+  Called by: `.ExitConsole()` (`Console/console.cs`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/clsSingleInstance.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

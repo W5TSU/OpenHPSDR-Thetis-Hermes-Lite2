@@ -19,6 +19,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `Midi2Cat` (namespace, L37)
@@ -27,17 +29,31 @@ _No extracted members._
 
 #### `MidiMessageManager` (type, L39)
 
-- `.Open()` — L55
-- `.Close()` — L77
-- `.PL1Device()` — L87
-- `.PL1Index()` — L102
-- `.SendUpdateToMidi()` — L118
-- `.PL1InitialButtonLights()` — L139
-- `.MicroInitialButtonLights()` — L197
-- `.InitDevice()` — L206
-- `.BindMappingHandlers()` — L224
-- `.onMidiDebugMsg()` — L256
-- `.OnMidiInput()` — L261
+- **`.Open()`** — L55 — `public void Open()`
+  Called by: `.OpenMidi2Cat()` (`Console/Midi2CatCommands.cs`)
+- **`.Close()`** — L77 — `public void Close()`
+  Called by: `.Open()` (same file), `.CloseMidi2Cat()` (`Console/Midi2CatCommands.cs`)
+- **`.PL1Device()`** — L87 — `public MidiDevice PL1Device()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PL1Index()`** — L102 — `public int PL1Index()`
+  Called by: `.SendUpdateToMidi()` (same file)
+- **`.SendUpdateToMidi()`** — L118 — `public void SendUpdateToMidi(CatCmd cmd, double pct)`
+  Sends update to midi.
+  Called by: `.SendUpdateToMidi()` (`Console/Midi2CatCommands.cs`)
+- **`.PL1InitialButtonLights()`** — L139 — `public void PL1InitialButtonLights(MidiDevice device)`
+  Called by: `.InitDevice()` (same file)
+- **`.MicroInitialButtonLights()`** — L197 — `public void MicroInitialButtonLights(MidiDevice device)`
+  Called by: `.InitDevice()` (same file)
+- **`.InitDevice()`** — L206 — `void InitDevice(string deviceName,List<ControllerMapping> mappings, int Idx)`
+  Inits device.
+  Called by: `.Open()` (same file)
+- **`.BindMappingHandlers()`** — L224 — `Dictionary<int, MidMessageHandler> BindMappingHandlers(List<ControllerMapping> mappings)`
+  Called by: `.InitDevice()` (same file)
+- **`.onMidiDebugMsg()`** — L256 — `void onMidiDebugMsg(int Device, Direction direction, Status status, string msg1, string msg2)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnMidiInput()`** — L261 — `void OnMidiInput(MidiDevice Device, int DeviceIdx, int ControlId, int Data, int Status, int Voice, int Channel)`
+  Handles/raises the midi input event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Midi2Cat/MidiMessageManager.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

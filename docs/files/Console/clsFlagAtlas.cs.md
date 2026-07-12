@@ -13,16 +13,26 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `FlagAtlas` (type, L49)
 
-- `.Init()` — L55
-- `.GetFlag()` — L104
-- `.ContainsFlag()` — L126
-- `.GetFlagBounds()` — L140
-- `.Clear()` — L157
-- `.ensureInitialised()` — L171
+- **`.Init()`** — L55 — `public static void Init(Image atlas_image, string json)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetFlag()`** — L104 — `public static Bitmap GetFlag(string flag_name)`
+  Returns flag.
+  Called by: `.getFlagImage()` (`Console/SpotManager2.cs`)
+- **`.ContainsFlag()`** — L126 — `public static bool ContainsFlag(string flag_name)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetFlagBounds()`** — L140 — `public static Rectangle GetFlagBounds(string flag_name)`
+  Returns flag bounds.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Clear()`** — L157 — `public static void Clear()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ensureInitialised()`** — L171 — `private static void ensureInitialised()`
+  Called by: `.GetFlag()` (same file), `.GetFlagBounds()` (same file)
 
 #### `AtlasDefinition` (type, L177)
 

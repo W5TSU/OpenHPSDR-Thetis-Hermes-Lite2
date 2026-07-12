@@ -14,16 +14,22 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `.Restore1()` — L120
+- **`.Restore1()`** — L120 — `public static DXMemList Restore1()`
+  Called by: `.InitConsole()` (`Console/console.cs`)
 
 ### Types
 
 #### `DXMemList` (type, L38)
 
-- `.Save1()` — L90
-- `.CheckVersion1()` — L176
+- **`.Save1()`** — L90 — `private void Save1(string file_name)`
+  Called by: `.Restore1()` (same file)
+- **`.CheckVersion1()`** — L176 — `public void CheckVersion1()`
+  Checks version1.
+  Called by: `.InitConsole()` (`Console/console.cs`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/Memory/DXMemList.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

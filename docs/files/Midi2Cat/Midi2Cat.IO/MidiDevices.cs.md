@@ -12,12 +12,16 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `MidiDevices` (type, L34)
 
-- `.MidiInGetName()` — L80
-- `.MidiOutGetName()` — L89
+- **`.MidiInGetName()`** — L80 — `public static string MidiInGetName(int index)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.MidiOutGetName()`** — L89 — `public static string MidiOutGetName(int index)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Midi2Cat/Midi2Cat.IO/MidiDevices.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

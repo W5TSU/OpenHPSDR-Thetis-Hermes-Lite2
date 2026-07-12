@@ -15,17 +15,24 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `.Copy()` — L109
+- **`.Copy()`** — L109 — `public Channel Copy()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ### Types
 
 #### `Channel` (type, L46)
 
-- `.ToString()` — L98
-- `.CompareTo()` — L103
-- `.InBW()` — L114
+- **`.ToString()`** — L98 — `public override string ToString()`
+  Displays the Channel details in a string
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.CompareTo()`** — L103 — `public int CompareTo(object obj)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.InBW()`** — L114 — `public bool InBW(double low, double high)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/Channel.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

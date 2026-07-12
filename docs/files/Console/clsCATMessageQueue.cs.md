@@ -14,6 +14,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `CATQueueBatching` (namespace, L48)
@@ -22,25 +24,43 @@ _No extracted members._
 
 #### `MessageQueueSystem` (type, L50)
 
-- `.createBatch()` — L137
-- `.sendBatch()` — L142
-- `.isBusy()` — L156
-- `.getPending()` — L163
-- `.isEmpty()` — L170
-- `.stopAndClearQueue()` — L177
-- `.stopAll()` — L199
-- `.startQueue()` — L208
-- `.ensureQueueRunning()` — L226
-- `.workerLoop()` — L231
-- `.drainQueue()` — L277
-- `.throwIfDisposed()` — L284
-- `.Dispose()` — L289
+- **`.createBatch()`** — L137 — `public MessageBatch createBatch()`
+  Called by: `.OnContainerVisible()` (`Console/MeterManager.cs`), `.handleMacroButtonPress()` (`Console/MeterManager.cs`)
+- **`.sendBatch()`** — L142 — `public void sendBatch(int queue_index, MessageBatch batch)`
+  Called by: `.OnContainerVisible()` (`Console/MeterManager.cs`), `.handleMacroButtonPress()` (`Console/MeterManager.cs`)
+- **`.isBusy()`** — L156 — `public bool isBusy(int queue_index)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.getPending()`** — L163 — `public int getPending(int queue_index)`
+  Returns pending.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.isEmpty()`** — L170 — `public bool isEmpty(int queue_index)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.stopAndClearQueue()`** — L177 — `public void stopAndClearQueue(int queue_index)`
+  Called by: `.stopAll()` (same file)
+- **`.stopAll()`** — L199 — `public void stopAll()`
+  Called by: `.Shutdown()` (`Console/MeterManager.cs`)
+- **`.startQueue()`** — L208 — `private void startQueue(int index)`
+  Called by: `.ensureQueueRunning()` (same file)
+- **`.ensureQueueRunning()`** — L226 — `private void ensureQueueRunning(int index)`
+  Called by: `.sendBatch()` (same file)
+- **`.workerLoop()`** — L231 — `private void workerLoop(int index, CancellationToken token)`
+  Called by: `.startQueue()` (same file)
+- **`.drainQueue()`** — L277 — `private void drainQueue(int index)`
+  Called by: `.stopAndClearQueue()` (same file)
+- **`.throwIfDisposed()`** — L284 — `private void throwIfDisposed()`
+  Called by: `.sendBatch()` (same file), `.isBusy()` (same file), `.getPending()` (same file), `.isEmpty()` (same file), `.stopAndClearQueue()` (same file), `.stopAll()` (same file)
+- **`.Dispose()`** — L289 — `public void Dispose()`
+  Releases the object’s resources.
+  Called by: `.startQueue()` (same file)
 
 #### `MessageBatch` (type, L55)
 
-- `.add()` — L66
-- `.isEmpty()` — L76
-- `.snapshot()` — L84
+- **`.add()`** — L66 — `public Guid add(ScriptCommand cmd)`
+  Called by: `.OnContainerVisible()` (`Console/MeterManager.cs`), `.handleMacroButtonPress()` (`Console/MeterManager.cs`)
+- **`.isEmpty()`** — L76 — `internal bool isEmpty()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.snapshot()`** — L84 — `internal QueuedItem[] snapshot()`
+  Called by: `.sendBatch()` (same file)
 
 #### `QueuedItem` (type, L93)
 

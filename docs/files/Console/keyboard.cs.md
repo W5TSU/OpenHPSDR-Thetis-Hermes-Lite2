@@ -15,13 +15,19 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `Keyboard` (type, L50)
 
-- `.GetKeyState()` — L60
-- `.IsKeyDown()` — L81
-- `.IsKeyToggled()` — L86
+- **`.GetKeyState()`** — L60 — `[DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern short GetKeyState(int keyCode)`
+  Returns key state.
+  Called by: `.IsKeyDown()` (same file), `.IsKeyToggled()` (same file)
+- **`.IsKeyDown()`** — L81 — `public static bool IsKeyDown(Keys key)`
+  Called by: `.toggleSplit()` (`Console/MeterManager.cs`), `.LoadDB()` (`Console/clsDBMan.cs`), `.chkVFOSplit_MouseClick()` (`Console/console.cs`)
+- **`.IsKeyToggled()`** — L86 — `public static bool IsKeyToggled(Keys key)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 #### `KeyStates` (type, L52)
 

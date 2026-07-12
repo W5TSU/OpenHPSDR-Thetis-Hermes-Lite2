@@ -16,18 +16,40 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `create_txgain()` — L29
-- `destroy_txgain()` — L58
-- `xtxgain()` — L65
-- `SetTXGainSize()` — L111
-- `SetTXFixedGainRun()` — L116
-- `SetTXFixedGain()` — L126
-- `SetAmpProtectADCValue()` — L137
-- `GetAndResetAmpProtect()` — L146
-- `SetAmpProtectRun()` — L153
-- `SetADCSupply()` — L163
+- **`create_txgain()`** — L29 — `TXGAIN create_txgain( int run_fixed, int run_amp_protect, int size, double* in,`
+  Constructor for the `txgain` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `create_xmtr()` (`ChannelMaster/cmaster.c`)
+- **`destroy_txgain()`** — L58 — `void destroy_txgain(TXGAIN a)`
+  Destroys the `txgain` block, freeing its allocated buffers.
+  Called by: `destroy_xmtr()` (`ChannelMaster/cmaster.c`)
+- **`xtxgain()`** — L65 — `void xtxgain(TXGAIN a)`
+  Runs the `txgain` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xcmaster()` (`ChannelMaster/cmaster.c`)
+- **`SetTXGainSize()`** — L111 — `void SetTXGainSize(TXGAIN p, int size)`
+  Sets txgain size — API setter, typically called from the console via P/Invoke.
+  Called by: `SetXmtrChannelOutrate()` (`ChannelMaster/cmaster.c`)
+- **`SetTXFixedGainRun()`** — L116 — `PORT void SetTXFixedGainRun(int txid, int run)`
+  Sets txfixed gain run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetTXFixedGain()`** — L126 — `PORT void SetTXFixedGain(int txid, double Igain, double Qgain)`
+  Sets txfixed gain — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetAmpProtectADCValue()`** — L137 — `void SetAmpProtectADCValue (int txid, int value)`
+  call when new ADC value arrives from network
+  Called by: `ReadThreadMainLoop()` (`ChannelMaster/network.c`)
+- **`GetAndResetAmpProtect()`** — L146 — `PORT int GetAndResetAmpProtect(int txid)`
+  Returns and reset amp protect — API getter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetAmpProtectRun()`** — L153 — `PORT void SetAmpProtectRun(int txid, int run)`
+  Sets amp protect run — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
+- **`SetADCSupply()`** — L163 — `PORT void SetADCSupply(int txid, int v)`
+  Sets adcsupply — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/ChannelMaster/txgain.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

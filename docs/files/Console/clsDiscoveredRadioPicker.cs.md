@@ -12,13 +12,18 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `clsDiscoveredRadioPicker` (type, L54)
 
-- `.PickRadios()` — L62
-- `.buildNicKey()` — L566
-- `.cloneNicWithoutRadios()` — L573
+- **`.PickRadios()`** — L62 — `public List<NicRadioScanResult> PickRadios(IWin32Window owner, List<NicRadioScanResult> discovered)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.buildNicKey()`** — L566 — `private string buildNicKey(NicRadioScanResult nic)`
+  Called by: `.PickRadios()` (same file)
+- **`.cloneNicWithoutRadios()`** — L573 — `private NicRadioScanResult cloneNicWithoutRadios(NicRadioScanResult src)`
+  Called by: `.PickRadios()` (same file)
 
 #### `RowRef` (type, L56)
 

@@ -12,21 +12,35 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `frmVariablePicker` (type, L48)
 
-- `.colour_for_type()` — L118
-- `.list_box_DrawItem()` — L130
-- `.btnSelect_Click()` — L154
-- `.btnCancel_Click()` — L168
-- `.Init()` — L174
-- `.btnDefault_Click()` — L233
-- `.lstVariables_MouseDoubleClick()` — L239
+- **`.colour_for_type()`** — L118 — `private Color colour_for_type(clsVariableListItems.VariableListItemType t)`
+  Called by: `.list_box_DrawItem()` (same file)
+- **`.list_box_DrawItem()`** — L130 — `private void list_box_DrawItem(object sender, DrawItemEventArgs e)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.btnSelect_Click()`** — L154 — `private void btnSelect_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnSelect` is clicked.
+  Called by: `.lstVariables_MouseDoubleClick()` (same file)
+- **`.btnCancel_Click()`** — L168 — `private void btnCancel_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnCancel` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.Init()`** — L174 — `public void Init(int variable, Guid g, string current, bool textoverlay_led_picker = false)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.btnDefault_Click()`** — L233 — `private void btnDefault_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnDefault` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.lstVariables_MouseDoubleClick()`** — L239 — `private void lstVariables_MouseDoubleClick(object sender, MouseEventArgs e)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 #### `clsVariableListItems` (type, L64)
 
-- `.ToString()` — L99
+- **`.ToString()`** — L99 — `public override string ToString()`
+  Returns the string representation.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 #### `VariableListItemType` (type, L66)
 

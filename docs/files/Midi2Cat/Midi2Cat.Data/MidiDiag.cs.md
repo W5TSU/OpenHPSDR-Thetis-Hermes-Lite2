@@ -13,6 +13,8 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `MidiDiagItem` (type, L33)
@@ -21,7 +23,8 @@ _No extracted members._
 
 #### `MidiDiagList` (type, L44)
 
-- `.Add()` — L51
+- **`.Add()`** — L51 — `public new void Add(MidiDiagItem item)`
+  Called by: `.OnMidiInput()` (`Midi2Cat/Midi2Cat.IO/MidiDeviceSetup.cs`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Midi2Cat/Midi2Cat.Data/MidiDiag.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

@@ -20,11 +20,14 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `FixUp` (type, L33)
 
-- `.FixControlType()` — L35
+- **`.FixControlType()`** — L35 — `public static ControlType FixControlType(int controlType)`
+  Called by: `.PopulateMapping()` (`Midi2Cat/Midi2Cat.Data/Database.cs`), `.GetDeviceMappings()` (`Midi2Cat/Midi2Cat.Data/MappedCommands.cs`)
 
 #### `CmdState` (type, L47)
 

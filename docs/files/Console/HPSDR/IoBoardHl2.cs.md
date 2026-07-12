@@ -14,19 +14,29 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `.getIOBoard()` — L96
+- **`.getIOBoard()`** — L96 — `public static IOBoard getIOBoard(Console c)`
+  Returns ioboard.
+  Called by: `.UpdateIOBoard()` (`Console/console.cs`)
 
 ### Types
 
 #### `IOBoard` (type, L37)
 
-- `.readRequest()` — L129
-- `.readResponse()` — L148
-- `.readRegister()` — L172
-- `.writeRequest()` — L177
-- `.setFrequency()` — L184
+- **`.readRequest()`** — L129 — `public byte readRequest(Registers readRequest)`
+  Called by: `.UpdateIOBoard()` (`Console/console.cs`)
+- **`.readResponse()`** — L148 — `public byte readResponse()`
+  Called by: `.UpdateIOBoard()` (`Console/console.cs`)
+- **`.readRegister()`** — L172 — `public byte readRegister(Registers readRequest)`
+  Called by: `.UpdateIOBoard()` (`Console/console.cs`)
+- **`.writeRequest()`** — L177 — `public void writeRequest(Registers writeRequest, byte writeData)`
+  Called by: `.AutoTuningHL2()` (`Console/console.cs`), `.UpdateIOBoard()` (`Console/console.cs`)
+- **`.setFrequency()`** — L184 — `public void setFrequency(long frequency)`
+  Sets frequency.
+  Called by: `.UpdateIOBoard()` (`Console/console.cs`)
 
 #### `Registers` (type, L39)
 

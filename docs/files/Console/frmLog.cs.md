@@ -11,15 +11,26 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `frmLog` (type, L46)
 
-- `.btnClear_Click()` — L60
-- `.chkLog_CheckedChanged()` — L69
-- `.Log()` — L82
-- `.ShowWithTitle()` — L111
-- `.frmLog_FormClosing()` — L117
+- **`.btnClear_Click()`** — L60 — `private void btnClear_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnClear` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.chkLog_CheckedChanged()`** — L69 — `private void chkLog_CheckedChanged(object sender, EventArgs e)`
+  WinForms event handler: runs when `chkLog` checked state changes.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.Log()`** — L82 — `public void Log(bool bIn, string sMessage)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ShowWithTitle()`** — L111 — `public void ShowWithTitle(string title)`
+  Shows with title.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.frmLog_FormClosing()`** — L117 — `private void frmLog_FormClosing(object sender, FormClosingEventArgs e)`
+  WinForms event handler: runs when `frmLog` is closing.
+  Called by: WinForms event wiring at runtime (no static call sites).
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/frmLog.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

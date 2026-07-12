@@ -13,16 +13,25 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `BasicAudio` (type, L50)
 
-- `.player_LocationChanged()` — L84
-- `.player_LoadCompleted()` — L88
-- `.LoadSound()` — L103
-- `.Play()` — L127
-- `.Stop()` — L143
-- `.playSound()` — L153
+- **`.player_LocationChanged()`** — L84 — `private void player_LocationChanged(object sender, EventArgs e)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.player_LoadCompleted()`** — L88 — `private void player_LoadCompleted(object sender, AsyncCompletedEventArgs e)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.LoadSound()`** — L103 — `public void LoadSound(string sFile)`
+  Loads sound.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Play()`** — L127 — `public void Play()`
+  Called by: `.updateQSOTimerStatusbar()` (`Console/console.cs`)
+- **`.Stop()`** — L143 — `public void Stop()`
+  Called by: `.QSOTimerReset()` (`Console/console.cs`)
+- **`.playSound()`** — L153 — `private void playSound()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/BasicAudio.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

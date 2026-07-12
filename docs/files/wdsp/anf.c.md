@@ -16,22 +16,52 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `create_anf()` — L29
-- `destroy_anf()` — L77
-- `xanf()` — L82
-- `flush_anf()` — L136
-- `setBuffers_anf()` — L143
-- `setSamplerate_anf()` — L149
-- `setSize_anf()` — L154
-- `SetRXAANFRun()` — L166
-- `SetRXAANFVals()` — L185
-- `SetRXAANFTaps()` — L197
-- `SetRXAANFDelay()` — L206
-- `SetRXAANFGain()` — L215
-- `SetRXAANFLeakage()` — L224
-- `SetRXAANFPosition()` — L233
+- **`create_anf()`** — L29 — `ANF create_anf ( int run, int position, int buff_size, double *in_buff,`
+  Constructor for the `anf` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `create_rxa()` (`wdsp/RXA.c`)
+- **`destroy_anf()`** — L77 — `void destroy_anf (ANF a)`
+  Destroys the `anf` block, freeing its allocated buffers.
+  Called by: `destroy_rxa()` (`wdsp/RXA.c`)
+- **`xanf()`** — L82 — `void xanf(ANF a, int position)`
+  Runs the `anf` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
+  Called by: `xrxa()` (`wdsp/RXA.c`)
+- **`flush_anf()`** — L136 — `void flush_anf (ANF a)`
+  Flushes (zeroes) the `anf` block’s internal buffers/state.
+  Called by: `setSamplerate_anf()` (same file), `setSize_anf()` (same file), `SetRXAANFRun()` (same file), `SetRXAANFVals()` (same file), `SetRXAANFTaps()` (same file), `SetRXAANFDelay()` (same file) — and 4 more
+- **`setBuffers_anf()`** — L143 — `void setBuffers_anf (ANF a, double* in, double* out)`
+  Re-points the `anf` block’s input/output buffers (called when the channel’s buffers change).
+  Called by: `setDSPBuffsize_rxa()` (`wdsp/RXA.c`)
+- **`setSamplerate_anf()`** — L149 — `void setSamplerate_anf (ANF a, int rate)`
+  Reconfigures the `anf` block for a new sample rate.
+  Called by: `setDSPSamplerate_rxa()` (`wdsp/RXA.c`)
+- **`setSize_anf()`** — L154 — `void setSize_anf (ANF a, int size)`
+  Reconfigures the `anf` block for a new buffer size.
+  Called by: `setDSPBuffsize_rxa()` (`wdsp/RXA.c`)
+- **`SetRXAANFRun()`** — L166 — `PORT void SetRXAANFRun (int channel, int run)`
+  Sets rxaanfrun — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFVals()`** — L185 — `PORT void SetRXAANFVals (int channel, int taps, int delay, double gain, double leakage)`
+  Sets rxaanfvals — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFTaps()`** — L197 — `PORT void SetRXAANFTaps (int channel, int taps)`
+  Sets rxaanftaps — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFDelay()`** — L206 — `PORT void SetRXAANFDelay (int channel, int delay)`
+  Sets rxaanfdelay — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFGain()`** — L215 — `PORT void SetRXAANFGain (int channel, double gain)`
+  Sets rxaanfgain — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFLeakage()`** — L224 — `PORT void SetRXAANFLeakage (int channel, double leakage)`
+  Sets rxaanfleakage — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+- **`SetRXAANFPosition()`** — L233 — `PORT void SetRXAANFPosition (int channel, int position)`
+  Sets rxaanfposition — API setter, typically called from the console via P/Invoke.
+  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/anf.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

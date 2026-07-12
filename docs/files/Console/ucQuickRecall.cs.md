@@ -14,33 +14,73 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `ucQuickRecall` (type, L49)
 
-- `.resizeAndReposition()` — L142
-- `.OnPopupClosed()` — L153
-- `.OnMoxChanged()` — L158
-- `.OnModeChanged()` — L174
-- `.OnVFOAChange()` — L192
-- `.buttonClicked()` — L204
-- `.formatFrequencyToString()` — L210
-- `.findExistingInVFOA()` — L221
-- `.addVFOAEntry()` — L230
-- `.OnBackgroundColourPingerTick()` — L238
-- `.OnVFOAModeTick()` — L244
-- `.OnVFOATick()` — L267
-- `.OnDispose()` — L299
-- `.OnEntrySelected()` — L310
-- `.btnPrevious_Click()` — L318
-- `.btnNext_Click()` — L329
-- `.selectVFOAEntry()` — L340
-- `.btnList_Click()` — L348
-- `.buildAndShowPopup()` — L361
-- `.ucQuickRecall_BackColorChanged()` — L378
-- `.setButtonBackColour()` — L383
-- `.ucQuickRecall_Resize()` — L390
-- `.lblFlashColour_Click()` — L395
+- **`.resizeAndReposition()`** — L142 — `private void resizeAndReposition()`
+  Called by: `.ucQuickRecall_Resize()` (same file)
+- **`.OnPopupClosed()`** — L153 — `private void OnPopupClosed(object sender, ToolStripDropDownClosedEventArgs e)`
+  Handles/raises the popup closed event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnMoxChanged()`** — L158 — `private void OnMoxChanged(int rx, bool oldMox, bool newMox)`
+  Handles/raises the mox changed event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnModeChanged()`** — L174 — `private void OnModeChanged(int rx, DSPMode oldMode, DSPMode newMode, Band oldBand, Band newBand)`
+  Handles/raises the mode changed event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnVFOAChange()`** — L192 — `private void OnVFOAChange(Band oldBand, Band newBand, DSPMode oldMode, DSPMode newMode, Filter oldFilter, Filter newFilter, double oldFreq, double newFreq, double oldCentreF, doubl`
+  Handles/raises the vfoachange event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.buttonClicked()`** — L204 — `private void buttonClicked(EventArgs e)`
+  Called by: `.btnPrevious_Click()` (same file), `.btnNext_Click()` (same file), `.btnList_Click()` (same file)
+- **`.formatFrequencyToString()`** — L210 — `private string formatFrequencyToString(double f)`
+  Called by: `.OnVFOATick()` (same file)
+- **`.findExistingInVFOA()`** — L221 — `private int findExistingInVFOA(double f)`
+  Called by: `.OnVFOAModeTick()` (same file), `.OnVFOATick()` (same file)
+- **`.addVFOAEntry()`** — L230 — `private void addVFOAEntry(QuickInfo qi)`
+  Called by: `.OnVFOATick()` (same file)
+- **`.OnBackgroundColourPingerTick()`** — L238 — `private void OnBackgroundColourPingerTick(Object sender, EventArgs e)`
+  Handles/raises the background colour pinger tick event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnVFOAModeTick()`** — L244 — `private void OnVFOAModeTick(Object sender, EventArgs e)`
+  Handles/raises the vfoamode tick event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnVFOATick()`** — L267 — `private void OnVFOATick(Object sender, EventArgs e)`
+  Handles/raises the vfoatick event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnDispose()`** — L299 — `private void OnDispose(object sender, EventArgs e)`
+  Handles/raises the dispose event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.OnEntrySelected()`** — L310 — `private void OnEntrySelected(int index)`
+  Handles/raises the entry selected event.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.btnPrevious_Click()`** — L318 — `private void btnPrevious_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnPrevious` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.btnNext_Click()`** — L329 — `private void btnNext_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnNext` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.selectVFOAEntry()`** — L340 — `private void selectVFOAEntry(int index)`
+  Called by: `.OnEntrySelected()` (same file), `.btnPrevious_Click()` (same file), `.btnNext_Click()` (same file)
+- **`.btnList_Click()`** — L348 — `private void btnList_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `btnList` is clicked.
+  Called by: `.lblFlashColour_Click()` (same file)
+- **`.buildAndShowPopup()`** — L361 — `private void buildAndShowPopup()`
+  Called by: `.OnVFOATick()` (same file), `.btnList_Click()` (same file)
+- **`.ucQuickRecall_BackColorChanged()`** — L378 — `private void ucQuickRecall_BackColorChanged(object sender, EventArgs e)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.setButtonBackColour()`** — L383 — `private void setButtonBackColour()`
+  Sets button back colour.
+  Called by: `.ucQuickRecall_BackColorChanged()` (same file)
+- **`.ucQuickRecall_Resize()`** — L390 — `private void ucQuickRecall_Resize(object sender, EventArgs e)`
+  WinForms event handler: runs when `ucQuickRecall` is resized.
+  Called by: WinForms event wiring at runtime (no static call sites).
+- **`.lblFlashColour_Click()`** — L395 — `private void lblFlashColour_Click(object sender, EventArgs e)`
+  WinForms event handler: runs when `lblFlashColour` is clicked.
+  Called by: WinForms event wiring at runtime (no static call sites).
 
 #### `QuickInfo` (type, L64)
 

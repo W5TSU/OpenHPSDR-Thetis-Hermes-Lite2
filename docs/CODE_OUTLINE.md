@@ -11,9 +11,10 @@ the source tree (15,492 nodes / 36,536 edges / 434 communities). See
 [Exploring further](#exploring-the-code-with-the-knowledge-graph) at the end.
 
 **Per-file documentation:** every file listed below has its own page under
-[`docs/files/`](files/README.md) with an outline of its classes, methods, and functions (with line
-numbers) and a graph-derived summary of how it is used (callers and callees). Regenerate those
-pages with `python docs/tools/gen_file_docs.py` after rebuilding the graph.
+[`docs/files/`](files/README.md) with an outline of its classes, methods, and functions — each
+with line number, signature, a short description, and how it is called — plus a graph-derived
+summary of how the file is used (callers and callees). Regenerate those pages with
+`python docs/tools/gen_file_docs.py` after rebuilding the graph.
 
 ---
 

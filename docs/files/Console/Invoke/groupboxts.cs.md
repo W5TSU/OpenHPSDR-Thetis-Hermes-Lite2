@@ -24,53 +24,121 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Types
 
 #### `GroupBoxTS` (type, L33)
 
-- `.BringToFront()` — L453
-- `.Contains()` — L460
-- `.CreateControl()` — L472
-- `.CreateGraphics()` — L479
-- `.Dispose()` — L503
-- `.DoDragDrop()` — L510
-- `.Equals()` — L522
-- `.FindForm()` — L534
-- `.Focus()` — L546
-- `.GetChildAtPoint()` — L558
-- `.GetContainerControl()` — L570
-- `.GetHashCode()` — L582
-- `.GetLifetimeService()` — L594
-- `.GetNextControl()` — L606
-- `.GetType()` — L618
-- `.Hide()` — L630
-- `.InitializeLifetimeService()` — L637
-- `.Invalidate()` — L649
-- `.PerformLayout()` — L711
-- `.PointToClient()` — L729
-- `.PointToScreen()` — L741
-- `.PreProcessMessage()` — L753
-- `.RectangleToClient()` — L765
-- `.RectangleToScreen()` — L777
-- `.Refresh()` — L789
-- `.ResetBackColor()` — L796
-- `.ResetBindings()` — L803
-- `.ResetCursor()` — L810
-- `.ResetFont()` — L817
-- `.ResetForeColor()` — L824
-- `.ResetImeMode()` — L831
-- `.ResetRightToLeft()` — L838
-- `.ResetText()` — L845
-- `.ResumeLayout()` — L852
-- `.Scale()` — L870
-- `.Select()` — L881
-- `.SelectNextControl()` — L888
-- `.SendToBack()` — L902
-- `.SetBounds()` — L909
-- `.Show()` — L932
-- `.SuspendLayout()` — L939
-- `.ToString()` — L946
-- `.Update()` — L958
+- **`.BringToFront()`** — L453 — `public new void BringToFront()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Contains()`** — L460 — `public new bool Contains(Control ctl)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.CreateControl()`** — L472 — `public new void CreateControl()`
+  Creates control.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.CreateGraphics()`** — L479 — `public new Graphics CreateGraphics()`
+  Creates graphics.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Dispose()`** — L503 — `public new virtual void Dispose()`
+  Releases the object’s resources.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.DoDragDrop()`** — L510 — `public new DragDropEffects DoDragDrop(object data, DragDropEffects allowedEffects)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Equals()`** — L522 — `public new virtual object Equals(object obj)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.FindForm()`** — L534 — `public new Form FindForm()`
+  Finds form.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Focus()`** — L546 — `public new bool Focus()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetChildAtPoint()`** — L558 — `public new Control GetChildAtPoint(System.Drawing.Point pt)`
+  Returns child at point.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetContainerControl()`** — L570 — `public new IContainerControl GetContainerControl()`
+  Returns container control.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetHashCode()`** — L582 — `public new virtual int GetHashCode()`
+  Returns hash code.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetLifetimeService()`** — L594 — `public new virtual object GetLifetimeService()`
+  Returns lifetime service.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetNextControl()`** — L606 — `public new Control GetNextControl(Control ctl, bool forward)`
+  Returns next control.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.GetType()`** — L618 — `public new Type GetType()`
+  Returns type.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Hide()`** — L630 — `public new void Hide()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.InitializeLifetimeService()`** — L637 — `public new virtual object InitializeLifetimeService()`
+  Initializes lifetime service.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Invalidate()`** — L649 — `public new void Invalidate()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PerformLayout()`** — L711 — `public new void PerformLayout()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PointToClient()`** — L729 — `public new System.Drawing.Point PointToClient(System.Drawing.Point p)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PointToScreen()`** — L741 — `public new System.Drawing.Point PointToScreen(System.Drawing.Point p)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.PreProcessMessage()`** — L753 — `public new virtual bool PreProcessMessage(ref Message msg)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.RectangleToClient()`** — L765 — `public new Rectangle RectangleToClient(Rectangle r)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.RectangleToScreen()`** — L777 — `public new Rectangle RectangleToScreen(Rectangle r)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Refresh()`** — L789 — `public new virtual void Refresh()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetBackColor()`** — L796 — `public new virtual void ResetBackColor()`
+  Resets back color.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetBindings()`** — L803 — `public new void ResetBindings()`
+  Resets bindings.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetCursor()`** — L810 — `public new virtual void ResetCursor()`
+  Resets cursor.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetFont()`** — L817 — `public new virtual void ResetFont()`
+  Resets font.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetForeColor()`** — L824 — `public new virtual void ResetForeColor()`
+  Resets fore color.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetImeMode()`** — L831 — `public new void ResetImeMode()`
+  Resets ime mode.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetRightToLeft()`** — L838 — `public new virtual void ResetRightToLeft()`
+  Resets right to left.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResetText()`** — L845 — `public new virtual void ResetText()`
+  Resets text.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ResumeLayout()`** — L852 — `public new void ResumeLayout()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Scale()`** — L870 — `public new void Scale(SizeF ratio)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Select()`** — L881 — `public new void Select()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.SelectNextControl()`** — L888 — `public new bool SelectNextControl(Control ctl, bool forward, bool tabStopOnly, bool nested, bool wrap)`
+  Selects next control.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.SendToBack()`** — L902 — `public new void SendToBack()`
+  Sends to back.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.SetBounds()`** — L909 — `public new void SetBounds(int x, int y, int width, int height)`
+  Sets bounds.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Show()`** — L932 — `public new void Show()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.SuspendLayout()`** — L939 — `public new void SuspendLayout()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.ToString()`** — L946 — `public new virtual string ToString()`
+  Returns the string representation.
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`.Update()`** — L958 — `public new void Update()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/Invoke/groupboxts.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._

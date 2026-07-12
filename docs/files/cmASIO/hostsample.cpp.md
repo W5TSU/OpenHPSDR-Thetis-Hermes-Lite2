@@ -17,24 +17,44 @@
 
 ## Outline
 
+_Each entry: symbol — line — signature, then a description (from source comments where present, otherwise inferred from naming conventions) and its callers as recorded in the graph._
+
 ### Functions
 
-- `init_asio_static_data()` — L137
-- `bufferSwitchTimeInfo()` — L212
-- `bufferSwitch()` — L231
-- `sampleRateChanged()` — L251
-- `asioMessages()` — L262
-- `create_asio_buffers()` — L327
-- `prepareASIO()` — L492
-- `unloadASIO()` — L598
-- `getASIODriverString()` — L609
-- `getASIOBlockNum()` — L634
-- `asioStart()` — L657
-- `asioStop()` — L674
-- `getASIOBaseInputChannel()` — L691
-- `getASIOBaseOutputChannel()` — L713
-- `getASIOInputMode()` — L735
-- `get_sys_reference_time()` — L760
+- **`init_asio_static_data()`** — L137 — `long init_asio_static_data (DriverInfo *asioDriverInfo)`
+  Called by: `prepareASIO()` (same file)
+- **`bufferSwitchTimeInfo()`** — L212 — `ASIOTime *bufferSwitchTimeInfo(ASIOTime *timeInfo, long index, ASIOBool processNow)`
+  Called by: `bufferSwitch()` (same file)
+- **`bufferSwitch()`** — L231 — `void bufferSwitch(long index, ASIOBool processNow)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`sampleRateChanged()`** — L251 — `void sampleRateChanged(ASIOSampleRate sRate)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`asioMessages()`** — L262 — `long asioMessages(long selector, long value, void* message, double* opt)`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+- **`create_asio_buffers()`** — L327 — `ASIOError create_asio_buffers(DriverInfo* asioDriverInfo, long input_ch0, long input_ch1, long output_ch0, long output_ch1)`
+  Constructor for the `asio_buffers` block: allocates its state/buffers and computes initial coefficients.
+  Called by: `prepareASIO()` (same file)
+- **`prepareASIO()`** — L492 — `int prepareASIO(int blocksize, int samplerate, char* asioDriverName, void (*CallbackASIO)(void* inputL, void* inputR, void* outputL, void* outputR), long input_base_channel, long o`
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`unloadASIO()`** — L598 — `void unloadASIO()`
+  Called by: `destroy_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`getASIODriverString()`** — L609 — `long getASIODriverString(void* szData)`
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`getASIOBlockNum()`** — L634 — `long getASIOBlockNum(void* dwData)`
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`asioStart()`** — L657 — `long asioStart()`
+  Called by: `cm_asioStart()` (`ChannelMaster/cmasio.c`)
+- **`asioStop()`** — L674 — `long asioStop()`
+  Called by: `cm_asioStop()` (`ChannelMaster/cmasio.c`)
+- **`getASIOBaseInputChannel()`** — L691 — `long getASIOBaseInputChannel(void* dwData)`
+  [2.10.3.13]MW0LGE get base channel numbers for input and output, and input mode
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`getASIOBaseOutputChannel()`** — L713 — `long getASIOBaseOutputChannel(void* dwData)`
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`getASIOInputMode()`** — L735 — `long getASIOInputMode(void* dwData)`
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`)
+- **`get_sys_reference_time()`** — L760 — `unsigned long get_sys_reference_time()`
+  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ### Types
 
