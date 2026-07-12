@@ -412,3 +412,8 @@ Project Files/lib/NR_Algorithms_x64/src/libspecbleach/old.github
 # graphify knowledge-graph outputs and caches
 graphify-out/
 *.swp
+.npmrc
+CLAUDE.md
+ci-artifactes
+packate-lock.json
+package.json
