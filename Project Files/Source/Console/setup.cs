@@ -6219,74 +6219,150 @@ namespace Thetis
                 ucIOPinsLedStripHF.Enabled = value;
                 grpIOPinState.Enabled = value;
 
-                radAlexR1_160.Enabled = value;
-                radAlexR1_80.Enabled = value;
-                radAlexR1_60.Enabled = value;
-                radAlexR1_40.Enabled = value;
-                radAlexR1_30.Enabled = value;
-                radAlexR1_20.Enabled = value;
-                radAlexR1_17.Enabled = value;
-                radAlexR1_15.Enabled = value;
-                radAlexR1_12.Enabled = value;
-                radAlexR1_10.Enabled = value;
+                grpTransmitPinActionHF.Enabled   = false;
+                grpExtPAControlHF.Enabled   = false;
+                groupBoxTS1.Enabled   = false;
+                chkPennyExtCtrl.Enabled   = false;
 
-                radAlexR2_160.Enabled = value;
-                radAlexR2_80.Enabled = value;
-                radAlexR2_60.Enabled = value;
-                radAlexR2_40.Enabled = value;
-                radAlexR2_30.Enabled = value;
-                radAlexR2_20.Enabled = value;
-                radAlexR2_17.Enabled = value;
-                radAlexR2_15.Enabled = value;
-                radAlexR2_12.Enabled = value;
-                radAlexR2_10.Enabled = value;
+                chkAlex160R1.Enabled = value;
+                chkAlex80R1.Enabled = value;
+                chkAlex60R1.Enabled = value;
+                chkAlex40R1.Enabled = value;
+                chkAlex30R1.Enabled = value;
+                chkAlex20R1.Enabled = value;
+                chkAlex17R1.Enabled = value;
+                chkAlex15R1.Enabled = value;
+                chkAlex12R1.Enabled = value;
+                chkAlex10R1.Enabled = value;
 
-                radAlexR3_160.Enabled = value;
-                radAlexR3_80.Enabled = value;
-                radAlexR3_60.Enabled = value;
-                radAlexR3_40.Enabled = value;
-                radAlexR3_30.Enabled = value;
-                radAlexR3_20.Enabled = value;
-                radAlexR3_17.Enabled = value;
-                radAlexR3_15.Enabled = value;
-                radAlexR3_12.Enabled = value;
-                radAlexR3_10.Enabled = value;
+                radAlexR1_160.Enabled = false;    // Switch off the aerial select, as it's not supported at the minute  
+                radAlexR1_160.Checked = true;    
+                radAlexR1_80.Enabled = false;
+                radAlexR1_80.Checked = true;    
+                radAlexR1_60.Enabled = false;
+                radAlexR1_60.Checked = true;    
+                radAlexR1_40.Enabled = false;
+                radAlexR1_40.Checked = true;    
+                radAlexR1_30.Enabled = false;
+                radAlexR1_30.Checked = true;    
+                radAlexR1_20.Enabled = false;
+                radAlexR1_20.Checked = true;    
+                radAlexR1_17.Enabled = false;
+                radAlexR1_17.Checked = true;    
+                radAlexR1_15.Enabled = false;
+                radAlexR1_15.Checked = true;    
+                radAlexR1_12.Enabled = false;
+                radAlexR1_12.Checked = true;    
+                radAlexR1_10.Enabled = false;
+                radAlexR1_10.Checked = true;    
 
-                radAlexT1_160.Enabled = value;
-                radAlexT1_80.Enabled = value;
-                radAlexT1_60.Enabled = value;
-                radAlexT1_40.Enabled = value;
-                radAlexT1_30.Enabled = value;
-                radAlexT1_20.Enabled = value;
-                radAlexT1_17.Enabled = value;
-                radAlexT1_15.Enabled = value;
-                radAlexT1_12.Enabled = value;
-                radAlexT1_10.Enabled = value;
+                radAlexR2_160.Enabled = false;
+                radAlexR2_160.Checked = false;    
+                radAlexR2_80.Enabled = false;
+                radAlexR2_80.Checked = false;    
+                radAlexR2_60.Enabled = false;
+                radAlexR2_60.Checked = false;    
+                radAlexR2_40.Enabled = false;
+                radAlexR2_40.Checked = false;    
+                radAlexR2_30.Enabled = false;
+                radAlexR2_30.Checked = false;    
+                radAlexR2_20.Enabled = false;
+                radAlexR2_20.Checked = false;    
+                radAlexR2_17.Enabled = false;
+                radAlexR2_17.Checked = false;    
+                radAlexR2_15.Enabled = false;
+                radAlexR2_15.Checked = false;    
+                radAlexR2_12.Enabled = false;
+                radAlexR2_12.Checked = false;    
+                radAlexR2_10.Enabled = false;
+                radAlexR2_10.Checked = false;    
 
-                radAlexT2_160.Enabled = value;
-                radAlexT2_80.Enabled = value;
-                radAlexT2_60.Enabled = value;
-                radAlexT2_40.Enabled = value;
-                radAlexT2_30.Enabled = value;
-                radAlexT2_20.Enabled = value;
-                radAlexT2_17.Enabled = value;
-                radAlexT2_15.Enabled = value;
-                radAlexT2_12.Enabled = value;
-                radAlexT2_10.Enabled = value;
+                radAlexR3_160.Enabled = false;
+                radAlexR3_160.Checked = false;    
+                radAlexR3_80.Enabled = false;
+                radAlexR3_80.Checked = false;    
+                radAlexR3_60.Enabled = false;
+                radAlexR3_60.Checked = false;    
+                radAlexR3_40.Enabled = false;
+                radAlexR3_40.Checked = false;    
+                radAlexR3_30.Enabled = false;
+                radAlexR3_30.Checked = false;    
+                radAlexR3_20.Enabled = false;
+                radAlexR3_20.Checked = false;    
+                radAlexR3_17.Enabled = false;
+                radAlexR3_17.Checked = false;    
+                radAlexR3_15.Enabled = false;
+                radAlexR3_15.Checked = false;    
+                radAlexR3_12.Enabled = false;
+                radAlexR3_12.Checked = false;    
+                radAlexR3_10.Enabled = false;
+                radAlexR3_10.Checked = false;    
 
-                radAlexT3_160.Enabled = value;
-                radAlexT3_80.Enabled = value;
-                radAlexT3_60.Enabled = value;
-                radAlexT3_40.Enabled = value;
-                radAlexT3_30.Enabled = value;
-                radAlexT3_20.Enabled = value;
-                radAlexT3_17.Enabled = value;
-                radAlexT3_15.Enabled = value;
-                radAlexT3_12.Enabled = value;
-                radAlexT3_10.Enabled = value;
+                radAlexT1_160.Enabled = false;
+                radAlexT1_160.Checked = true;    
+                radAlexT1_80.Enabled = false;
+                radAlexT1_80.Checked = true;    
+                radAlexT1_60.Enabled = false;
+                radAlexT1_60.Checked = true;    
+                radAlexT1_40.Enabled = false;
+                radAlexT1_40.Checked = true;    
+                radAlexT1_30.Enabled = false;
+                radAlexT1_30.Checked = true;    
+                radAlexT1_20.Enabled = false;
+                radAlexT1_20.Checked = true;    
+                radAlexT1_17.Enabled = false;
+                radAlexT1_17.Checked = true;    
+                radAlexT1_15.Enabled = false;
+                radAlexT1_15.Checked = true;    
+                radAlexT1_12.Enabled = false;
+                radAlexT1_12.Checked = true;    
+                radAlexT1_10.Enabled = false;
+                radAlexT1_10.Checked = true;    
 
-                chkBlockTxAnt2.Enabled = value;
-                chkBlockTxAnt3.Enabled = value;
+                radAlexT2_160.Enabled = false;
+                radAlexT2_160.Checked = false;    
+                radAlexT2_80.Enabled = false;
+                radAlexT2_80.Checked = false;    
+                radAlexT2_60.Enabled = false;
+                radAlexT2_60.Checked = false;    
+                radAlexT2_40.Enabled = false;
+                radAlexT2_40.Checked = false;    
+                radAlexT2_30.Enabled = false;
+                radAlexT2_30.Checked = false;    
+                radAlexT2_20.Enabled = false;
+                radAlexT2_20.Checked = false;    
+                radAlexT2_17.Enabled = false;
+                radAlexT2_17.Checked = false;    
+                radAlexT2_15.Enabled = false;
+                radAlexT2_15.Checked = false;    
+                radAlexT2_12.Enabled = false;
+                radAlexT2_12.Checked = false;    
+                radAlexT2_10.Enabled = false;
+                radAlexT2_10.Checked = false;    
+
+                radAlexT3_160.Enabled = false;
+                radAlexT3_160.Checked = false;    
+                radAlexT3_80.Enabled = false;
+                radAlexT3_80.Checked = false;    
+                radAlexT3_60.Enabled = false;
+                radAlexT3_60.Checked = false;    
+                radAlexT3_40.Enabled = false;
+                radAlexT3_40.Checked = false;    
+                radAlexT3_30.Enabled = false;
+                radAlexT3_30.Checked = false;    
+                radAlexT3_20.Enabled = false;
+                radAlexT3_20.Checked = false;    
+                radAlexT3_17.Enabled = false;
+                radAlexT3_17.Checked = false;    
+                radAlexT3_15.Enabled = false;
+                radAlexT3_15.Checked = false;    
+                radAlexT3_12.Enabled = false;
+                radAlexT3_12.Checked = false;    
+                radAlexT3_10.Enabled = false;
+                radAlexT3_10.Checked = false;    
+
+                chkBlockTxAnt2.Enabled = false;
+                chkBlockTxAnt3.Enabled = false;
 
                 console.AlexAntCtrlEnabled = value;
 
@@ -6506,7 +6582,7 @@ namespace Thetis
                 HardwareSpecific.Model != HPSDRModel.ANAN7000D &&
                 HardwareSpecific.Model != HPSDRModel.ANAN8000D &&
                 HardwareSpecific.Model != HPSDRModel.ANVELINAPRO3 &&
-                HardwareSpecific.Model != HPSDRModel.ANAN_G1 && //N1GP G1 added
+                HardwareSpecific.Model != HPSDRModel.ANAN_G2E && //N1GP G2E added
                 HardwareSpecific.Model != HPSDRModel.ANAN_G2 &&
                 HardwareSpecific.Model != HPSDRModel.ANAN_G2_1K &&
                 HardwareSpecific.Model != HPSDRModel.REDPITAYA)//DH1KLM
@@ -6595,9 +6671,7 @@ namespace Thetis
                 HardwareSpecific.Model == HPSDRModel.ANAN7000D || HardwareSpecific.Model == HPSDRModel.ANAN8000D ||
                 HardwareSpecific.Model == HPSDRModel.ANVELINAPRO3 ||
                 HardwareSpecific.Model == HPSDRModel.ANAN_G2 || HardwareSpecific.Model == HPSDRModel.ANAN_G2_1K ||
-               HardwareSpecific.Model == HPSDRModel.REDPITAYA    || //DH1KLM
-                HardwareSpecific.Model == HPSDRModel.REDPITAYA || HardwareSpecific.Model == HPSDRModel.ANAN_G1) //DH1KLM  //N1GP G1 added
-
+                HardwareSpecific.Model == HPSDRModel.REDPITAYA || HardwareSpecific.Model == HPSDRModel.ANAN_G2E) //DH1KLM  //N1GP G2E added
             {
                 if (!tcGeneral.TabPages.Contains(tpOtherHW))
                 {
@@ -16084,7 +16158,7 @@ namespace Thetis
             }
             else if (AlexPresent && 
                 HardwareSpecific.Model != HPSDRModel.ANAN10 &&
-                HardwareSpecific.Model != HPSDRModel.ANAN_G1 && //N1GP G1 added
+                HardwareSpecific.Model != HPSDRModel.ANAN_G2E && //N1GP G2E added
                 HardwareSpecific.Model != HPSDRModel.ANAN10E &&
                 HardwareSpecific.Model != HPSDRModel.ANAN7000D &&
                 HardwareSpecific.Model != HPSDRModel.ANAN8000D &&
@@ -16148,7 +16222,7 @@ namespace Thetis
             //MW0LGE_21f
             if (AlexPresent &&
                 HardwareSpecific.Model != HPSDRModel.ANAN10 &&
-                HardwareSpecific.Model != HPSDRModel.ANAN_G1 && //N1GP G1 added
+                HardwareSpecific.Model != HPSDRModel.ANAN_G2E && //N1GP G2E added
                 HardwareSpecific.Model != HPSDRModel.ANAN10E &&
                 HardwareSpecific.Model != HPSDRModel.ANAN7000D &&
                 HardwareSpecific.Model != HPSDRModel.ANAN8000D &&
@@ -20187,7 +20261,7 @@ namespace Thetis
                     setupAttRXControls(2);
                     break;
 
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
+                case HPSDRModel.ANAN_G2E: //N1GP G2E added
                     chkAlexPresent.Checked = true;
                     chkAlexPresent.Enabled = true;
                     chkApolloPresent.Enabled = false;
@@ -20249,6 +20323,8 @@ namespace Thetis
                     udHermesStepAttenuatorDataRX2.Minimum = (decimal)-28;
                     udHermesStepAttenuatorData.Maximum = 31;
                     udHermesStepAttenuatorDataRX2.Maximum = 31;
+                    chkAlexPresent_CheckedChanged(this, EventArgs.Empty);
+                    chkAlexAntCtrl_CheckedChanged(this, EventArgs.Empty);
                     chkAutoPACalibrate.Checked = false;
                     chkAutoPACalibrate.Visible = false;
                     labelRXAntControl.Text = "  RX1   RX2    XVTR";
@@ -20301,6 +20377,11 @@ namespace Thetis
                     radDDC4ADC1.Checked = false;
                     radDDC5ADC1.Checked = false;
                     radDDC6ADC1.Checked = false;
+
+                    chkPennyExtCtrl.Visible = false;
+                    btnPennyCtrlReset.Visible = false;
+
+                    labelRXAntControl.Text = "ALT RX  RX2  XVTR";
 
                     chkAlex160R1.Enabled = true;
                     chkAlex80R1.Enabled = true;
@@ -21016,8 +21097,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
+                case HPSDRModel.ANAN_G2E: //N1GP G2E added
                 case HPSDRModel.HERMESLITE:         // MI0BOT: HL2
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -21195,8 +21276,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
+                case HPSDRModel.ANAN_G2E: //N1GP G2E added
                 case HPSDRModel.HERMESLITE:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -21226,8 +21307,8 @@ namespace Thetis
             switch (HardwareSpecific.Model)
             {
                 case HPSDRModel.HERMES:
+                case HPSDRModel.ANAN_G2E: //N1GP G2E added
                 case HPSDRModel.HERMESLITE:
-                case HPSDRModel.ANAN_G1: //N1GP G1 added
                 case HPSDRModel.ANAN10:
                 case HPSDRModel.ANAN10E:
                 case HPSDRModel.ANAN100:
@@ -21719,19 +21800,19 @@ namespace Thetis
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        public void EnableCl1_10MHz()
+        async public Task EnableCl1_10MHz()
         {
-            WriteVersaClockAsync(clockRegisterData10MhzEnable);
+            await WriteVersaClockAsync(clockRegisterData10MhzEnable);
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        public void DisableCl1_10MHz()
+        async public Task DisableCl1_10MHz()
         {
-            WriteVersaClockAsync(clockRegisterData10MhzDisable);
+            await WriteVersaClockAsync(clockRegisterData10MhzDisable);
         }
 
         // MI0BOT: Support for HL2 Cl2 clock output
-        public void ControlCl2(bool enable)
+        async public Task ControlCl2(bool enable)
         {
             Decimal vco = (Decimal)1305.6;
 
@@ -21757,13 +21838,13 @@ namespace Thetis
                     clockRegisterDataCl2[15] = (Byte)((intFrac >> 6) & 0xff);
                     clockRegisterDataCl2[17] = (Byte)((intFrac << 2) & 0xf6);
 
-                    WriteVersaClockAsync(clockRegisterDataCl2);
+                    await WriteVersaClockAsync(clockRegisterDataCl2);
                 }
             }
             else
             {
                 udCl2Freq.Enabled = false;
-                WriteVersaClockAsync(clockRegisterDataCl2Off);
+                await WriteVersaClockAsync(clockRegisterDataCl2Off);
             }
         }
 
@@ -21780,18 +21861,18 @@ namespace Thetis
         }
 
         // MI0BOT: Support for HL2 10MHz clock input
-        private void chkExt10MHz_CheckedChanged(object sender, EventArgs e)
+        async private void chkExt10MHz_CheckedChanged(object sender, EventArgs e)
         {
             if (chkExt10MHz.Checked)
             {
-                EnableCl1_10MHz();
+                await EnableCl1_10MHz();
             }
             else
             {
-                DisableCl1_10MHz();
+                await DisableCl1_10MHz();
             }
 
-            ControlCl2(chkCl2Enable.Checked);
+            await ControlCl2(chkCl2Enable.Checked);
         }
 
         private void chkDataLineGradient_CheckedChanged(object sender, EventArgs e)
@@ -24589,11 +24670,11 @@ namespace Thetis
                             if (g != 1000 && bRemoveOld) removeOldPASetting(sSetting);
                         }
                         break;
-                    case HPSDRModel.ANAN_G1: //N1GP G1 added
+                    case HPSDRModel.ANAN_G2E: //N1GP G2E added
                         for (int n = (int)Band.B160M; n <= (int)Band.B6M; n++)
                         {
                             Band b = (Band)n;
-                            string sSetting = "udANAN_G1PAGain" + mapBandToMeters(b).ToString();
+                            string sSetting = "udANAN_G2EPAGain" + mapBandToMeters(b).ToString();
                             float g = getOldVariablePAgain(sSetting, ref getDict);
                             if (g != 1000) p.SetGainForBand(b, g);
                             if (g != 1000 && bRemoveOld) removeOldPASetting(sSetting);
@@ -24601,7 +24682,7 @@ namespace Thetis
                         for (int n = (int)Band.VHF0; n <= (int)Band.VHF13; n++)
                         {
                             Band b = (Band)n;
-                            string sSetting = "udANAN_G1PAGainVHF" + (n - (int)Band.VHF0).ToString();
+                            string sSetting = "udANAN_G2EPAGainVHF" + (n - (int)Band.VHF0).ToString();
                             float g = getOldVariablePAgain(sSetting, ref getDict);
                             if (g != 1000) p.SetGainForBand(b, g);
                             if (g != 1000 && bRemoveOld) removeOldPASetting(sSetting);
@@ -38375,6 +38456,16 @@ namespace Thetis
         private void tbTCISpotBackPanel_alpha_Scroll(object sender, EventArgs e)
         {
             Display.TCIBackPanelAlpha = tbTCISpotBackPanel_alpha.Value;
+        }
+
+        private void chkWaterfall_smear_CheckedChanged(object sender, EventArgs e)
+        {
+            Display.AllowWaterfallSmear = chkWaterfall_smear.Checked;
+        }
+
+        private void chkN1mm_include_cw_shift_CheckedChanged(object sender, EventArgs e)
+        {
+            N1MM.CWShiftEnable = chkN1mm_include_cw_shift.Checked;
         }
     }
 

@@ -44,7 +44,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
-using ConsoleForm = Thetis.Console;
 
 namespace Thetis
 {
@@ -69,7 +68,7 @@ namespace Thetis
         private const int DataIndexWrap = 1000000000;
         private static readonly ArrayPool<float> PixelArrayPool = ArrayPool<float>.Shared;
 
-        private readonly ConsoleForm _console;
+        private readonly Console _console;
         private readonly object _endpointsLock = new object();
         private readonly Dictionary<string, SpectrumEndpoint> _endpoints;
         private readonly Thread _workerThread;
@@ -78,7 +77,7 @@ namespace Thetis
         private volatile bool _workerRunning;
         private bool _disposed;
 
-        public clsSpectrumProcessor(ConsoleForm console)
+        public clsSpectrumProcessor(Console console)
         {
             if (console == null) throw new ArgumentNullException(nameof(console));
 
@@ -98,19 +97,9 @@ namespace Thetis
             _workerThread.Start();
         }
 
-        public bool AddReceiver(int receiverId)
-        {
-            return AddReceiver(receiverId, DefaultPixels, DefaultFrameRate, DefaultFftSize);
-        }
-
         public bool AddReceiver(int receiverId, int pixels, int frameRate, int fftSize)
         {
             return AddSource(SpectrumSourceType.Receiver, receiverId, pixels, frameRate, fftSize);
-        }
-
-        public bool AddTransmitter(int transmitterId)
-        {
-            return AddTransmitter(transmitterId, DefaultPixels, DefaultFrameRate, DefaultFftSize);
         }
 
         public bool AddTransmitter(int transmitterId, int pixels, int frameRate, int fftSize)

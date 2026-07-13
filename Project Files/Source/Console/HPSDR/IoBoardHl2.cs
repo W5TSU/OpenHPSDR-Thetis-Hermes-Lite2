@@ -81,8 +81,8 @@ namespace Thetis
 
         public enum HardwareVersion
 		{
-			Version_1 = 0xf1,
-		}
+            Version_1 = 0x01,
+        }
 
 		private static IOBoard theSingleton = null; 
         private static Console console;
@@ -156,7 +156,8 @@ namespace Thetis
 				if (lastReadRequest == (int)Registers.HardwareVersion)
 				{
                     hardwareVersion = read_data[3];
-				}
+                    hardwareVersion &= 0x0f;                    // We are only interested in the first nibble - the upper nibble can change
+                }
 				else
 				{
 					registers[lastReadRequest+0] = read_data[3];
