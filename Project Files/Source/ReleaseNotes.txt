@@ -2,10 +2,15 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.17 HL2 (2026-07-13)
+
+- [add] option added to setup n1mm to use/ignore the cw frequency tone shift when sending spectrum to n1mm, default now off (was previously always enabled) - from official Thetis 8071b543
+- [change] nuget package updates (Markdig 1.2.0, Microsoft.Bcl.* 10.0.8, System.* 10.0.8) - from official Thetis
+- [add] code documentation under docs/ (code outline, per-file pages, NR3 deep dive)
+
 # 2.10.3.16 HL2 (2026-06-15)
 
 - [change] Merged upstream mi0bot HL2 updates (official Thetis sync, I/I board support, auto-tune timeout fix, antenna switching disabled from console, Alt RX start-up fix)
-- [add] option added to setup n1mm to use/ignore the cw frequency tone shift when sending spectrum to n1mm, default now off (was previously always enabled) - from official Thetis 8071b543
 
 # 2.10.3.15 HL2 Beta 1 (2026-06-12)
 
