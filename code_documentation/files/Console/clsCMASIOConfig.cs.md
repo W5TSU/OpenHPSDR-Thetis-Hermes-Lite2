@@ -70,4 +70,4 @@ _Each entry: symbol — line — signature, then a description (from source comm
   Called by: `.SetupCMAsio()` (`Console/setup.cs`)
 
 ---
-_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/clsCMASIOConfig.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/clsCMASIOConfig.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python code_documentation/tools/gen_file_docs.py`._

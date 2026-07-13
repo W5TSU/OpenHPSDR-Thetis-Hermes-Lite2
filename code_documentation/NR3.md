@@ -206,6 +206,6 @@ replace `rnnoise.dll` alongside it (build commands in `src/HowTo/how.txt`).
 ## 7. Related documentation
 
 - [`docs/files/wdsp/rnnr.c.md`](files/wdsp/rnnr.c.md) — generated symbol outline of the wrapper
-- [`docs/CODE_OUTLINE.md` §7](CODE_OUTLINE.md#7-wdsp--the-dsp-engine) — NR3's place among the wdsp noise-reduction blocks
+- [`code_documentation/CODE_OUTLINE.md` §7](CODE_OUTLINE.md#7-wdsp--the-dsp-engine) — NR3's place among the wdsp noise-reduction blocks
 - NR4 (`wdsp/sbnr.c`, libspecbleach) shares the same UI slot pattern and the same
   `NR_Algorithms_x64` library folder — the natural comparison when NR3's speech bias is a problem

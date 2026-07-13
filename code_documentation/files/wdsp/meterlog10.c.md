@@ -26,4 +26,4 @@ _Each entry: symbol — line — signature, then a description (from source comm
   Called by: `avenger()` (`wdsp/analyzer.c`), `DetectMaxBin()` (`wdsp/analyzer.c`), `CalcBandwidthNormalization()` (`wdsp/analyzer.c`), `GetTXACFCOMPDisplayCompression()` (`wdsp/cfcomp.c`), `getZeta()` (`wdsp/emnr.c`), `xmeter()` (`wdsp/meter.c`) — and 1 more
 
 ---
-_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/meterlog10.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/meterlog10.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python code_documentation/tools/gen_file_docs.py`._

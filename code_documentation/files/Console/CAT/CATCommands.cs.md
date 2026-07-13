@@ -1153,4 +1153,4 @@ _Each entry: symbol — line — signature, then a description (from source comm
   Called by: `.ZZHA()` (same file), `.ZZHR()` (same file), `.ZZHT()` (same file), `.ZZHU()` (same file), `.ZZHV()` (same file), `.ZZHW()` (same file) — and 1 more
 
 ---
-_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/CAT/CATCommands.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python docs/tools/gen_file_docs.py`._
+_Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/Console/CAT/CATCommands.cs`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python code_documentation/tools/gen_file_docs.py`._

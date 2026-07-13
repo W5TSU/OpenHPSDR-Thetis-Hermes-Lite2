@@ -10,7 +10,7 @@ docs/files/<relpath>.md containing:
     naming-convention heuristic otherwise), and its callers from the graph
 Also writes docs/files/README.md as an index grouped by functional area.
 
-Run: python docs/tools/gen_file_docs.py   (after `graphify update "Project Files/Source"`)
+Run: python code_documentation/tools/gen_file_docs.py   (after `graphify update "Project Files/Source"`)
 """
 import json
 import re
@@ -19,9 +19,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / 'Project Files/Source'
-OUTLINE = ROOT / 'docs/CODE_OUTLINE.md'
+OUTLINE = ROOT / 'code_documentation/CODE_OUTLINE.md'
 GRAPH = ROOT / 'graphify-out/graph.json'
-OUTDIR = ROOT / 'docs/files'
+OUTDIR = ROOT / 'code_documentation/files'
 
 SECTION_DIR_HINTS = {
     7: ['wdsp/'],
@@ -466,7 +466,7 @@ for rel, info in sorted(file_info.items()):
                  f'(`graphify-out/graph.json`); line numbers refer to '
                  f'`Project Files/Source/{rel}`. Regenerate after code changes '
                  'with `graphify update "Project Files/Source"` followed by '
-                 '`python docs/tools/gen_file_docs.py`._')
+                 '`python code_documentation/tools/gen_file_docs.py`._')
     outp = OUTDIR / (rel + '.md')
     outp.parent.mkdir(parents=True, exist_ok=True)
     outp.write_text('\n'.join(lines) + '\n', encoding='utf-8')
