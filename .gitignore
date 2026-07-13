@@ -417,3 +417,9 @@ CLAUDE.md
 ci-artifactes
 packate-lock.json
 package.json
+
+# local CI artifact downloads and npm tooling
+ci-artifacts/
+package-lock.json
+package.json
+node_modules/
