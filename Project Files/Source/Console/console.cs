@@ -20845,6 +20845,13 @@ namespace Thetis
             set { spacebar_ptt = value; }
         }
 
+        private bool spacebar_ptt_hold = false;     // W5TSU: momentary PTT, hold spacebar to TX
+        public bool SpaceBarPTTHold
+        {
+            get { return spacebar_ptt_hold; }
+            set { spacebar_ptt_hold = value; }
+        }
+
         private bool spacebar_vox = false;
         public bool SpaceBarVOX
         {
@@ -26851,7 +26858,40 @@ namespace Thetis
         {
             if (!Common.ShiftKeyDown) Display.DisplayShiftKeyDown = false;
 
+            if (e.KeyCode == Keys.Space && spacebar_ptt_hold)   // W5TSU: momentary PTT
+            {
+                spacebarHoldRelease();
+                e.Handled = true;
+            }
+
             ToggleFocusMasterTimer();
+        }
+
+        // W5TSU: momentary spacebar PTT (SpaceBarPTTHold)
+        private bool _spacebar_ptt_held = false;
+        private void spacebarHoldRelease()
+        {
+            if (!_spacebar_ptt_held) return;
+            _spacebar_ptt_held = false;
+
+            if (chkMOX.Checked && _current_ptt_mode == PTTMode.SPACE)
+            {
+                chkMOX.Checked = false;
+
+                //VACBypass
+                if (!(ARP.IsBusy && BypassVACWhenPlayingWAV)) // dont change vac bypass if it being used by ARP
+                {
+                    if (chkVAC1.Checked && Audio.VACBypass)
+                        Audio.VACBypass = false;
+                }
+            }
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            // KeyUp is never delivered if focus leaves the window mid-transmission - drop TX rather than stick keyed
+            spacebarHoldRelease();
+            base.OnDeactivate(e);
         }
 
         // MW0LGE
@@ -27274,6 +27314,27 @@ namespace Thetis
                                         }
                                     }
 
+                                    e.Handled = true;
+                                }
+                                else if (spacebar_ptt_hold)     // W5TSU: momentary PTT, KeyUp/Deactivate return to receive
+                                {
+                                    if (!_spacebar_ptt_held)    // KeyDown auto-repeats while held, only key TX on the first press
+                                    {
+                                        _spacebar_ptt_held = true;
+
+                                        if (!chkMOX.Checked)
+                                        {
+                                            _current_ptt_mode = PTTMode.SPACE;
+                                            chkMOX.Checked = true;
+
+                                            //VACBypass
+                                            if (!(ARP.IsBusy && BypassVACWhenPlayingWAV)) // dont change vac bypass if it being used by ARP
+                                            {
+                                                if (chkVAC1.Checked && allow_space_bypass)
+                                                    Audio.VACBypass = true;
+                                            }
+                                        }
+                                    }
                                     e.Handled = true;
                                 }
                                 else if (spacebar_vox)
