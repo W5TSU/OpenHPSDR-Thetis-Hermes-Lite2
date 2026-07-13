@@ -14,6 +14,9 @@ of the program does, which source files implement it, and how the files relate t
 | [`tools/gen_file_docs.py`](tools/gen_file_docs.py) | The generator that produces everything under `files/` from the knowledge graph and `CODE_OUTLINE.md`. |
 | [`NR3.md`](NR3.md) | Deep dive: the RNNoise neural-network noise reduction (NR3) — architecture across all layers, how to use it, how models are loaded/validated, and how to train new models with the bundled RNNoise toolchain. |
 | [`History.md`](History.md) | The lineage of this software, 2003–present: FlexRadio's SDR-1000/PowerSDR, the HPSDR group and TAPR, the OpenHPSDR hardware era, PowerSDR mRX, Thetis, and the fork map down to this Hermes-Lite 2 repository. |
+| [`Database.md`](Database.md) | Deep dive: the settings database — what "Export Database" (Database Manager) writes, the `database.xml` DataSet-XML format, every table's schema (Options, State, TXProfile, Memory, BandStack2…), and how import/restore works. |
+| [`Protocols.md`](Protocols.md) | Deep dive: openHPSDR network Protocols 1 & 2 — framing and port maps, how discovery picks the protocol, which boards run which protocol, the HL2's P1 extensions (I²C tunnelling, ACK), and how HL2 gateware is updated. |
+| [`hermes-lite2+.md`](hermes-lite2+.md) | Deep dive: hardware (H/W) selection — where the radio-model data lives (`HPSDRModel`/`HPSDRHW`, `clsHardwareSpecific.cs`), how a selection is applied and persisted, the checklist for adding a new radio, and exactly how the Hermes-Lite 2 is defined. |
 
 Documentation covers the six first-party subprojects under `Project Files/Source/` — Console,
 wdsp, ChannelMaster, cmASIO, Midi2Cat, and RawInput (~473 source files). Vendored third-party
