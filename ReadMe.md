@@ -1,4 +1,4 @@
-There are a number of people working on Thetis.
+I'm maintaining this fork for my own use. The purpose is to merge the "BEST" parts of many of the others working on Thetis.
 
 MW0LGE  here  https://github.com/ramdor/Thetis
 
