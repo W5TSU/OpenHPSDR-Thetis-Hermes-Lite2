@@ -26868,9 +26868,31 @@ namespace Thetis
         }
 
         // W5TSU: momentary spacebar PTT (SpaceBarPTTHold)
+        // KeyUp cannot be relied on to end the hold: FocusMaster (and anything else that moves
+        // keyboard focus off this form while MOX is engaged) means the release is never delivered.
+        // A timer polls the physical key state instead, which works whoever has focus.
         private bool _spacebar_ptt_held = false;
+        private System.Windows.Forms.Timer _spacebar_ptt_timer = null;
+        private void spacebarHoldEngaged()
+        {
+            _spacebar_ptt_held = true;
+
+            if (_spacebar_ptt_timer == null)
+            {
+                _spacebar_ptt_timer = new System.Windows.Forms.Timer();
+                _spacebar_ptt_timer.Interval = 25;
+                _spacebar_ptt_timer.Tick += (s, ea) =>
+                {
+                    if (!Keyboard.IsKeyDownAsync(Keys.Space))
+                        spacebarHoldRelease();
+                };
+            }
+            _spacebar_ptt_timer.Start();
+        }
         private void spacebarHoldRelease()
         {
+            if (_spacebar_ptt_timer != null) _spacebar_ptt_timer.Stop();
+
             if (!_spacebar_ptt_held) return;
             _spacebar_ptt_held = false;
 
@@ -26885,13 +26907,6 @@ namespace Thetis
                         Audio.VACBypass = false;
                 }
             }
-        }
-
-        protected override void OnDeactivate(EventArgs e)
-        {
-            // KeyUp is never delivered if focus leaves the window mid-transmission - drop TX rather than stick keyed
-            spacebarHoldRelease();
-            base.OnDeactivate(e);
         }
 
         // MW0LGE
@@ -27316,11 +27331,11 @@ namespace Thetis
 
                                     e.Handled = true;
                                 }
-                                else if (spacebar_ptt_hold)     // W5TSU: momentary PTT, KeyUp/Deactivate return to receive
+                                else if (spacebar_ptt_hold)     // W5TSU: momentary PTT, released by KeyUp or the key-state poll timer
                                 {
                                     if (!_spacebar_ptt_held)    // KeyDown auto-repeats while held, only key TX on the first press
                                     {
-                                        _spacebar_ptt_held = true;
+                                        spacebarHoldEngaged();
 
                                         if (!chkMOX.Checked)
                                         {

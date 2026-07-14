@@ -83,6 +83,16 @@ namespace Thetis
             return KeyStates.Down == (GetKeyState(key) & KeyStates.Down);
         }
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        private static extern short GetAsyncKeyState(int keyCode);
+
+        // W5TSU: physical key state - unlike GetKeyState this is not tied to the calling
+        // thread's input queue, so it stays correct when another window has keyboard focus
+        public static bool IsKeyDownAsync(Keys key)
+        {
+            return (GetAsyncKeyState((int)key) & 0x8000) == 0x8000;
+        }
+
         public static bool IsKeyToggled(Keys key)
         {
             return KeyStates.Toggled == (GetKeyState(key) & KeyStates.Toggled);
