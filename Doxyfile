@@ -1,0 +1,38 @@
+# Doxygen configuration for OpenHPSDR Thetis (Hermes-Lite 2 fork).
+# Only non-default settings are listed; doxygen fills in the rest.
+# Generate with:  doxygen Doxyfile   → output in dox/html/index.html
+
+PROJECT_NAME           = "OpenHPSDR Thetis — Hermes-Lite 2"
+PROJECT_NUMBER         = 2.10.3.18
+PROJECT_BRIEF          = "Thetis SDR console adapted for the Hermes-Lite 2"
+OUTPUT_DIRECTORY       = dox
+
+# First-party code only: the six subprojects. Vendored libraries
+# (Project Files/lib), the installer, and generated designer files
+# are excluded to match code_documentation/ coverage.
+INPUT                  = "Project Files/Source/Console" \
+                         "Project Files/Source/wdsp" \
+                         "Project Files/Source/ChannelMaster" \
+                         "Project Files/Source/cmASIO" \
+                         "Project Files/Source/Midi2Cat" \
+                         "Project Files/Source/RawInput"
+RECURSIVE              = YES
+FILE_PATTERNS          = *.cs *.c *.h *.cpp *.hpp
+EXCLUDE_PATTERNS       = */obj/* */bin/* *Designer.cs *.designer.cs AssemblyInfo.cs
+
+# The codebase has few doc comments, so index everything rather than
+# only documented symbols.
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+WARN_IF_UNDOCUMENTED   = NO
+
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+SOURCE_BROWSER         = YES
+STRIP_CODE_COMMENTS    = NO
+
+# graphviz not required; use doxygen's built-in class diagrams
+HAVE_DOT               = NO
+
+QUIET                  = YES

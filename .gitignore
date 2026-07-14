@@ -423,3 +423,6 @@ ci-artifacts/
 package-lock.json
 package.json
 node_modules/
+
+# doxygen output (regenerate with: doxygen Doxyfile)
+dox/
