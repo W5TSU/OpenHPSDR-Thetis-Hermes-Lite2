@@ -18,7 +18,11 @@ I have a (Hermes-Lite 2+)"http://hermeslite.com" with some personal modification
 
 For the full story of how this software evolved — from FlexRadio's SDR-1000 and the HPSDR/TAPR project through OpenHPSDR and Thetis to the Hermes-Lite 2 forks above — see [History](code_documentation/History.md). Developer documentation for this code base is in [code_documentation](code_documentation/README.md).
 
-# Latest Release v2.10.3.17 13th July, 2026
+# Latest Release v2.10.3.18 14th July, 2026
+
+# 2.10.3.18 (2026-07-14)
+
+- New SpaceBar Control "PTT/MOX Hold" option (Setup > Keyboard): hold the space bar to transmit, release to receive; works even when Focus Master hands keyboard focus to another program
 
 # 2.10.3.17 (2026-07-13)
 

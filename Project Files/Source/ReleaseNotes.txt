@@ -2,6 +2,10 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.18 HL2 (2026-07-14)
+
+- [add] SpaceBar Control "PTT/MOX Hold" option (Setup > Keyboard): hold the space bar to transmit, release to receive; works even when Focus Master hands keyboard focus to another program
+
 # 2.10.3.17 HL2 (2026-07-13)
 
 - [add] option added to setup n1mm to use/ignore the cw frequency tone shift when sending spectrum to n1mm, default now off (was previously always enabled) - from official Thetis 8071b543
