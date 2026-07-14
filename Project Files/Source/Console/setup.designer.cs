@@ -3545,6 +3545,7 @@
             this.radSpaceBarMicMute = new System.Windows.Forms.RadioButtonTS();
             this.radSpaceBarVOX = new System.Windows.Forms.RadioButtonTS();
             this.radSpaceBarPTT = new System.Windows.Forms.RadioButtonTS();
+            this.radSpaceBarPTTHold = new System.Windows.Forms.RadioButtonTS();
             this.grpKBXIT = new System.Windows.Forms.GroupBoxTS();
             this.lblKBXITUp = new System.Windows.Forms.LabelTS();
             this.lblKBXITDown = new System.Windows.Forms.LabelTS();
@@ -57308,9 +57309,10 @@
             this.grpBoxSpaceBarPTT.Controls.Add(this.radSpaceBarMicMute);
             this.grpBoxSpaceBarPTT.Controls.Add(this.radSpaceBarVOX);
             this.grpBoxSpaceBarPTT.Controls.Add(this.radSpaceBarPTT);
+            this.grpBoxSpaceBarPTT.Controls.Add(this.radSpaceBarPTTHold);
             this.grpBoxSpaceBarPTT.Location = new System.Drawing.Point(525, 8);
             this.grpBoxSpaceBarPTT.Name = "grpBoxSpaceBarPTT";
-            this.grpBoxSpaceBarPTT.Size = new System.Drawing.Size(168, 130);
+            this.grpBoxSpaceBarPTT.Size = new System.Drawing.Size(168, 152);
             this.grpBoxSpaceBarPTT.TabIndex = 41;
             this.grpBoxSpaceBarPTT.TabStop = false;
             this.grpBoxSpaceBarPTT.Text = "SpaceBar Control";
@@ -57381,9 +57383,22 @@
             this.toolTip1.SetToolTip(this.radSpaceBarPTT, "SpaceBar controls PTT");
             this.radSpaceBarPTT.UseVisualStyleBackColor = true;
             this.radSpaceBarPTT.CheckedChanged += new System.EventHandler(this.radSpaceBarPTT_CheckedChanged);
-            // 
+            //
+            // radSpaceBarPTTHold
+            //
+            this.radSpaceBarPTTHold.AutoSize = true;
+            this.radSpaceBarPTTHold.Image = null;
+            this.radSpaceBarPTTHold.Location = new System.Drawing.Point(6, 120);
+            this.radSpaceBarPTTHold.Name = "radSpaceBarPTTHold";
+            this.radSpaceBarPTTHold.Size = new System.Drawing.Size(101, 17);
+            this.radSpaceBarPTTHold.TabIndex = 69;
+            this.radSpaceBarPTTHold.Text = "PTT/MOX Hold";
+            this.toolTip1.SetToolTip(this.radSpaceBarPTTHold, "Hold SpaceBar down to transmit, release to receive");
+            this.radSpaceBarPTTHold.UseVisualStyleBackColor = true;
+            this.radSpaceBarPTTHold.CheckedChanged += new System.EventHandler(this.radSpaceBarPTTHold_CheckedChanged);
+            //
             // grpKBXIT
-            // 
+            //
             this.grpKBXIT.Controls.Add(this.lblKBXITUp);
             this.grpKBXIT.Controls.Add(this.lblKBXITDown);
             this.grpKBXIT.Controls.Add(this.comboKBXITUp);
@@ -57551,7 +57566,7 @@
             // 
             this.grpKeyboardOptions.Controls.Add(this.chkOptEnableKBShortcuts);
             this.grpKeyboardOptions.Controls.Add(this.chkOptQuickQSY);
-            this.grpKeyboardOptions.Location = new System.Drawing.Point(525, 144);
+            this.grpKeyboardOptions.Location = new System.Drawing.Point(525, 166);
             this.grpKeyboardOptions.Name = "grpKeyboardOptions";
             this.grpKeyboardOptions.Size = new System.Drawing.Size(168, 72);
             this.grpKeyboardOptions.TabIndex = 27;
@@ -74155,6 +74170,7 @@
         private RadioButtonTS radSpaceBarMicMute;
         private RadioButtonTS radSpaceBarVOX;
         private RadioButtonTS radSpaceBarPTT;
+        private RadioButtonTS radSpaceBarPTTHold;
         private NumericUpDownTS udLineInBoost;
         private LabelTS lblLineInBoost;
         private GroupBoxTS grpPennyExtCtrlVHF;

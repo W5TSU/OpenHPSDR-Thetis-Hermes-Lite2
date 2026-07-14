@@ -2627,6 +2627,7 @@ namespace Thetis
             comboKBPTTTx_SelectedIndexChanged(this, e);
             comboKBPTTRx_SelectedIndexChanged(this, e);
             radSpaceBarVFOBTX_CheckedChanged(this, e);
+            radSpaceBarPTTHold_CheckedChanged(this, e);
 
             // Appearance Tab
             clrbtnBtnSel_Changed(this, e);
@@ -14835,6 +14836,11 @@ namespace Thetis
         private void radSpaceBarPTT_CheckedChanged(object sender, EventArgs e)
         {
             console.SpaceBarPTT = radSpaceBarPTT.Checked;
+        }
+
+        private void radSpaceBarPTTHold_CheckedChanged(object sender, EventArgs e)
+        {
+            console.SpaceBarPTTHold = radSpaceBarPTTHold.Checked;
         }
 
         private void radSpaceBarVOX_CheckedChanged(object sender, EventArgs e)

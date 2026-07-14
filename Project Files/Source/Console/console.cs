@@ -20845,6 +20845,13 @@ namespace Thetis
             set { spacebar_ptt = value; }
         }
 
+        private bool spacebar_ptt_hold = false;     // W5TSU: momentary PTT, hold spacebar to TX
+        public bool SpaceBarPTTHold
+        {
+            get { return spacebar_ptt_hold; }
+            set { spacebar_ptt_hold = value; }
+        }
+
         private bool spacebar_vox = false;
         public bool SpaceBarVOX
         {
@@ -26851,7 +26858,55 @@ namespace Thetis
         {
             if (!Common.ShiftKeyDown) Display.DisplayShiftKeyDown = false;
 
+            if (e.KeyCode == Keys.Space && spacebar_ptt_hold)   // W5TSU: momentary PTT
+            {
+                spacebarHoldRelease();
+                e.Handled = true;
+            }
+
             ToggleFocusMasterTimer();
+        }
+
+        // W5TSU: momentary spacebar PTT (SpaceBarPTTHold)
+        // KeyUp cannot be relied on to end the hold: FocusMaster (and anything else that moves
+        // keyboard focus off this form while MOX is engaged) means the release is never delivered.
+        // A timer polls the physical key state instead, which works whoever has focus.
+        private bool _spacebar_ptt_held = false;
+        private System.Windows.Forms.Timer _spacebar_ptt_timer = null;
+        private void spacebarHoldEngaged()
+        {
+            _spacebar_ptt_held = true;
+
+            if (_spacebar_ptt_timer == null)
+            {
+                _spacebar_ptt_timer = new System.Windows.Forms.Timer();
+                _spacebar_ptt_timer.Interval = 25;
+                _spacebar_ptt_timer.Tick += (s, ea) =>
+                {
+                    if (!Keyboard.IsKeyDownAsync(Keys.Space))
+                        spacebarHoldRelease();
+                };
+            }
+            _spacebar_ptt_timer.Start();
+        }
+        private void spacebarHoldRelease()
+        {
+            if (_spacebar_ptt_timer != null) _spacebar_ptt_timer.Stop();
+
+            if (!_spacebar_ptt_held) return;
+            _spacebar_ptt_held = false;
+
+            if (chkMOX.Checked && _current_ptt_mode == PTTMode.SPACE)
+            {
+                chkMOX.Checked = false;
+
+                //VACBypass
+                if (!(ARP.IsBusy && BypassVACWhenPlayingWAV)) // dont change vac bypass if it being used by ARP
+                {
+                    if (chkVAC1.Checked && Audio.VACBypass)
+                        Audio.VACBypass = false;
+                }
+            }
         }
 
         // MW0LGE
@@ -27274,6 +27329,27 @@ namespace Thetis
                                         }
                                     }
 
+                                    e.Handled = true;
+                                }
+                                else if (spacebar_ptt_hold)     // W5TSU: momentary PTT, released by KeyUp or the key-state poll timer
+                                {
+                                    if (!_spacebar_ptt_held)    // KeyDown auto-repeats while held, only key TX on the first press
+                                    {
+                                        spacebarHoldEngaged();
+
+                                        if (!chkMOX.Checked)
+                                        {
+                                            _current_ptt_mode = PTTMode.SPACE;
+                                            chkMOX.Checked = true;
+
+                                            //VACBypass
+                                            if (!(ARP.IsBusy && BypassVACWhenPlayingWAV)) // dont change vac bypass if it being used by ARP
+                                            {
+                                                if (chkVAC1.Checked && allow_space_bypass)
+                                                    Audio.VACBypass = true;
+                                            }
+                                        }
+                                    }
                                     e.Handled = true;
                                 }
                                 else if (spacebar_vox)
