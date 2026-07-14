@@ -52,7 +52,7 @@ version, and OS-integration helpers.
 | `Console/radio.cs` | Radio/receiver object model — bands, modes, filter presets per mode, and per-RX DSP state that the console manipulates. |
 | `Console/enums.cs` | Shared enumerations (bands, modes, meter types, display modes, etc.) used across the whole console. |
 | `Console/common.cs` | Grab-bag of static helpers: string/number formatting, control lookup, debugging aids, exception reporting. |
-| `Console/keyboard.cs` | Keyboard shortcut handling (tune steps, band/mode changes, CW from keyboard). |
+| `Console/keyboard.cs` | Static key-state helpers over `GetKeyState`/`GetAsyncKeyState` P/Invoke; the async variant backs the spacebar PTT-hold release detection (shortcut handling itself lives in `console.cs` `Console_KeyDown`). |
 | `Console/titlebar.cs` | Custom title bar text/version display. |
 | `Console/splash.cs`, `Console/progress.cs`, `Console/ucProgress.cs` | Startup splash screen and progress reporting during initialization. |
 | `Console/VersionInfo.cs`, `Console/Versions.cs`, `Console/frmReleaseNotes.cs`, `Console/frmAbout.cs` | Version identification, release notes, and About box. |

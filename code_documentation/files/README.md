@@ -17,14 +17,14 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`Console/clsSingleInstance.cs`](Console/clsSingleInstance.cs.md) — 2 functions/methods
 - [`Console/clsTouchHandler.cs`](Console/clsTouchHandler.cs.md) — 10 functions/methods
 - [`Console/common.cs`](Console/common.cs.md) — 89 functions/methods
-- [`Console/console.cs`](Console/console.cs.md) — 1046 functions/methods
+- [`Console/console.cs`](Console/console.cs.md) — 1048 functions/methods
 - [`Console/enums.cs`](Console/enums.cs.md) — 0 functions/methods
 - [`Console/frmAbout.cs`](Console/frmAbout.cs.md) — 13 functions/methods
 - [`Console/frmFinder.cs`](Console/frmFinder.cs.md) — 23 functions/methods
 - [`Console/frmLog.cs`](Console/frmLog.cs.md) — 5 functions/methods
 - [`Console/frmReleaseNotes.cs`](Console/frmReleaseNotes.cs.md) — 5 functions/methods
 - [`Console/hiperftimer.cs`](Console/hiperftimer.cs.md) — 6 functions/methods
-- [`Console/keyboard.cs`](Console/keyboard.cs.md) — 3 functions/methods
+- [`Console/keyboard.cs`](Console/keyboard.cs.md) — 5 functions/methods
 - [`Console/progress.cs`](Console/progress.cs.md) — 6 functions/methods
 - [`Console/radio.cs`](Console/radio.cs.md) — 29 functions/methods
 - [`Console/splash.cs`](Console/splash.cs.md) — 22 functions/methods
@@ -43,7 +43,7 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`Console/clsThetisSkinService.cs`](Console/clsThetisSkinService.cs.md) — 13 functions/methods
 - [`Console/database.cs`](Console/database.cs.md) — 110 functions/methods
 - [`Console/frmDBMan.cs`](Console/frmDBMan.cs.md) — 30 functions/methods
-- [`Console/setup.cs`](Console/setup.cs.md) — 2223 functions/methods
+- [`Console/setup.cs`](Console/setup.cs.md) — 2225 functions/methods
 - [`Console/ucTunestepOptionsGrid.cs`](Console/ucTunestepOptionsGrid.cs.md) — 5 functions/methods
 - [`Console/xvtr.cs`](Console/xvtr.cs.md) — 42 functions/methods
 

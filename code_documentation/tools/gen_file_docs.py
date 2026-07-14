@@ -80,6 +80,15 @@ print(f'outline: {len(file_info)} files across {len(sections)} sections')
 
 # ------------------------------------------------------------------ graph ---
 g = json.loads(GRAPH.read_text(encoding='utf-8'))
+# depending on where `graphify update` was run from, node paths are either
+# relative to the corpus root ("Console/keyboard.cs") or to the repo root
+# ("Project Files/Source/Console/keyboard.cs") - normalise to the former,
+# which is what the CODE_OUTLINE.md tables use
+_SRC_PREFIX = 'Project Files/Source/'
+for n in g['nodes']:
+    sf = n.get('source_file') or ''
+    if sf.startswith(_SRC_PREFIX):
+        n['source_file'] = sf[len(_SRC_PREFIX):]
 nodes = {n['id']: n for n in g['nodes']}
 nodes_by_file = defaultdict(list)
 for n in g['nodes']:

@@ -13,12 +13,12 @@
   - `Console/TCIServer.cs` (references ×4)
   - `Console/CAT/TCPIPcatServer.cs` (references ×3)
   - `Console/clsLegacyItemController.cs` (references ×2)
-  - `Console/clsSpectrumProcessor.cs` (imports ×1, references ×1)
   - `Console/Dumpcap.cs` (references ×2)
   - `Console/frmBandStack2.cs` (references ×2)
   - `Console/frmMacroButtonConfig.cs` (references ×2)
   - `Console/HPSDR/IoBoardHl2.cs` (references ×2)
   - `Console/Skin.cs` (references ×2)
+  - `Console/TimeOutTimerManager.cs` (references ×2)
   - …and 33 more files
 - Uses (outgoing references to other files):
   - `Console/console.cs` (calls ×23)
