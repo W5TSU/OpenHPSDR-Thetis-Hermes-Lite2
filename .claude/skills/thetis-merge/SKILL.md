@@ -74,7 +74,7 @@ These files conflict predictably; resolve them the same way every time:
 
 | File | Rule |
 |------|------|
-| `Console/titlebar.cs` | **Keep ours** — `BUILD_NAME` is this fork's identity (e.g. "HL2 Beta 1 (MI0BOT)"). |
+| `Console/titlebar.cs` | **Keep ours** — `BUILD_NAME` is this fork's identity (e.g. "HL2 (MI0BOT/W5TSU)"; must stay ≤ 22 chars so the splash's 32-char version line fits). |
 | `Source/ReleaseNotes.txt` | **Keep ours**, then add a line for the picked change under the current HL2 section, citing the upstream short SHA ("- [add] ... - from official Thetis <sha>"). |
 | `Console/packages.config` + `Thetis.csproj` + `app.config` | Treat as one unit: take NuGet version bumps in **all three or none** — a mismatch breaks the build. Upstream's bumps are safe (CI restores from nuget.org). |
 | `ReadMe.md` | **Keep the user's prose** (fork purpose, developer acknowledgments); take only newer release-headline/changelog facts. |

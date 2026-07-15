@@ -50,7 +50,7 @@ namespace Thetis
 {
     class TitleBar
     {
-        public const string BUILD_NAME = "HL2 Beta 1 (MI0BOT)";
+        public const string BUILD_NAME = "HL2 (MI0BOT/W5TSU)";   // W5TSU: must stay <= 22 chars, splash.cs caps the version line at 32
         public static string GetString(bool bWithFirmware = true)
         {
             string sRevision = "." + Common.GetRevision();
