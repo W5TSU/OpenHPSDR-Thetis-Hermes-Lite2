@@ -40,6 +40,17 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 - Setup → DSP → NR tab: "FreeDV (prototype)" group — **"Decode FreeDV 700E (RX1)"**
   checkbox (auto-persisted) + live sync/SNR label polled at 500 ms
 
+### ✅ Side-by-side test installer *(done — branch-only change)*
+
+- On this branch the MSI installs as **"Thetis HL2 Test"** into
+  `Program Files\OpenHPSDR\Thetis-Test\`, with its own x64 UpgradeCode (so it can
+  never upgrade/remove the production Thetis HL2 install), `Thetis-Test` shortcut
+  names, and `-dbid:HL2TEST` on the shortcuts so the test build keeps its own
+  active settings database. Output file: `Thetis-Test-v<version>.x64.msi`
+  (commit `d304a2df`)
+- **Must be reverted (or identity restored) before merging to master** — the release
+  installer keeps the production UpgradeCode, name, and `Thetis-HL2` folder
+
 ### ⬜ Phase 3 — verification *(next; needs Windows + HL2)*
 
 1. Bench: play a FreeDV 700E off-air recording through the Voicemeeter/VAC chain
@@ -52,6 +63,8 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 
 - Docs: FreeDV-native section in `Documentation/`, code_documentation regeneration
   (`fdv.c` needs a `CODE_OUTLINE.md` table row first), release-notes entry
+- Revert the Thetis-Test installer identity (see above) so master's MSI remains the
+  production installer
 - Decision gate: merge to master as an experimental feature in the next release,
   or keep maturing on the branch
 
