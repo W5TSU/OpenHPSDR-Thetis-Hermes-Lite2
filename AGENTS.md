@@ -84,6 +84,7 @@ When the user requests a durable behavior change, record it here or in the relev
 - Windows-only build (VS2022); on non-Windows verify via GitHub Actions: `gh workflow run build.yml --ref <branch> -R W5TSU/OpenHPSDR-Thetis-Hermes-Lite2` (always pass `-R`)
 - Release flow (version bump, notes, tag) follows `.claude/skills/thetis-merge/SKILL.md` Step 8; version is authoritative only in `Project Files/Source/Console/AssemblyInfo.cs`; `version.json` is vestigial upstream metadata — never bump it
 - Vendored code (`Project Files/lib/`, bundled ASIO SDK) and `Skins/` are not edited
+- `Tools/FreeDV/` holds the FreeDV bench-test signal generator (see its README); generated `.wav`/`.raw` outputs are gitignored, only the generator is tracked
 - Commit messages end with the Claude co-author trailer when Claude authors the change
 
 ## Child DOX Index
