@@ -103,7 +103,64 @@ MON (with headphone latency and coloring) is only a rough guide. Record yourself
 **WebSDR/KiwiSDR** or have a local station record you, then iterate the curve. RX EQ:
 leave near flat; +2–3 dB around 1.5–2 kHz helps pull voices from band noise.
 
-## 7. Gotchas
+## 7. FreeDV (digital voice)
+
+FreeDV (freedv.org) sits between the mic/headphones and Thetis, converting voice ↔ a
+~1–2 kHz modem signal transmitted as ordinary USB. Keep **Voicemeeter for the human
+side** and add a **VB-Cable pair** for the radio side:
+
+```
+AT2020 → Scarlett → Voicemeeter (B1) ──► FreeDV "From Mic"
+FreeDV "To Radio" ──► VB-Cable B ──► Thetis VAC1 in ──► HL2 TX
+HL2 RX ──► Thetis VAC1 out ──► VB-Cable A ──► FreeDV "From Radio"
+FreeDV "To Speakers" ──► Voicemeeter/Scarlett ──► headphones
+```
+
+| FreeDV audio device | Set to |
+|---------------------|--------|
+| From Microphone | `Voicemeeter Out B1` |
+| To Speakers | headphone path (Voicemeeter VAIO or Scarlett direct) |
+| From Radio | `CABLE-A Output` |
+| To Radio | `CABLE-B Input` |
+
+Thetis VAC1 is repointed to the cables while FreeDV is inline: Input = `CABLE-B Output`,
+Output = `CABLE-A Input`.
+
+**Leave FreeDV permanently in the chain**: its **Analog** button passes audio straight
+through, so normal SSB still works without any device reshuffling — just remember to
+switch the Thetis TX profile along with the Analog ↔ DV toggle.
+
+### Thetis settings for FreeDV — modem audio is not speech
+
+- **Mode DIGU**, filter ~3 kHz, all bands use USB convention.
+- Dedicated **"FreeDV" TX profile with ALL processing OFF**: TX EQ, CFC, compander,
+  DEXP, leveler, CESSB — any of them mangles the OFDM waveform and costs SNR at the
+  far end.
+- **RX**: NR/NR2/ANF and noise blankers OFF (they corrupt the modem constellation);
+  Thetis squelch off — FreeDV's own SNR squelch does the work.
+- **Drive**: high peak-to-average waveforms — set average output to ~20–30% of the
+  HL2's 5 W (≈1–1.5 W avg); 700E tolerates harder drive than 700D. PureSignal on is a
+  plus (linearity helps OFDM).
+- Sample rates stay 48 kHz end-to-end.
+
+### PTT
+
+Preferred: **com0com virtual serial pair** — Thetis Setup → CAT Control on one end
+(Kenwood TS-2000 dialect), FreeDV → Tools → PTT → Hamlib "Kenwood TS-2000" on the
+other, matching baud. Fallbacks: Thetis's TCP CAT server (if the FreeDV/Hamlib build
+supports network rigs) or VOX on the VAC input (risks clipping the modem preamble).
+
+### Operating
+
+- Watering holes: **14.236 MHz** (20 m, main US frequency), 7.177 (40 m, EU); check
+  **FreeDV Reporter** (qso.freedv.org) for live activity before calling.
+- Mode: **700E** for typical HF, 1600 for good conditions/legacy, **RADE** (FreeDV 2.x
+  neural codec) for best voice quality in an SSB channel — degrades gracefully at
+  HL2-class power.
+- The AT2020 chain needs no changes: FreeDV wants clean, flat, unprocessed mic audio.
+  Set FreeDV's own mic meter sensibly; no aggressive EQ into the codec.
+
+## 8. Gotchas
 
 - **Spacebar PTT vs VAC**: Thetis can bypass/mute the VAC mic path when keying with the
   space bar (the "allow space bypass" behavior). No TX audio when space-keying → check
