@@ -257,6 +257,17 @@ namespace Thetis
         public static extern void SetRXARNNRUseDefaultGain(int channel, int use_default_gain);
         //
 
+        // FreeDV RX decode (fdv.c) // W5TSU
+        [DllImport("wdsp.dll", EntryPoint = "SetRXAFDVRun", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRXAFDVRun(int channel, int run);
+
+        [DllImport("wdsp.dll", EntryPoint = "GetRXAFDVSync", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRXAFDVSync(int channel);
+
+        [DllImport("wdsp.dll", EntryPoint = "GetRXAFDVSnr", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double GetRXAFDVSnr(int channel);
+        //
+
         //libspecbleach
         [DllImport("wdsp.dll", EntryPoint = "SetRXASBNRRun", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetRXASBNRRun(int channel, int run);

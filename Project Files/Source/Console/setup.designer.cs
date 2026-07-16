@@ -2640,6 +2640,9 @@
             this.labelTS446 = new System.Windows.Forms.LabelTS();
             this.nudNR4_red_rx1 = new System.Windows.Forms.NumericUpDownTS();
             this.grpRNnoise = new System.Windows.Forms.GroupBoxTS();
+            this.grpFreeDV = new System.Windows.Forms.GroupBoxTS();
+            this.chkFreeDVDecode = new System.Windows.Forms.CheckBoxTS();
+            this.lblFreeDVStatus = new System.Windows.Forms.LabelTS();
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
             this.btnNR3_model_load = new System.Windows.Forms.ButtonTS();
@@ -5127,6 +5130,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_smo_rx1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).BeginInit();
             this.grpRNnoise.SuspendLayout();
+            this.grpFreeDV.SuspendLayout();
             this.grpDSPNR2RX2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_factor_rx2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_level_rx2)).BeginInit();
@@ -42475,6 +42479,7 @@
             this.tpDSPNR.Controls.Add(this.groupBoxTS56);
             this.tpDSPNR.Controls.Add(this.groupBoxTS55);
             this.tpDSPNR.Controls.Add(this.grpRNnoise);
+            this.tpDSPNR.Controls.Add(this.grpFreeDV);
             this.tpDSPNR.Controls.Add(this.grpDSPNR2RX2);
             this.tpDSPNR.Controls.Add(this.groupBoxTS5);
             this.tpDSPNR.Controls.Add(this.grpDSPNR2);
@@ -43149,9 +43154,43 @@
             this.grpRNnoise.TabIndex = 43;
             this.grpRNnoise.TabStop = false;
             this.grpRNnoise.Text = "NR3";
-            // 
+            //
+            // grpFreeDV
+            //
+            this.grpFreeDV.Controls.Add(this.chkFreeDVDecode);
+            this.grpFreeDV.Controls.Add(this.lblFreeDVStatus);
+            this.grpFreeDV.Location = new System.Drawing.Point(483, 97);
+            this.grpFreeDV.Name = "grpFreeDV";
+            this.grpFreeDV.Size = new System.Drawing.Size(235, 76);
+            this.grpFreeDV.TabIndex = 44;
+            this.grpFreeDV.TabStop = false;
+            this.grpFreeDV.Text = "FreeDV (prototype)";
+            //
+            // chkFreeDVDecode
+            //
+            this.chkFreeDVDecode.AutoSize = true;
+            this.chkFreeDVDecode.Image = null;
+            this.chkFreeDVDecode.Location = new System.Drawing.Point(16, 22);
+            this.chkFreeDVDecode.Name = "chkFreeDVDecode";
+            this.chkFreeDVDecode.Size = new System.Drawing.Size(160, 17);
+            this.chkFreeDVDecode.TabIndex = 0;
+            this.chkFreeDVDecode.Text = "Decode FreeDV 700E (RX1)";
+            this.toolTip1.SetToolTip(this.chkFreeDVDecode, "Decode FreeDV 700E digital voice on RX1. Use USB/DIGU with a ~3kHz filter; modem audio passes through until sync.");
+            this.chkFreeDVDecode.UseVisualStyleBackColor = true;
+            this.chkFreeDVDecode.CheckedChanged += new System.EventHandler(this.chkFreeDVDecode_CheckedChanged);
+            //
+            // lblFreeDVStatus
+            //
+            this.lblFreeDVStatus.AutoSize = true;
+            this.lblFreeDVStatus.Image = null;
+            this.lblFreeDVStatus.Location = new System.Drawing.Point(16, 48);
+            this.lblFreeDVStatus.Name = "lblFreeDVStatus";
+            this.lblFreeDVStatus.Size = new System.Drawing.Size(21, 13);
+            this.lblFreeDVStatus.TabIndex = 1;
+            this.lblFreeDVStatus.Text = "off";
+            //
             // chkNR3_RNNoiseFixedGain
-            // 
+            //
             this.chkNR3_RNNoiseFixedGain.AutoSize = true;
             this.chkNR3_RNNoiseFixedGain.Checked = true;
             this.chkNR3_RNNoiseFixedGain.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -72724,6 +72763,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_smo_rx1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).EndInit();
             this.grpRNnoise.ResumeLayout(false);
+            this.grpFreeDV.ResumeLayout(false);
+            this.grpFreeDV.PerformLayout();
             this.grpRNnoise.PerformLayout();
             this.grpDSPNR2RX2.ResumeLayout(false);
             this.grpDSPNR2RX2.PerformLayout();
@@ -77635,6 +77676,9 @@
         private CheckBoxTS chkOverrideSpotFlashColour;
         private ColorButton clrbtnSpotFlashColour;
         private GroupBoxTS grpRNnoise;
+        private GroupBoxTS grpFreeDV;
+        private CheckBoxTS chkFreeDVDecode;
+        private LabelTS lblFreeDVStatus;
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;
         private LabelTS labelTS446;

@@ -2464,6 +2464,7 @@ namespace Thetis
             radANFPreAGC_CheckedChanged(this, e);
             radANF2PreAGC_CheckedChanged(this, e);
             chkNR3_RNNoiseFixedGain_CheckedChanged(this, e);
+            chkFreeDVDecode_CheckedChanged(this, e); // W5TSU: FreeDV RX decode
             chkMNFAutoIncrease_CheckedChanged(this, e);
             udCWEdgeLength_ValueChanged(this, e);
             chkShowAGC_CheckedChanged(this, e);
@@ -36680,6 +36681,50 @@ namespace Thetis
             console.radio.GetDSPRX(0, 0).RXANR3FixedGain = fixed_gain;
             console.radio.GetDSPRX(0, 1).RXANR3FixedGain = fixed_gain;
             console.radio.GetDSPRX(1, 0).RXANR3FixedGain = fixed_gain;
+        }
+
+        // W5TSU: FreeDV RX decode prototype (wdsp fdv.c)
+        private System.Windows.Forms.Timer _freedv_status_timer = null;
+        private void chkFreeDVDecode_CheckedChanged(object sender, EventArgs e)
+        {
+            console.radio.GetDSPRX(0, 0).RXAFDVRun = chkFreeDVDecode.Checked ? 1 : 0;
+
+            if (_freedv_status_timer == null)
+            {
+                _freedv_status_timer = new System.Windows.Forms.Timer();
+                _freedv_status_timer.Interval = 500;
+                _freedv_status_timer.Tick += freedvStatusTimer_Tick;
+            }
+            _freedv_status_timer.Enabled = chkFreeDVDecode.Checked;
+
+            if (!chkFreeDVDecode.Checked)
+            {
+                lblFreeDVStatus.Text = "off";
+                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+        }
+
+        private void freedvStatusTimer_Tick(object sender, EventArgs e)
+        {
+            if (!console.PowerOn)
+            {
+                lblFreeDVStatus.Text = "radio off";
+                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+                return;
+            }
+
+            bool sync = WDSP.GetRXAFDVSync(WDSP.id(0, 0)) != 0;
+            if (sync)
+            {
+                double snr = WDSP.GetRXAFDVSnr(WDSP.id(0, 0));
+                lblFreeDVStatus.Text = string.Format("SYNC   SNR {0:F1} dB", snr);
+                lblFreeDVStatus.ForeColor = System.Drawing.Color.Green;
+            }
+            else
+            {
+                lblFreeDVStatus.Text = "no sync";
+                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
         }
 
         private void pbCMasio_InOut_Info_Click(object sender, EventArgs e)

@@ -372,6 +372,7 @@ namespace Thetis
             this.RXANR3Run = rx.rx_nr3_run;
             this.RXANR3Position = rx.rx_nr3_position;
             this.RXANR3FixedGain = rx.rx_nr3_fixed_gain;
+            this.RXAFDVRun = rx.rx_fdv_run; // W5TSU: FreeDV RX decode
             this.RXANR4Run = rx.rx_nr4_run;
             this.RXANR4Position = rx.rx_nr4_position;
             this.RXASBNRreductionAmount = rx.rx_nr4_reductionAmount;
@@ -475,6 +476,7 @@ namespace Thetis
             RXANR3Run = rx_nr3_run;
             RXANR3Position = rx_nr3_position;
             RXANR3FixedGain = rx_nr3_fixed_gain;
+            RXAFDVRun = rx_fdv_run; // W5TSU: FreeDV RX decode
             RXANR4Run = rx_nr4_run;
             RXANR4Position = rx_nr4_position;
             RXASBNRreductionAmount = rx_nr4_reductionAmount;
@@ -2272,6 +2274,26 @@ namespace Thetis
                 }
             }
         }
+        // W5TSU: FreeDV RX decode (fdv.c)
+        private int rx_fdv_run = 0;
+        private int rx_fdv_run_dsp = 0;
+        public int RXAFDVRun
+        {
+            get { return rx_fdv_run; }
+            set
+            {
+                rx_fdv_run = value;
+                if (update)
+                {
+                    if (value != rx_fdv_run_dsp || force)
+                    {
+                        WDSP.SetRXAFDVRun(WDSP.id(thread, subrx), value);
+                        rx_fdv_run_dsp = value;
+                    }
+                }
+            }
+        }
+
         private int rx_nr3_position = 1;
         private int rx_nr3_position_dsp = 1;
         public int RXANR3Position
