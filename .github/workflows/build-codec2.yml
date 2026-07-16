@@ -2,6 +2,10 @@
 # dll/import-lib/headers as an artifact, which is then vendored into
 # Project Files/lib/codec2_x64/ for the FreeDV RX prototype (see FreeDV branch).
 # Dispatch-only; not part of the normal build.
+#
+# codec2's CMake uses GCC-style flags, so it is built with MinGW (MSYS2);
+# an MSVC-compatible import library is then generated with gendef + lib.exe
+# so the MSVC-built wdsp.dll can link against it.
 name: Build codec2 (Windows x64)
 
 on:
@@ -15,6 +19,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - name: Checkout codec2
         uses: actions/checkout@v4
@@ -23,26 +30,53 @@ jobs:
           ref: ${{ inputs.codec2_ref }}
           path: codec2
 
-      - name: Configure (MSVC x64)
-        run: cmake -S codec2 -B codec2/build -A x64 -DBUILD_SHARED_LIBS=ON -DUNITTEST=OFF
+      - name: Set up MSYS2/MinGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-tools-git
 
-      - name: Build library
-        run: cmake --build codec2/build --config Release --target codec2
+      - name: Configure and build (MinGW64)
+        run: |
+          cmake -S codec2 -B codec2/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DUNITTEST=OFF
+          cmake --build codec2/build --target codec2
 
-      - name: Install to staging
-        run: cmake --install codec2/build --config Release --prefix staging
+      - name: Install headers to staging
+        run: cmake --install codec2/build --prefix staging || true
+
+      - name: Generate .def from the dll
+        run: |
+          DLL=$(find codec2/build -name "libcodec2*.dll" | head -1)
+          cp "$DLL" libcodec2.dll
+          gendef libcodec2.dll
+          ls -la libcodec2.*
+
+      - name: Set up MSVC dev environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Create MSVC import library
+        shell: cmd
+        run: lib /def:libcodec2.def /machine:x64 /out:codec2.lib
 
       - name: Package
-        shell: bash
         run: |
           mkdir -p out/codec2_x64/include
-          find staging -name "*.dll" -exec cp {} out/codec2_x64/ \;
-          find staging -name "*.lib" -exec cp {} out/codec2_x64/ \;
-          find codec2/build -name "codec2.dll" -exec cp {} out/codec2_x64/ \; 2>/dev/null || true
-          find codec2/build -name "codec2.lib" -exec cp {} out/codec2_x64/ \; 2>/dev/null || true
-          cp -r staging/include/* out/codec2_x64/include/ 2>/dev/null || true
+          cp libcodec2.dll codec2.lib out/codec2_x64/
+          cp -r staging/include/* out/codec2_x64/include/ 2>/dev/null || \
+            (mkdir -p out/codec2_x64/include/codec2 && \
+             cp codec2/src/freedv_api.h codec2/src/codec2.h codec2/src/comp.h \
+                codec2/src/modem_stats.h codec2/src/codec2_fft.h codec2/src/kiss_fft.h \
+                out/codec2_x64/include/codec2/)
           cp codec2/COPYING out/codec2_x64/
-          echo "codec2 ${{ inputs.codec2_ref }} built $(date -u +%F) via MSVC x64" > out/codec2_x64/VERSION.txt
+          echo "codec2 ${{ inputs.codec2_ref }} built $(date -u +%F), MinGW64 dll + MSVC import lib" > out/codec2_x64/VERSION.txt
           ls -laR out/
 
       - name: Upload artifact
