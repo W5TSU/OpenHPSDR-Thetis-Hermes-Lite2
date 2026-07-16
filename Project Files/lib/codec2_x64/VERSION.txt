@@ -1,0 +1,1 @@
+codec2 1.2.0 built 2026-07-16, MinGW64 dll + MSVC import lib
