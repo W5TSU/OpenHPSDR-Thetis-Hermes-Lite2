@@ -348,7 +348,15 @@ void create_rxa (int channel)
 		rxa[channel].midbuff,							// input buffer
 		rxa[channel].midbuff,							// output buffer
 		ch[channel].dsp_rate);							// samplerate
-	
+
+	// FreeDV RX decode	// W5TSU
+	rxa[channel].fdv.p = create_fdv (
+		0,												// run
+		ch[channel].dsp_size,							// buffer size
+		rxa[channel].midbuff,							// input buffer
+		rxa[channel].midbuff,							// output buffer
+		ch[channel].dsp_rate);							// samplerate
+
 	// AGC
 	rxa[channel].agc.p = create_wcpagc (
 		1,												// run
@@ -576,6 +584,7 @@ void destroy_rxa (int channel)
 	destroy_emnr (rxa[channel].emnr.p);
 	destroy_rnnr (rxa[channel].rnnr.p);	// NR3 + NR4 support (nr3)
     destroy_sbnr (rxa[channel].sbnr.p);	// NR3 + NR4 support (nr4)
+	destroy_fdv (rxa[channel].fdv.p);	// W5TSU: FreeDV RX decode
 	destroy_anr (rxa[channel].anr.p);
 	destroy_anf (rxa[channel].anf.p);
 	destroy_eqp (rxa[channel].eqp.p);
@@ -628,6 +637,7 @@ void flush_rxa (int channel)
 	flush_doublepole (rxa[channel].doublepole.p);
 	flush_matched (rxa[channel].matched.p);
 	flush_gaussian (rxa[channel].gaussian.p);
+	flush_fdv (rxa[channel].fdv.p);	// W5TSU: FreeDV RX decode
 	flush_speak (rxa[channel].speak.p);
 	flush_mpeak (rxa[channel].mpeak.p);
 	flush_ssql (rxa[channel].ssql.p);
@@ -669,6 +679,7 @@ void xrxa (int channel)
     xsbnr (rxa[channel].sbnr.p, 1);	// NR3 + NR4 support (nr4)
 	xbandpass (rxa[channel].bp1.p, 1);
 	xmeter (rxa[channel].agcmeter.p);
+	xfdv (rxa[channel].fdv.p);	// W5TSU: FreeDV RX decode, post-AGC
 	xsiphon (rxa[channel].sip1.p, 0);
 	xcbl (rxa[channel].cbl.p, 1);	// carrier removal after AGC (default)
 	xdoublepole (rxa[channel].doublepole.p, 0);
@@ -742,6 +753,7 @@ void setDSPSamplerate_rxa (int channel)
 	setSamplerate_emnr (rxa[channel].emnr.p, ch[channel].dsp_rate);
 	setSamplerate_rnnr(rxa[channel].rnnr.p, ch[channel].dsp_rate); // NR3 + NR4 support (nr3)
 	setSamplerate_sbnr(rxa[channel].sbnr.p, ch[channel].dsp_rate); // NR3 + NR4 support (nr4)
+	setSamplerate_fdv(rxa[channel].fdv.p, ch[channel].dsp_rate); // W5TSU: FreeDV RX decode
 	setSamplerate_bandpass (rxa[channel].bp1.p, ch[channel].dsp_rate);
 	setSamplerate_wcpagc (rxa[channel].agc.p, ch[channel].dsp_rate);
 	setSamplerate_meter (rxa[channel].agcmeter.p, ch[channel].dsp_rate);
@@ -809,6 +821,8 @@ void setDSPBuffsize_rxa (int channel)
 	setBuffers_rnnr(rxa[channel].rnnr.p, rxa[channel].midbuff, rxa[channel].midbuff); // NR3 + NR4 support (nr3)
 	setSize_sbnr(rxa[channel].sbnr.p, ch[channel].dsp_size); // NR3 + NR4 support (nr4)
     setBuffers_sbnr (rxa[channel].sbnr.p, rxa[channel].midbuff, rxa[channel].midbuff); // NR3 + NR4 support (nr4)
+	setSize_fdv(rxa[channel].fdv.p, ch[channel].dsp_size); // W5TSU: FreeDV RX decode
+	setBuffers_fdv(rxa[channel].fdv.p, rxa[channel].midbuff, rxa[channel].midbuff); // W5TSU: FreeDV RX decode
 	setSize_emnr (rxa[channel].emnr.p, ch[channel].dsp_size);
 	setBuffers_bandpass (rxa[channel].bp1.p, rxa[channel].midbuff, rxa[channel].midbuff);
 	setSize_bandpass (rxa[channel].bp1.p, ch[channel].dsp_size);

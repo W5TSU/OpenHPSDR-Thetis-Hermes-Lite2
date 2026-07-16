@@ -83,6 +83,7 @@ warren@wpratt.com
 #include "osctrl.h"
 #include "patchpanel.h"
 #include "resample.h"
+#include "fdv.h"	// W5TSU: FreeDV RX decode (needs resample.h above)
 #include "rmatch.h"
 #include "RXA.h"
 #include "sender.h"

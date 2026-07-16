@@ -164,6 +164,10 @@ struct _rxa
     {
         SBNR p; // NR3 + NR4 support (nr4)
     } sbnr;
+    struct
+    {
+        FDV p; // W5TSU: FreeDV RX decode
+    } fdv;
 
 	struct
 	{
