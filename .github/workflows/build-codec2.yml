@@ -44,7 +44,8 @@ jobs:
       - name: Configure and build (MinGW64)
         run: |
           cmake -S codec2 -B codec2/build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DUNITTEST=OFF
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DUNITTEST=OFF \
+            -DCMAKE_SHARED_LINKER_FLAGS="-static-libgcc"
           cmake --build codec2/build --target codec2
 
       - name: Install headers to staging
