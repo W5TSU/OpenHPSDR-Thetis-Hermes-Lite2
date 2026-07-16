@@ -102,6 +102,7 @@
       <Pattern>^(\d+.\d+.\d+)</Pattern>
       <AssemblyVersion>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern)))</AssemblyVersion>
     </PropertyGroup>
-    <Move SourceFiles="..\..\bin\Installers\$(OutputName).msi" DestinationFiles="..\..\bin\Installers\Thetis-v$(AssemblyVersion).$(Platform).msi" />
+    <!-- W5TSU: FreeDV branch builds a side-by-side test install -->
+    <Move SourceFiles="..\..\bin\Installers\$(OutputName).msi" DestinationFiles="..\..\bin\Installers\Thetis-Test-v$(AssemblyVersion).$(Platform).msi" />
   </Target>
 </Project>
