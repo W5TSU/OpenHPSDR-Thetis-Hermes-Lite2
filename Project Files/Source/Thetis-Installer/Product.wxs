@@ -321,6 +321,15 @@
               />
 		</Component>
 
+		<!-- W5TSU: FreeDV - wdsp.dll imports libcodec2.dll, must ship beside it -->
+		<Component Guid="*">
+			<File Id="libcodec2DLL"
+				  Source="$(var.FilesPath)libcodec2.dll"
+				  KeyPath="yes"
+				  Checksum="yes"
+              />
+		</Component>
+
       <Component Guid="*">
         <File Id="PA19DLL"
               Source="$(var.FilesPath)PA19.dll"
