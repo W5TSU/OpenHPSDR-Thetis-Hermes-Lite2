@@ -2,6 +2,11 @@ This is the Thetis version for the Hermes Lite 2.
 
 Please report any bugs on [GitHub here](https://github.com/mi0bot/OpenHPSDR-Thetis/issues/new/choose).
 
+# 2.10.3.19 HL2 (2026-07-15)
+
+- [change] build name is now "HL2 (MI0BOT/W5TSU)" on the splash screen, title bar, and About box, so builds from this repository (W5TSU's fork) are not confused with MI0BOT's releases - report issues on this build to W5TSU, not MI0BOT
+- [add] developer tooling: Doxygen configuration (Doxyfile) and AGENTS.md work contracts
+
 # 2.10.3.18 HL2 (2026-07-14)
 
 - [add] SpaceBar Control "PTT/MOX Hold" option (Setup > Keyboard): hold the space bar to transmit, release to receive; works even when Focus Master hands keyboard focus to another program

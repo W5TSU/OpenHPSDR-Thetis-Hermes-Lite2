@@ -18,7 +18,12 @@ I have a (Hermes-Lite 2+)"http://hermeslite.com" with some personal modification
 
 For the full story of how this software evolved — from FlexRadio's SDR-1000 and the HPSDR/TAPR project through OpenHPSDR and Thetis to the Hermes-Lite 2 forks above — see [History](code_documentation/History.md). Developer documentation for this code base is in [code_documentation](code_documentation/README.md).
 
-# Latest Release v2.10.3.18 14th July, 2026
+# Latest Release v2.10.3.19 15th July, 2026
+
+# 2.10.3.19 (2026-07-15)
+
+- Build identity: the splash screen, title bar, and About box now show **HL2 (MI0BOT/W5TSU)**. Releases from this repository are W5TSU's builds of the Hermes-Lite 2 fork, so they are not confused with MI0BOT's OpenHPSDR-Thetis releases — please report issues with these builds here, not to MI0BOT.
+- Developer tooling: Doxygen configuration (`Doxyfile`) and AGENTS.md work contracts.
 
 # 2.10.3.18 (2026-07-14)
 
