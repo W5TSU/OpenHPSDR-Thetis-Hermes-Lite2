@@ -2492,6 +2492,7 @@
             this.radRX2LSB = new System.Windows.Forms.RadioButtonTS();
             this.radRX2LSBUSB = new System.Windows.Forms.RadioButtonTS();
             this.tpDSPFM = new System.Windows.Forms.TabPage();
+            this.tpDSPFreeDV = new System.Windows.Forms.TabPage();
             this.grpFMRX = new System.Windows.Forms.GroupBoxTS();
             this.btnResetFMAF_rx = new System.Windows.Forms.ButtonTS();
             this.labelTS187 = new System.Windows.Forms.LabelTS();
@@ -5078,6 +5079,7 @@
             this.panelTS9.SuspendLayout();
             this.grpRX2AMSBSEL.SuspendLayout();
             this.tpDSPFM.SuspendLayout();
+            this.tpDSPFreeDV.SuspendLayout();
             this.grpFMRX.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udFMHighCutRX)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udFMLowCutRX)).BeginInit();
@@ -37815,6 +37817,7 @@
             this.tcDSP.Controls.Add(this.tpDSPAGCALC);
             this.tcDSP.Controls.Add(this.tpDSPAMSAM);
             this.tcDSP.Controls.Add(this.tpDSPFM);
+            this.tcDSP.Controls.Add(this.tpDSPFreeDV);
             this.tcDSP.Controls.Add(this.tpDSPAudio);
             this.tcDSP.Controls.Add(this.tpDSPEER);
             this.tcDSP.Controls.Add(this.tpDSPNR);
@@ -41184,9 +41187,20 @@
             this.chkEmphPos.Text = "Pre-emphasize Before Limiting";
             this.chkEmphPos.UseVisualStyleBackColor = true;
             this.chkEmphPos.CheckedChanged += new System.EventHandler(this.chkEmphPos_CheckedChanged);
-            // 
+            //
+            // tpDSPFreeDV
+            //
+            this.tpDSPFreeDV.BackColor = System.Drawing.SystemColors.Control;
+            this.tpDSPFreeDV.Controls.Add(this.grpFreeDV);
+            this.tpDSPFreeDV.Location = new System.Drawing.Point(4, 22);
+            this.tpDSPFreeDV.Name = "tpDSPFreeDV";
+            this.tpDSPFreeDV.Padding = new System.Windows.Forms.Padding(3);
+            this.tpDSPFreeDV.Size = new System.Drawing.Size(724, 414);
+            this.tpDSPFreeDV.TabIndex = 12;
+            this.tpDSPFreeDV.Text = "FreeDV";
+            //
             // tpDSPAudio
-            // 
+            //
             this.tpDSPAudio.BackColor = System.Drawing.SystemColors.Control;
             this.tpDSPAudio.Controls.Add(this.grpDSPAudRX2Dolly);
             this.tpDSPAudio.Controls.Add(this.grpDSPAudRX1SubDolly);
@@ -42479,7 +42493,6 @@
             this.tpDSPNR.Controls.Add(this.groupBoxTS56);
             this.tpDSPNR.Controls.Add(this.groupBoxTS55);
             this.tpDSPNR.Controls.Add(this.grpRNnoise);
-            this.tpDSPNR.Controls.Add(this.grpFreeDV);
             this.tpDSPNR.Controls.Add(this.grpDSPNR2RX2);
             this.tpDSPNR.Controls.Add(this.groupBoxTS5);
             this.tpDSPNR.Controls.Add(this.grpDSPNR2);
@@ -43159,7 +43172,7 @@
             //
             this.grpFreeDV.Controls.Add(this.chkFreeDVDecode);
             this.grpFreeDV.Controls.Add(this.lblFreeDVStatus);
-            this.grpFreeDV.Location = new System.Drawing.Point(483, 97);
+            this.grpFreeDV.Location = new System.Drawing.Point(16, 16);
             this.grpFreeDV.Name = "grpFreeDV";
             this.grpFreeDV.Size = new System.Drawing.Size(235, 76);
             this.grpFreeDV.TabIndex = 44;
@@ -72698,6 +72711,7 @@
             this.grpRX2AMSBSEL.ResumeLayout(false);
             this.grpRX2AMSBSEL.PerformLayout();
             this.tpDSPFM.ResumeLayout(false);
+            this.tpDSPFreeDV.ResumeLayout(false);
             this.grpFMRX.ResumeLayout(false);
             this.grpFMRX.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udFMHighCutRX)).EndInit();
@@ -74999,6 +75013,7 @@
         private System.Windows.Forms.NumericUpDownTS udTXGenPulseTransition;
         private System.Windows.Forms.LabelTS labelTS317;
         private System.Windows.Forms.TabPage tpDSPFM;
+        private System.Windows.Forms.TabPage tpDSPFreeDV;
         private System.Windows.Forms.GroupBoxTS grpFMTX;
         private System.Windows.Forms.CheckBoxTS chkEmphPos;
         private System.Windows.Forms.GroupBoxTS grpFMRX;
