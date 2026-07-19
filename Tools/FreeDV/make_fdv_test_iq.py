@@ -22,6 +22,8 @@ Requires numpy only.
 """
 
 import argparse
+import os
+import shutil
 import struct
 import sys
 
@@ -101,6 +103,14 @@ def main() -> int:
     dur = len(iq) / args.rate_out
     print(f"wrote {args.out_wav}: {dur:.1f} s, {args.rate_out} Hz stereo float32 I/Q, "
           f"peak {args.peak_dbfs:.0f} dBFS")
+
+    # Also drop a copy under the fixed name Thetis's quick-Play button expects,
+    # ready to place in Music\Thetis\quickrecord\ (Thetis maintains the .json
+    # sidecar itself on first play).
+    quick = os.path.join(os.path.dirname(os.path.abspath(args.out_wav)), "SDRQuickAudio.wav")
+    if os.path.abspath(args.out_wav) != quick:
+        shutil.copyfile(args.out_wav, quick)
+        print(f"wrote {quick} (copy for Thetis quick-Play)")
     return 0
 
 

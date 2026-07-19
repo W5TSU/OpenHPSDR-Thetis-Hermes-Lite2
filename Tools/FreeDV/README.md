@@ -26,12 +26,15 @@ python3 make_fdv_test_iq.py fdv700e_modem_8k.raw fdv700e_test_iq.wav
 ```
 
 (~112 s of speech; needs Python 3 + numpy only. `--peak-dbfs`/`--noise-dbfs`
-adjust signal level and noise floor.)
+adjust signal level and noise floor. Alongside the named output the script also
+writes `SDRQuickAudio.wav`, a ready-named copy for Thetis's quick-Play button.)
 
 ## Using it in Thetis
 
-1. Copy `fdv700e_test_iq.wav` to the Windows machine as
-   `Music\Thetis\quickrecord\SDRQuickAudio.wav`.
+1. Copy `SDRQuickAudio.wav` to the Windows machine into
+   `Music\Thetis\quickrecord\` (Setup → Audio → Recording → "Open Quick Record
+   Folder" opens the exact folder; Thetis maintains the `.json` sidecar there
+   itself).
 2. Thetis: RX1 mode **DIGU**, ~3 kHz filter, NR/NB/ANF/squelch off; enable
    Setup → DSP → NR → "Decode FreeDV 700E (RX1)".
 3. Press the console's quick **Play** button. Expect the modem waveform on the
