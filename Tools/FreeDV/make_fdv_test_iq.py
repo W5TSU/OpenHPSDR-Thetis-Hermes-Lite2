@@ -5,9 +5,10 @@ Takes the raw 8 kHz 16-bit mono modem audio produced by codec2's `freedv_tx`
 and writes a stereo I/Q wav (left = I, right = Q) that Thetis's RX wave
 playback injects ahead of the whole RXA DSP chain, exactly where antenna
 samples enter (ChannelMaster pipe.c, "IQ data" position). The modem audio is
-converted to its analytic signal (FFT Hilbert transform), so the energy sits
-only on the positive-frequency side: with the VFO on the playback centre and
-mode DIGU, the signal appears at +500..+2500 Hz in the passband, image-free.
+converted to a single-sideband complex signal (FFT Hilbert transform, then
+conjugated to match wdsp's spectral sign convention): with the VFO on the
+playback centre and mode DIGU, the signal appears at +500..+2500 Hz in the
+passband, image-free.
 
 Usage:
     python3 make_fdv_test_iq.py modem_8k.raw out.wav \
@@ -78,8 +79,11 @@ def main() -> int:
         iq += rng.normal(0.0, sigma, len(iq)) + 1j * rng.normal(0.0, sigma, len(iq))
 
     frames = np.empty((len(iq), 2), dtype="<f4")
+    # Thetis/wdsp use the opposite spectral sign convention: a straight analytic
+    # signal displays in the lower sideband, so write the conjugate to land USB
+    # (verified on the panadapter against the FreeDV branch build).
     frames[:, 0] = iq.real  # left  = I
-    frames[:, 1] = iq.imag  # right = Q
+    frames[:, 1] = -iq.imag  # right = Q (conjugate)
     data = frames.tobytes()
 
     with open(args.out_wav, "wb") as f:
