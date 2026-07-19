@@ -37724,6 +37724,7 @@ namespace Thetis
                     ckQuickPlay.Checked = false;
                     ckQuickPlay.CheckedChanged += ckQuickPlay_CheckedChanged;
                     ckQuickRec.Enabled = true;
+                    MessageBox.Show("Quick play failed: " + error + "\n\n" + file, "Quick Play", MessageBoxButtons.OK, MessageBoxIcon.Warning); // W5TSU: surface the otherwise-discarded error
                 }
             }
             else
