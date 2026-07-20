@@ -37,8 +37,13 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 - `dsp.cs`: P/Invoke declarations (rnnoise group pattern)
 - `radio.cs`: `RXAFDVRun` cached property on `RadioDSPRX` (`RXANR3Run` pattern) — run
   flag survives wdsp channel rebuilds and applies via delayed update
-- Setup → DSP → NR tab: "FreeDV (prototype)" group — **"Decode FreeDV 700E (RX1)"**
-  checkbox (auto-persisted) + live sync/SNR label polled at 500 ms
+- Setup → DSP → its own **"FreeDV"** tab (placed after AM/SAM and FM; originally
+  tucked into the NR tab where it was easy to miss — moved `7289b20e`) — "FreeDV
+  (prototype)" group, **"Decode FreeDV 700E (RX1)"** checkbox (auto-persisted) +
+  live sync/SNR label polled at 500 ms
+- Quick-Play failures (missing file, already-playing, bad header) used to silently
+  uncheck the button with the error discarded; now shown in a message box with the
+  attempted file path (`9006b38e`)
 
 ### ✅ Side-by-side test installer *(done — branch-only change)*
 
@@ -51,7 +56,7 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 - **Must be reverted (or identity restored) before merging to master** — the release
   installer keeps the production UpgradeCode, name, and `Thetis-HL2` folder
 
-### ⬜ Phase 3 — verification *(next; needs Windows + HL2)*
+### 🟡 Phase 3 — verification *(in progress; blocked on "no sync")*
 
 > Note: audio can't be injected into the RX chain via Voicemeeter/VAC — VAC input
 > feeds the TX mic path only. The bench route is Thetis's RX wave playback, which
@@ -61,24 +66,51 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 **Common settings** (all steps): RX1 mode **DIGU**, ~3 kHz filter, NR/NR2/ANF/NB
 and squelch **off** (`Thetis_VB-Audio_config.md` §7).
 
-1. ✅ **Bench signal built** — `Tools/FreeDV/fdv700e_test_iq.wav` (~112 s, perfect
-   700E, verified: demod + `freedv_rx` decodes all 1405 frames). Regenerate any
-   time with `Tools/FreeDV/make_fdv_test_iq.py` (see its README).
-2. ⬜ **Smoke test**: install `Thetis-Test-v<version>.x64.msi`; confirm
-   `libcodec2.dll` is in the install folder and ticking the FreeDV checkbox on an
-   empty band doesn't fault (P/Invoke/dll-load check)
-3. ⬜ **Bench decode**: copy the test wav to
-   `Music\Thetis\quickrecord\SDRQuickAudio.wav`, press the console quick **Play**
-   button (plays into RX1) → expect warble (passthrough) → decoded voice + green
-   "SYNC SNR x.x dB"; on stop, graceful fallback to passthrough — no silence, no
-   crash
-4. ⬜ **Off-air capture**: during live activity, quick-**Rec** a few minutes of
-   14.236 MHz — becomes the permanent real-world regression file (replayable I/Q)
-5. ⬜ **Live decode**: 14.236 MHz DIGU (check qso.freedv.org first; evenings/nets).
-   Ground truth: before enabling the checkbox, confirm the external FreeDV GUI app
-   (VAC path, §7) syncs on the same signal — separates our-code failures from band
-   conditions. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
-6. ⬜ **Iterate on findings**:
+1. ✅ **Bench signal built** — `Tools/FreeDV/fdv700e_test_iq.wav` (~112 s, 700E via
+   codec2's `freedv_tx`, ve9qrp sample). Regenerate any time with
+   `Tools/FreeDV/make_fdv_test_iq.py` (see its README); also drops a ready-named
+   `SDRQuickAudio.wav` copy. **Bug found & fixed in this step**: the generator's
+   original analytic-signal (Hilbert) construction landed the signal in the *lower*
+   sideband — wdsp's I/Q spectral sign convention is the conjugate of the textbook
+   one. Fixed by writing `-Q` (`df591ac0`); confirmed on the panadapter afterward.
+2. ✅ **Smoke test** — `Thetis-Test` installs and runs the FreeDV tab/checkbox
+   without fault; `libcodec2.dll` loads fine.
+3. 🟡 **Bench decode — in progress, currently blocked.** Signal plays and is
+   visually/numerically confirmed correct on every axis checked so far, but the
+   sync label sticks on **"no sync"** and never flips. Ruled out so far:
+   - Sideband/position: DIGU confirmed, dial re-anchors correctly on replay,
+     signal sits dead-centered in the 300–2700 Hz filter (~1500 Hz above dial,
+     matching 700E's designed OFDM centre frequency) — confirmed via panadapter
+     screenshots, not just the frequency math
+   - Filter width: 300–2700 Hz (2400 Hz) is ample; 700E's actual occupied
+     bandwidth is ~1500 Hz (21 carriers × ~71 Hz spacing, codec2 `ofdm_mode.c`),
+     centred at 1500 Hz — no clipping
+   - Level: signal peaks -85 dBFS against a -145 dBFS floor (60 dB), far more
+     than needed for OFDM sync
+   - ANF, NR/NR2/NR3, NB, SNB, MNF (manual notch), CTUN — all confirmed off via
+     console screenshots (ANF/MNF were the leading suspects — a notch filter
+     sitting on the OFDM carriers — but both were off)
+   - AGC set to Slow; not yet tested with AGC fully off/fixed gain
+   - Code audit: `fdv.c`'s resampler direction, RMS/gain-normalization math, and
+     the `freedv_nin()`/`freedv_rx()` block loop were checked line-by-line against
+     codec2's own reference `freedv_rx.c` CLI tool — structurally identical, no
+     bug found by inspection
+   - **Still open**: confirm the actual DSP processing rate (Setup → DSP →
+     Options) matches the 48 kHz `fdv.c` assumes; try AGC fully off; run the same
+     bench file/tuning through the **external FreeDV desktop app** (via the VAC
+     path, `Thetis_VB-Audio_config.md` §7) as a differential test — an
+     independent decoder syncing on our signal would isolate the bug to `fdv.c`
+     itself, while a shared failure would point back at the demod chain or the
+     synthetic file's realism (built with an idealized brick-wall filter, not a
+     realistic FIR response)
+4. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
+   live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
+   more-realistic differential test signal (real channel effects) and the
+   permanent regression file once decode is working.
+5. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
+   checkbox, confirm the external FreeDV GUI app (VAC path, §7) syncs on the same
+   signal. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
+6. ⬜ **Iterate on findings** (once sync is achieved):
    - decoded speech level — `FDV_SPEECH_GAIN` (0.30f, fdv.c) vs passthrough/SSB
      loudness
    - priming latency — ~125 ms buffer before decode engages; listen for swallowed
