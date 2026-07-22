@@ -252,6 +252,23 @@ void xfdv(FDV a)
 
             // W5TSU: DEBUG - temporary diagnostic dump, remove before merge
             {
+                static int dbg_audio_count = 0;
+                if (dbg_audio_count < 150)
+                {
+                    const char* dir = getenv("TEMP");
+                    char path[512];
+                    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_audio.raw", dir);
+                    else snprintf(path, sizeof(path), "C:\\fdv_debug_audio.raw");
+                    FILE* rawf = fopen(path, "ab");
+                    if (rawf)
+                    {
+                        fwrite(a->demod_in, sizeof(short), nin, rawf);
+                        fclose(rawf);
+                    }
+                    dbg_audio_count++;
+                }
+            }
+            {
                 static int dbg_count = 0;
                 if (dbg_count < 40)
                 {
