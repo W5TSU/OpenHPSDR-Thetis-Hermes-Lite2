@@ -250,6 +250,29 @@ void xfdv(FDV a)
             int nout = freedv_rx(a->f, a->speech_out, a->demod_in);
             freedv_get_modem_stats(a->f, &a->sync, &a->snr);
 
+            // W5TSU: DEBUG - temporary diagnostic dump, remove before merge
+            {
+                static int dbg_count = 0;
+                if (dbg_count < 40)
+                {
+                    const char* dir = getenv("TEMP");
+                    char path[512];
+                    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug.txt", dir);
+                    else snprintf(path, sizeof(path), "C:\\fdv_debug.txt");
+                    FILE* dbgf = fopen(path, "a");
+                    if (dbgf)
+                    {
+                        fprintf(dbgf, "block=%d nin=%d rms=%.1f cur_db=%.1f agc_gain_db=%.1f in[0..3]=%.5f,%.5f,%.5f,%.5f demod_in[0..3]=%d,%d,%d,%d sync=%d snr=%.1f\n",
+                            dbg_count, nin, rms, cur_db, a->agc_gain_db,
+                            a->in[0], a->in[2], a->in[4], a->in[6],
+                            (int)a->demod_in[0], (int)a->demod_in[1], (int)a->demod_in[2], (int)a->demod_in[3],
+                            a->sync, a->snr);
+                        fclose(dbgf);
+                    }
+                    dbg_count++;
+                }
+            }
+
             if (nout > 0)
             {
                 // decoded speech: back to float, up to the dsp rate, into the output ring
