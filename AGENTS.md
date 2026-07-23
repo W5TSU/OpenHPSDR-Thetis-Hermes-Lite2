@@ -90,5 +90,6 @@ When the user requests a durable behavior change, record it here or in the relev
 
 - `Project Files/Source/AGENTS.md` — the six first-party subprojects (Console C# UI, wdsp C DSP, ChannelMaster C/C++ audio+network, cmASIO, Midi2Cat, RawInput): code conventions, fork/upstream-sync constraints, verification
 - `code_documentation/AGENTS.md` — the documentation system: generated-vs-hand-written boundaries, regeneration workflow, index maintenance
+- `Tools/thetis-ai-control/AGENTS.md` — the thetisctl Go CLI, TX-safety contract, and verification workflow
 
 All other paths (CI workflow, installer, `Documentation/`, root files) are owned by this root doc.
