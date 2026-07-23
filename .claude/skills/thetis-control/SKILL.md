@@ -88,6 +88,7 @@ safety protocol below before using it.
 | `tci --host <ip> atten <rx> <dB>` / `preamp <rx> <dB<=0>` | Step attenuator / preamp gain |
 | `tci --host <ip> agc <rx> <mode>` / `agc-gain <rx> <-20..120>` | AGC |
 | `tci --host <ip> drive <rx> <0-100>` | TX drive power |
+| `tci --host <ip> cw send <rx> "<text>" --speed <wpm> --mode <cw\|cwu\|cwl>` | Key CW text via Thetis's own macro keyer |
 | `tci --host <ip> query <cmd> [args...]` | Raw passthrough for anything not listed above |
 
 ```bash
@@ -119,11 +120,27 @@ $ ./thetisctl tci --host 192.168.1.50 tx-audio send 0 --file cq.wav \
 latter with `--audio` to declare this connection as the TX audio source) —
 same safety protocol applies.
 
+CW — Thetis's own macro keyer sends the text and manages PTT itself, so
+`--confirm-tx` here authorizes the whole message, not per-character:
+
+```bash
+$ ./thetisctl tci --host 192.168.1.50 cw send 0 "CQ CQ DE W5TSU" --speed 5 --mode cwu
+[dry-run] would send: modulation:0,cwu; cw_macros_speed:5; cw_macros:0,CQ CQ DE W5TSU;
+Pass --confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO to actually transmit this message.
+
+$ ./thetisctl tci --host 192.168.1.50 cw send 0 "CQ CQ DE W5TSU" --speed 5 --mode cwu \
+    --confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO --max-duration 60s
+```
+
+`cw send` sets the target receiver's mode explicitly (`--mode`, default `cw`
+which lets Thetis auto-pick CWL/CWU) before keying — don't assume the
+receiver is already in a CW mode.
+
 ## Safety protocol — read before any TX-capable command
 
-`cat ptt`, `tci tune`, `tci ptt`, and `tci tx-audio send` can key the
-transmitter. Since neither network protocol has authentication, `thetisctl`
-enforces:
+`cat ptt`, `tci tune`, `tci ptt`, `tci cw send`, and `tci tx-audio send` can
+key the transmitter. Since neither network protocol has authentication,
+`thetisctl` enforces:
 
 1. **Dry-run by default.** Without `--confirm-tx`, these commands print
    exactly what they would send and do nothing TX-capable. Always run the
@@ -157,6 +174,22 @@ before adding more:
   (`buildStreamPayload`, `encodeSamples`/`decodeSamples`).
 - `Documentation/Radio/Thetis-CAT-Command-Reference-Guide-V3.pdf` — official
   CAT command reference.
+
+Gotchas found by testing against a real Thetis instance, not obvious from
+reading the protocol alone:
+
+- **CAT sends an unsolicited connect banner.** If "Send Welcome" is on,
+  Thetis writes `#Thetis TCP/IP Cat - <version>#;` right after a client
+  connects, before any reply to the first command — a naive client can
+  misread it as the answer to its first query. `internal/cat/client.go`'s
+  `Query` skips non-matching replies for this reason; do the same in any new
+  CAT client code.
+- **`cw_macros_empty` is CW-Terminal-mode-only, not "message finished."**
+  Both places TCIServer.cs fires it are gated on `isTerminalEnabledLocked`
+  (lines ~8547, ~8852-8853) — it never fires for a plain `cw_macros` send, no
+  matter how long you wait. `cw send` instead polls the bare `trx:<rx>;`
+  query (1-arg = get, `handleTrxMessage` TCIServer.cs:3690-3693) and watches
+  live PTT/MOX go true then false.
 
 ## Verification / reporting
 

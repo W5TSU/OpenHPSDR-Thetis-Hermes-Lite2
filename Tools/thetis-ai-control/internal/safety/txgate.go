@@ -6,12 +6,6 @@
 // explicit, hard-to-fat-finger confirmation.
 package safety
 
-import (
-	"bufio"
-	"fmt"
-	"strings"
-)
-
 // ConfirmPhrase is the exact value --confirm-tx must equal to key the
 // transmitter. A bare boolean flag is intentionally rejected so that no
 // other tool's "--confirm-tx" convention can accidentally authorize TX here.
@@ -23,37 +17,26 @@ type Decision struct {
 	DryRun  bool
 }
 
-// Check validates a --confirm-tx flag value. If confirmFlag does not equal
-// ConfirmPhrase, the caller must run in dry-run mode (Proceed=false,
-// DryRun=true). If it matches and isTTY, an interactive y/N prompt is also
-// required before Proceed becomes true; non-TTY (scripted) use is allowed to
-// proceed on the phrase match alone, since the phrase itself is the explicit,
-// deliberate opt-in for automation.
-func Check(confirmFlag string, isTTY bool, prompt func(string) (bool, error)) (Decision, error) {
+// Check validates a --confirm-tx flag value against ConfirmPhrase.
+//
+// This is thetisctl's only realtime gate. The harder requirement — that
+// nothing ever passes this flag without a human explicitly authorizing this
+// specific transmission (frequency, mode, content, duration) in the current
+// conversation — is procedural, enforced by
+// .claude/skills/thetis-control/SKILL.md's safety protocol, not by this
+// function; a CLI flag cannot verify who typed it or why.
+//
+// An earlier version of this gate also required an interactive TTY "yes"
+// prompt on top of the phrase match. That was removed: it assumed a real
+// terminal is attached to read the prompt from, but thetisctl's primary use
+// case is an AI agent invoking it non-interactively on the operator's behalf
+// after collecting consent through its own conversation — stdin there is
+// typically closed or redirected (e.g. /dev/null), which a naive
+// os.ModeCharDevice check misidentifies as a TTY, so the prompt blocked on
+// EOF instead of protecting anything.
+func Check(confirmFlag string) Decision {
 	if confirmFlag != ConfirmPhrase {
-		return Decision{Proceed: false, DryRun: true}, nil
+		return Decision{Proceed: false, DryRun: true}
 	}
-	if isTTY {
-		ok, err := prompt(fmt.Sprintf(
-			"About to key the transmitter. Confirm? (only 'yes' proceeds) "))
-		if err != nil {
-			return Decision{}, fmt.Errorf("safety: confirmation prompt: %w", err)
-		}
-		if !ok {
-			return Decision{Proceed: false, DryRun: true}, nil
-		}
-	}
-	return Decision{Proceed: true, DryRun: false}, nil
-}
-
-// PromptStdin implements the prompt func signature Check expects, reading a
-// single line from stdin and treating exactly "yes" (case-insensitive,
-// trimmed) as confirmation.
-func PromptStdin(r *bufio.Reader, question string) (bool, error) {
-	fmt.Print(question)
-	line, err := r.ReadString('\n')
-	if err != nil {
-		return false, err
-	}
-	return strings.EqualFold(strings.TrimSpace(line), "yes"), nil
+	return Decision{Proceed: true, DryRun: false}
 }

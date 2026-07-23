@@ -28,6 +28,18 @@ func (c *Client) SendCmd(cmd string, args ...string) error {
 	return c.conn.WriteText(msg)
 }
 
+// SendBareCmd writes "cmd;" (no colon, no args) as a text frame. Thetis's
+// parser (parseTextFrame, TCIServer.cs:5258-5285) splits each message on the
+// first ':'; messages with no colon go to a separate dispatch table for
+// argument-less queries/actions. A handful of commands — notably
+// "cw_macros_stop" — exist ONLY in that colon-less table (confirmed against
+// TCIServer.cs: "cw_macros_stop" appears once, in the bare-command switch,
+// never in the "cmd:args;" switch) and are silently ignored if sent through
+// SendCmd's "cmd:;" form.
+func (c *Client) SendBareCmd(cmd string) error {
+	return c.conn.WriteText(cmd + ";")
+}
+
 // RecvCmd reads the next text frame and splits it into command + args.
 func (c *Client) RecvCmd() (cmd string, args []string, err error) {
 	for {

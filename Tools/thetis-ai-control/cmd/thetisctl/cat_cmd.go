@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -286,10 +284,7 @@ func catPTT(c *cat.Client, args []string, a parsedArgs) error {
 		return c.SetPTT(false)
 	case "on":
 		hold := parseDuration(a.flag("hold", "3s"), 3*time.Second)
-		dec, err := safety.Check(a.flag("confirm-tx", ""), isTerminal(os.Stdin), stdinPrompt)
-		if err != nil {
-			return err
-		}
+		dec := safety.Check(a.flag("confirm-tx", ""))
 		if dec.DryRun {
 			fmt.Printf("[dry-run] would send: TX; ... (hold %s) ... RX;\n", hold)
 			fmt.Println("Pass --confirm-tx=" + safety.ConfirmPhrase + " to actually key the transmitter.")
@@ -308,10 +303,6 @@ func catPTT(c *cat.Client, args []string, a parsedArgs) error {
 	default:
 		return fmt.Errorf("ptt: unknown value %q (want on|off)", args[0])
 	}
-}
-
-func stdinPrompt(question string) (bool, error) {
-	return safety.PromptStdin(bufio.NewReader(os.Stdin), question)
 }
 
 func parseDuration(s string, def time.Duration) time.Duration {

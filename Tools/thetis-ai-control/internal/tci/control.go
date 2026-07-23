@@ -171,4 +171,40 @@ func (c *Client) SetAudioSampleType(t SampleType) error {
 	return c.SendCmd("audio_stream_sample_type", t.WireName())
 }
 
+// SetCWMacroSpeedWPM sets the CW macro/message keyer speed in words per
+// minute (clamped server-side to 1-99, clampMacroSpeed TCIServer.cs:8642-8645).
+// Wire: "cw_macros_speed:<wpm>;" (handleCwMacrosSpeed, TCIServer.cs:3493-3504).
+func (c *Client) SetCWMacroSpeedWPM(wpm int) error {
+	return c.SendCmd("cw_macros_speed", itoa(wpm))
+}
+
+// SendCWMacro sends free text to be keyed as CW by Thetis's own macro
+// engine (TCICWController.SendMacro, TCIServer.cs:8449-8462), which manages
+// PTT/MOX itself — callers do NOT need to (and should not) call SetTrx
+// around this. The engine sends an unsolicited "cw_macros_empty:<rx>;" text
+// frame when the message finishes keying (TCIServer.cs:1991-1993). This is a
+// raw wire action with no safety gating of its own — callers must apply the
+// TX confirmation gate (internal/safety) before calling this.
+// Wire: "cw_macros:<rx>,<text>;" (handleCwMacros, TCIServer.cs:3541-3549).
+func (c *Client) SendCWMacro(rx int, text string) error {
+	return c.SendCmd("cw_macros", itoa(rx), encodeCWText(text))
+}
+
+// StopCWMacros aborts any in-progress CW macro transmission owned by this
+// connection and unkeys. Sent as a bare command with no colon — see
+// SendBareCmd's doc comment.
+// Wire: "cw_macros_stop;" (handleCwMacrosStop, TCIServer.cs:5577-5579).
+func (c *Client) StopCWMacros() error {
+	return c.SendBareCmd("cw_macros_stop")
+}
+
+// encodeCWText escapes the wire protocol's own delimiter characters out of
+// free-text CW message content, matching decodeTciText's inverse mapping
+// (TCIServer.cs:8647-8651): ':' -> '^', ',' -> '~', ';' -> '*'. Without this,
+// e.g. a comma in the message would be misread as an argument separator.
+func encodeCWText(text string) string {
+	r := strings.NewReplacer(":", "^", ",", "~", ";", "*")
+	return r.Replace(text)
+}
+
 func itoa(n int) string { return strconv.Itoa(n) }

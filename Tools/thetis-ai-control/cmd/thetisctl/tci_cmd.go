@@ -71,6 +71,8 @@ func runTCI(rawArgs []string) error {
 		return tciRxAudio(client, args, a)
 	case "tx-audio":
 		return tciTxAudio(client, args, a)
+	case "cw":
+		return tciCW(client, args, a)
 	case "query":
 		return tciQuery(client, args)
 	default:
@@ -208,10 +210,7 @@ func tciTune(client *tci.Client, args []string, a parsedArgs) error {
 		return fmt.Errorf("tune: unknown value %q (want on|off)", args[1])
 	}
 	hold := parseDuration(a.flag("hold", "3s"), 3*time.Second)
-	dec, err := safety.Check(a.flag("confirm-tx", ""), isTerminal(os.Stdin), stdinPrompt)
-	if err != nil {
-		return err
-	}
+	dec := safety.Check(a.flag("confirm-tx", ""))
 	if dec.DryRun {
 		fmt.Printf("[dry-run] would send: tune:%d,true; ... (hold %s) ... tune:%d,false;\n", rx, hold, rx)
 		fmt.Println("Pass --confirm-tx=" + safety.ConfirmPhrase + " to actually key the transmitter.")
@@ -248,10 +247,7 @@ func tciPTT(client *tci.Client, args []string, a parsedArgs) error {
 		return fmt.Errorf("ptt: unknown value %q (want on|off)", args[1])
 	}
 	hold := parseDuration(a.flag("hold", "3s"), 3*time.Second)
-	dec, err := safety.Check(a.flag("confirm-tx", ""), isTerminal(os.Stdin), stdinPrompt)
-	if err != nil {
-		return err
-	}
+	dec := safety.Check(a.flag("confirm-tx", ""))
 	if dec.DryRun {
 		fmt.Printf("[dry-run] would send: trx:%d,true%s; ... (hold %s) ... trx:%d,false;\n",
 			rx, audioSuffix(useAudio), hold, rx)
@@ -439,10 +435,7 @@ func tciTxAudio(client *tci.Client, args []string, a parsedArgs) error {
 	}
 	peak := peakAbs(samples)
 
-	dec, err := safety.Check(a.flag("confirm-tx", ""), isTerminal(os.Stdin), stdinPrompt)
-	if err != nil {
-		return err
-	}
+	dec := safety.Check(a.flag("confirm-tx", ""))
 	if dec.DryRun {
 		fmt.Printf("[dry-run] would send: trx:%d,true,tci; then stream %s of TX audio from %s (%d Hz, %d ch, peak %.3f%s) as %s frames; then trx:%d,false,tci;\n",
 			rx, totalDuration, file, format.SampleRate, format.Channels, peak, truncatedNote(truncated), sampleType.WireName(), rx)
@@ -528,4 +521,121 @@ func peakAbs(samples []float32) float32 {
 		}
 	}
 	return peak
+}
+
+// tciCW is TCI's other TX-capable command: it hands free text to Thetis's
+// own CW macro/keyer engine, which manages PTT/MOX itself while it keys the
+// message (TCICWController.SendMacro, TCIServer.cs:8449-8462) — genuinely
+// transmitting RF. Gated behind the safety confirmation phrase; switches the
+// target receiver to CW mode first, waits for the server's unsolicited
+// "cw_macros_empty:<rx>;" completion notice, and always falls back to
+// cw_macros_stop on timeout, error, or Ctrl-C so the radio can't be left
+// keyed by a message that never finishes.
+func tciCW(client *tci.Client, args []string, a parsedArgs) error {
+	if len(args) != 3 || args[0] != "send" {
+		return fmt.Errorf("cw: usage: cw send <rx> <text> --confirm-tx=<phrase> [--speed 20] [--mode cw|cwu|cwl] [--max-duration 90s]")
+	}
+	rx, err := parseRx(args[1])
+	if err != nil {
+		return fmt.Errorf("cw: %w", err)
+	}
+	text := args[2]
+	if text == "" {
+		return fmt.Errorf("cw send: text must not be empty")
+	}
+	speed, err := strconv.Atoi(a.flag("speed", "20"))
+	if err != nil || speed < 1 || speed > 99 {
+		return fmt.Errorf("cw send: --speed must be an integer 1-99")
+	}
+	mode := a.flag("mode", "cw")
+	if mode != "cw" && mode != "cwu" && mode != "cwl" {
+		return fmt.Errorf("cw send: --mode must be cw, cwu, or cwl")
+	}
+	maxDuration := parseDuration(a.flag("max-duration", "90s"), 90*time.Second)
+
+	dec := safety.Check(a.flag("confirm-tx", ""))
+	if dec.DryRun {
+		fmt.Printf("[dry-run] would send: modulation:%d,%s; cw_macros_speed:%d; cw_macros:%d,%s;\n", rx, mode, speed, rx, text)
+		fmt.Printf("(Thetis keys PTT itself while sending; completion is detected by polling PTT state, hard-capped at %s)\n", maxDuration)
+		fmt.Println("Pass --confirm-tx=" + safety.ConfirmPhrase + " to actually transmit this message.")
+		return nil
+	}
+
+	if err := client.SetModulation(rx, mode); err != nil {
+		return err
+	}
+	if err := client.SetCWMacroSpeedWPM(speed); err != nil {
+		return err
+	}
+
+	stopped := false
+	stop := func() {
+		if stopped {
+			return
+		}
+		stopped = true
+		_ = client.StopCWMacros()
+	}
+	defer stop()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+	defer signal.Stop(sigCh)
+	go func() {
+		if _, ok := <-sigCh; ok {
+			stop()
+			fmt.Fprintln(os.Stderr, "\ncw: interrupted, sent cw_macros_stop")
+			os.Exit(130)
+		}
+	}()
+
+	if err := client.SendCWMacro(rx, text); err != nil {
+		return err
+	}
+	fmt.Printf("CW ON (rx %d, %d WPM) — sending %q, waiting for completion (max %s)\n", rx, speed, text, maxDuration)
+
+	// Thetis's CW macro engine has no "message finished" event for plain
+	// cw_macros sends — "cw_macros_empty" only fires in CW Terminal mode
+	// (TCICWController's two OnCwMacrosEmpty call sites are both gated on
+	// isTerminalEnabledLocked, TCIServer.cs:8547,8852-8853), which this
+	// command doesn't enable. Instead poll the bare "trx:<rx>;" query (1 arg
+	// = get, handleTrxMessage TCIServer.cs:3690-3693), which the engine's own
+	// PTT/MOX state answers truthfully (sendMOX, TCIServer.cs:2159-2168):
+	// wait for MOX to go true (keyed) then false (unkeyed) again.
+	rxStr := strconv.Itoa(rx)
+	everKeyed := false
+	lastPoll := time.Time{}
+	deadline := time.Now().Add(maxDuration)
+	for time.Now().Before(deadline) {
+		if time.Since(lastPoll) > 500*time.Millisecond {
+			if err := client.SendCmd("trx", rxStr); err != nil {
+				return err
+			}
+			lastPoll = time.Now()
+		}
+		cmd, cmdArgs, err := client.RecvCmd()
+		if err != nil {
+			if isTimeoutErr(err) {
+				continue
+			}
+			return err
+		}
+		if cmd != "trx" || len(cmdArgs) < 2 || cmdArgs[0] != rxStr {
+			continue
+		}
+		if cmdArgs[1] == "true" {
+			everKeyed = true
+			continue
+		}
+		if everKeyed {
+			fmt.Println("CW done (PTT released)")
+			return nil
+		}
+	}
+
+	stop()
+	if !everKeyed {
+		return fmt.Errorf("cw send: timed out after %s and PTT was never observed keyed — message likely did not send (another client may own the CW engine); sent cw_macros_stop as a precaution", maxDuration)
+	}
+	return fmt.Errorf("cw send: timed out after %s waiting for PTT to release after keying; sent cw_macros_stop", maxDuration)
 }

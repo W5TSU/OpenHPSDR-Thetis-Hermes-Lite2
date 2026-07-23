@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"strings"
 )
 
@@ -57,12 +56,4 @@ func (a parsedArgs) flag(name, def string) string {
 func (a parsedArgs) has(name string) bool {
 	_, ok := a.flags[name]
 	return ok
-}
-
-func isTerminal(f *os.File) bool {
-	fi, err := f.Stat()
-	if err != nil {
-		return false
-	}
-	return fi.Mode()&os.ModeCharDevice != 0
 }

@@ -100,6 +100,53 @@ func TestQueryUnexpectedReplyIsError(t *testing.T) {
 	}
 }
 
+// TestQuerySkipsWelcomeBanner reproduces a real Thetis instance sending its
+// unsolicited "#Thetis TCP/IP Cat - <version>#;" banner (TCPIPcatServer.cs:98)
+// immediately on connect, before any reply to the first query. Uses a real
+// loopback TCP listener rather than net.Pipe: net.Pipe's writes block until
+// matched by a read on the other end, which would deadlock this scenario
+// (server wants to write the banner before reading anything; client wants to
+// write its query before reading anything) — a real socket's kernel buffer
+// absorbs the banner write immediately, exactly as happens against Thetis.
+func TestQuerySkipsWelcomeBanner(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		conn.Write([]byte("#Thetis TCP/IP Cat - Thetis v2.10.3.19 x64#;"))
+		r := bufio.NewReader(conn)
+		line, err := r.ReadString(';')
+		if err != nil {
+			return
+		}
+		if strings.TrimSuffix(line, ";") == "ID" {
+			conn.Write([]byte("ID019;"))
+		}
+	}()
+
+	c, err := Dial(ln.Addr().String(), 2*time.Second)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+
+	id, err := c.Query("ID")
+	if err != nil {
+		t.Fatalf("Query(\"ID\") with a preceding welcome banner: %v", err)
+	}
+	if id != "019" {
+		t.Errorf("Query(\"ID\") = %q, want \"019\"", id)
+	}
+}
+
 func TestSetVFOFreqHzOutOfRange(t *testing.T) {
 	c, cleanup := newTestClient(t, nil)
 	defer cleanup()

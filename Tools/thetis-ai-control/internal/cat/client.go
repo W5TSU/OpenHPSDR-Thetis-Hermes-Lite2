@@ -83,14 +83,32 @@ func (c *Client) Set(code, params string) error {
 	return c.Send(code + params)
 }
 
-// Query sends "<code>;" and returns the payload with the code prefix stripped.
+// maxUnsolicited bounds how many non-matching replies Query will skip before
+// giving up. Thetis can send unsolicited messages on the CAT channel outside
+// of any request/response pairing — most notably the "#Thetis TCP/IP Cat -
+// <version>#;" welcome banner sent right after connect when the server's
+// "Send Welcome" option is on (TCPIPcatServer.cs:98) — which would otherwise
+// be misread as the reply to the first query issued after Dial.
+const maxUnsolicited = 8
+
+// Query sends "<code>;" and returns the payload with the code prefix
+// stripped, skipping over any unsolicited messages that don't start with
+// code (e.g. the connect-time welcome banner).
 func (c *Client) Query(code string) (string, error) {
-	reply, err := c.Do(code)
-	if err != nil {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if err := c.write(code); err != nil {
 		return "", err
 	}
-	if !strings.HasPrefix(reply, code) {
-		return "", fmt.Errorf("cat: query %q: unexpected reply %q", code, reply)
+	for i := 0; i < maxUnsolicited; i++ {
+		reply, err := c.readReply()
+		if err != nil {
+			return "", err
+		}
+		if strings.HasPrefix(reply, code) {
+			return strings.TrimPrefix(reply, code), nil
+		}
 	}
-	return strings.TrimPrefix(reply, code), nil
+	return "", fmt.Errorf("cat: query %q: no matching reply after %d unsolicited messages", code, maxUnsolicited)
 }

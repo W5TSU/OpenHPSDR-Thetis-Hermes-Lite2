@@ -72,6 +72,7 @@ TCI commands (control + audio + transmit, Tier 2; rx: 0=RX1, 1=RX2):
   rx-audio capture <rx> --duration 10s --out capture.wav [--sample-type float32]
   rx-audio stream <rx> --duration 10s        (raw float32 LE PCM to stdout)
   tx-audio send <rx> --file tone.wav --confirm-tx=<phrase> [--max-duration 10s] [--sample-type int16]
+  cw send <rx> "<text>" --confirm-tx=<phrase> [--speed 20] [--max-duration 90s]
   query <cmd> [args...]           (raw passthrough for anything not above)
 
 Every TX-capable command (ptt on, tune on, tx-audio send) defaults to a dry
