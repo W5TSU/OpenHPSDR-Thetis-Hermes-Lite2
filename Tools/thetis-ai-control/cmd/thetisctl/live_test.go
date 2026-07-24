@@ -80,7 +80,7 @@ func assertNotTransmitting(t *testing.T, host string) {
 		t.Fatalf("assertNotTransmitting: GetIF: %v", err)
 	}
 	if st.TXActive {
-		t.Fatal("radio is transmitting after a command that should have been a dry run")
+		t.Fatal("radio is still transmitting — either a dry run keyed for real, or a real TX command's unkey didn't take effect")
 	}
 }
 

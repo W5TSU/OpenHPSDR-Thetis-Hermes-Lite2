@@ -24,6 +24,14 @@ has no dependency on `Project Files/`. It has its own CI job (see Verification).
 - Any code path that can key the transmitter (CAT `TX;`, TCI `trx:...,true`,
   TCI `tune:...,true`) must route through `internal/safety`'s dry-run +
   `--confirm-tx` literal-match gate — never key directly.
+- Every unkey (`tune off`, `ptt off`, auto-unkey-after-`--hold`, completion/
+  interrupt/error unkey in `tx-audio`/`cw send`) must confirm the radio
+  actually unkeyed before returning — via `confirmTCIUnkeyed`/
+  `confirmCATUnkeyed` in `cmd/thetisctl/{tci,cat}_cmd.go` — never a bare
+  fire-and-forget send. Sending a TX-off command and immediately closing the
+  connection was proven, against a real radio, to sometimes silently drop
+  it, leaving the transmitter keyed with no time bound; see
+  `.claude/skills/thetis-control/SKILL.md`'s gotchas for the incident.
 - Wire formats in `internal/cat` and `internal/tci` were confirmed by reading
   `Project Files/Source/Console/CAT/{CATStructs.xml,CATCommands.cs,CATParser.cs}`
   and `Project Files/Source/Console/TCIServer.cs` directly (comments on each

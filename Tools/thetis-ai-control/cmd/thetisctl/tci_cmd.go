@@ -194,24 +194,84 @@ func tciFilter(client *tci.Client, args []string) error {
 	return nil
 }
 
+// confirmTCIUnkeyed sends an unkey-type command via send and verifies, via a
+// "<queryCmd>:<rx>;" query, that it actually took effect, retrying send if
+// not yet confirmed. This exists because sending a command and closing the
+// connection immediately afterward — every TX-capable command's original
+// behavior — was proven, by direct testing against a real radio, to
+// sometimes silently drop the command: Thetis does not always finish
+// processing it before the socket closes. The identical unkey command sent
+// over a connection kept open a couple of seconds afterward worked
+// reliably every time; immediate-close dropped it more than once in a row,
+// leaving the radio keyed with no time bound until a human noticed and
+// intervened manually. Never trust a fire-and-forget send for anything that
+// unkeys the transmitter — always confirm.
+func confirmTCIUnkeyed(client *tci.Client, queryCmd string, rx int, send func() error, timeout time.Duration) error {
+	rxStr := strconv.Itoa(rx)
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if err := send(); err != nil {
+			return err
+		}
+		checkDeadline := time.Now().Add(700 * time.Millisecond)
+		for time.Now().Before(checkDeadline) {
+			if err := client.SendCmd(queryCmd, rxStr); err != nil {
+				return err
+			}
+			cmd, args, err := client.RecvCmd()
+			if err != nil {
+				if isTimeoutErr(err) {
+					continue
+				}
+				return err
+			}
+			if cmd == queryCmd && len(args) >= 2 && args[0] == rxStr {
+				if args[1] == "false" {
+					return nil
+				}
+				break // got a reply, but still keyed — resend and retry
+			}
+		}
+	}
+	return fmt.Errorf("could not confirm rx %d unkeyed (query %q) within %s — radio may still be keyed, check manually", rx, queryCmd, timeout)
+}
+
 // tciTune and tciPTT are TCI's TX-capable commands: both gate real keying
 // behind the safety confirmation phrase and auto-unkey after --hold.
 
+// tuneMaxHold and tuneUnkeyConfirmBudget bound TUNE's total on-time at 5s no
+// matter what --hold is requested: TUNE is a bare, unmodulated carrier —
+// the highest-nuisance TX-capable command to leave running — so it gets a
+// tighter, non-configurable ceiling than the others (user-stated
+// requirement, not derived from the general reliability fix above).
+const (
+	tuneMaxHold             = 3 * time.Second
+	tuneUnkeyConfirmBudget  = 2 * time.Second
+	pttUnkeyConfirmBudget   = 5 * time.Second
+	audioUnkeyConfirmBudget = 5 * time.Second
+)
+
 func tciTune(client *tci.Client, args []string, a parsedArgs) error {
 	if len(args) != 2 {
-		return fmt.Errorf("tune: usage: tune <rx> on|off --confirm-tx=<phrase> [--hold 3s]")
+		return fmt.Errorf("tune: usage: tune <rx> on|off --confirm-tx=<phrase> [--hold 3s, capped at %s]", tuneMaxHold)
 	}
 	rx, err := parseRx(args[0])
 	if err != nil {
 		return fmt.Errorf("tune: %w", err)
 	}
+	unkey := func() error {
+		return confirmTCIUnkeyed(client, "tune", rx, func() error { return client.SetTune(rx, false) }, tuneUnkeyConfirmBudget)
+	}
 	if args[1] == "off" {
-		return client.SetTune(rx, false)
+		return unkey()
 	}
 	if args[1] != "on" {
 		return fmt.Errorf("tune: unknown value %q (want on|off)", args[1])
 	}
 	hold := parseDuration(a.flag("hold", "3s"), 3*time.Second)
+	if hold > tuneMaxHold {
+		hold = tuneMaxHold
+	}
 	dec := safety.Check(a.flag("confirm-tx", ""))
 	if dec.DryRun {
 		fmt.Printf("[dry-run] would send: tune:%d,true; ... (hold %s) ... tune:%d,false;\n", rx, hold, rx)
@@ -221,12 +281,12 @@ func tciTune(client *tci.Client, args []string, a parsedArgs) error {
 	if err := client.SetTune(rx, true); err != nil {
 		return err
 	}
-	fmt.Printf("TUNE ON (rx %d) — auto-unkeying after %s\n", rx, hold)
+	fmt.Printf("TUNE ON (rx %d) — auto-unkeying after %s (never more than %s total)\n", rx, hold, tuneMaxHold+tuneUnkeyConfirmBudget)
 	time.Sleep(hold)
-	if err := client.SetTune(rx, false); err != nil {
-		return fmt.Errorf("TUNE ON succeeded but auto-unkey failed, radio may still be keyed: %w", err)
+	if err := unkey(); err != nil {
+		return fmt.Errorf("TUNE ON succeeded but could not confirm unkey: %w", err)
 	}
-	fmt.Println("TUNE OFF")
+	fmt.Println("TUNE OFF (confirmed)")
 	return nil
 }
 
@@ -239,11 +299,15 @@ func tciPTT(client *tci.Client, args []string, a parsedArgs) error {
 		return fmt.Errorf("ptt: %w", err)
 	}
 	useAudio := a.has("audio")
+	setOff := func() error { return client.SetTrx(rx, false) }
+	if useAudio {
+		setOff = func() error { return client.SetTrxTCIAudio(rx, false) }
+	}
+	unkey := func() error {
+		return confirmTCIUnkeyed(client, "trx", rx, setOff, pttUnkeyConfirmBudget)
+	}
 	if args[1] == "off" {
-		if useAudio {
-			return client.SetTrxTCIAudio(rx, false)
-		}
-		return client.SetTrx(rx, false)
+		return unkey()
 	}
 	if args[1] != "on" {
 		return fmt.Errorf("ptt: unknown value %q (want on|off)", args[1])
@@ -265,10 +329,10 @@ func tciPTT(client *tci.Client, args []string, a parsedArgs) error {
 	}
 	fmt.Printf("PTT ON (rx %d) — auto-unkeying after %s\n", rx, hold)
 	time.Sleep(hold)
-	if err := client.SetTrx(rx, false); err != nil {
-		return fmt.Errorf("PTT ON succeeded but auto-unkey failed, radio may still be keyed: %w", err)
+	if err := unkey(); err != nil {
+		return fmt.Errorf("PTT ON succeeded but could not confirm unkey: %w", err)
 	}
-	fmt.Println("PTT OFF")
+	fmt.Println("PTT OFF (confirmed)")
 	return nil
 }
 
@@ -519,14 +583,17 @@ func tciTxAudio(client *tci.Client, args []string, a parsedArgs) error {
 	}
 
 	// Always unkey on completion, error, or Ctrl-C — never leave the radio
-	// keyed because this process exited unexpectedly.
+	// keyed because this process exited unexpectedly. Confirmed, not
+	// fire-and-forget — see confirmTCIUnkeyed's doc comment.
 	unkeyed := false
 	unkey := func() {
 		if unkeyed {
 			return
 		}
 		unkeyed = true
-		_ = client.SetTrxTCIAudio(rx, false)
+		if err := confirmTCIUnkeyed(client, "trx", rx, func() error { return client.SetTrxTCIAudio(rx, false) }, audioUnkeyConfirmBudget); err != nil {
+			fmt.Fprintln(os.Stderr, "tx-audio: WARNING:", err)
+		}
 	}
 	defer unkey()
 
@@ -645,7 +712,9 @@ func tciCW(client *tci.Client, args []string, a parsedArgs) error {
 			return
 		}
 		stopped = true
-		_ = client.StopCWMacros()
+		if err := confirmTCIUnkeyed(client, "trx", rx, client.StopCWMacros, pttUnkeyConfirmBudget); err != nil {
+			fmt.Fprintln(os.Stderr, "cw: WARNING:", err)
+		}
 	}
 	defer stop()
 

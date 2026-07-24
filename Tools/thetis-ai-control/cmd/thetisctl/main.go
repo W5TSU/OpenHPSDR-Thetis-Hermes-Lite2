@@ -69,7 +69,7 @@ TCI commands (control + audio + transmit, Tier 2; rx: 0=RX1, 1=RX2):
   agc-gain <rx> <-20..120>
   drive <rx> <0-100>
   power on|off                    (starts/stops Thetis's radio engine, not mains power; waits for confirmation)
-  tune <rx> on|off --confirm-tx=<phrase> [--hold 3s]
+  tune <rx> on|off --confirm-tx=<phrase> [--hold 3s]  (bare carrier — always off within 5s total, capped regardless of --hold)
   ptt <rx> on|off --confirm-tx=<phrase> [--hold 3s] [--audio]
   rx-audio capture <rx> --duration 10s --out capture.wav [--sample-type float32]
   rx-audio stream <rx> --duration 10s        (raw float32 LE PCM to stdout)

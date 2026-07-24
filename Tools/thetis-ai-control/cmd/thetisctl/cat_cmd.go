@@ -275,15 +275,47 @@ func catStatus(c *cat.Client) error {
 	return nil
 }
 
+// confirmCATUnkeyed sends an unkey command via send and verifies, via
+// GetIF's TXActive flag, that it actually took effect, retrying send if
+// not yet confirmed. Same reasoning as internal/tci's confirmTCIUnkeyed —
+// sending a command and closing the connection immediately afterward was
+// proven, by direct testing against a real radio, to sometimes silently
+// drop it. Never trust a fire-and-forget send for anything that unkeys the
+// transmitter — always confirm.
+func confirmCATUnkeyed(c *cat.Client, send func() error, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if err := send(); err != nil {
+			return err
+		}
+		checkDeadline := time.Now().Add(700 * time.Millisecond)
+		for time.Now().Before(checkDeadline) {
+			st, err := c.GetIF()
+			if err != nil {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			if !st.TXActive {
+				return nil
+			}
+			break // got a reply, but still keyed — resend and retry
+		}
+	}
+	return fmt.Errorf("could not confirm PTT unkeyed within %s — radio may still be keyed, check manually", timeout)
+}
+
 // catPTT is the sole TX-capable CAT command: it gates real keying behind the
 // safety confirmation phrase and always auto-unkeys after --hold.
 func catPTT(c *cat.Client, args []string, a parsedArgs) error {
 	if len(args) != 1 {
 		return fmt.Errorf("ptt: usage: ptt on --confirm-tx=<phrase> [--hold 3s] | ptt off")
 	}
+	unkey := func() error {
+		return confirmCATUnkeyed(c, func() error { return c.SetPTT(false) }, 5*time.Second)
+	}
 	switch args[0] {
 	case "off":
-		return c.SetPTT(false)
+		return unkey()
 	case "on":
 		hold := parseDuration(a.flag("hold", "3s"), 3*time.Second)
 		dec := safety.Check(a.flag("confirm-tx", ""))
@@ -297,10 +329,10 @@ func catPTT(c *cat.Client, args []string, a parsedArgs) error {
 		}
 		fmt.Printf("PTT ON — auto-unkeying after %s\n", hold)
 		time.Sleep(hold)
-		if err := c.SetPTT(false); err != nil {
-			return fmt.Errorf("PTT ON succeeded but auto-unkey failed, radio may still be keyed: %w", err)
+		if err := unkey(); err != nil {
+			return fmt.Errorf("PTT ON succeeded but could not confirm unkey: %w", err)
 		}
-		fmt.Println("PTT OFF")
+		fmt.Println("PTT OFF (confirmed)")
 		return nil
 	default:
 		return fmt.Errorf("ptt: unknown value %q (want on|off)", args[0])

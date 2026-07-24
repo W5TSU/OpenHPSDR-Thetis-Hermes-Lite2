@@ -97,7 +97,7 @@ Both `cat` and `tci` take:
 | `power on\|off` | Start/stop Thetis's radio engine, **not mains power**; waits for the server's confirmation broadcast |
 | `rx-audio capture <rx> --duration <d> --out <file.wav>` | Record RX audio to a WAV file |
 | `rx-audio stream <rx> --duration <d>` | Stream RX audio as raw float32 LE PCM to stdout |
-| `tune <rx> on\|off` | **TX-capable** — key TUNE (bare carrier) |
+| `tune <rx> on\|off` | **TX-capable** — key TUNE (bare carrier); hard-capped at 5s total on-time |
 | `ptt <rx> on\|off [--audio]` | **TX-capable** — key PTT (`--audio` marks this connection as the TX audio source) |
 | `cw send <rx> "<text>" --speed <wpm> --mode <cw\|cwu\|cwl>` | **TX-capable** — key CW text via Thetis's own macro keyer |
 | `tx-audio send <rx> --file <wav>` | **TX-capable** — stream a WAV file as TX audio |
@@ -136,12 +136,23 @@ Other TX flags:
 | Flag | Applies to | Meaning |
 |---|---|---|
 | `--confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO` | all TX-capable commands | Required to key for real; anything else stays a dry run |
-| `--hold <duration>` (default `3s`) | `cat ptt`, `tci tune`, `tci ptt` | Auto-unkeys after this long |
+| `--hold <duration>` (default `3s`) | `cat ptt`, `tci tune`, `tci ptt` | Auto-unkeys after this long — `tci tune` caps this at 5s **total** (hold + confirm), regardless of what's requested; see below |
 | `--max-duration <duration>` (default `10s` for tx-audio, `90s` for cw) | `tci tx-audio send`, `tci cw send` | Hard cap; truncates/stops and unkeys if exceeded |
 
-Every TX-capable command also unkeys automatically on completion, error, or
-Ctrl-C — the radio is never deliberately left keyed by a crashed or
-interrupted invocation.
+Every TX-capable command unkeys automatically on completion, error, or
+Ctrl-C, and — as of a fix made after a real incident, see below —
+**verifies** the unkey actually took effect (retrying if not) rather than
+firing the command once and trusting it worked.
+
+**Unkeying is confirmed, not fire-and-forget.** Earlier versions of every
+TX-capable command sent their unkey and closed the connection immediately
+afterward; against a real radio this was shown to sometimes silently drop
+the command, leaving the radio keyed with no time bound until a human
+noticed. Every unkey now sends, then queries the radio's actual state and
+retries until confirmed (or reports an error — never silent success). `tci
+tune` additionally hard-caps total on-time at 5 seconds no matter what
+`--hold` requests, since a bare unmodulated carrier is the highest-nuisance
+thing this tool can transmit if left running.
 
 ## Live tests
 
@@ -183,6 +194,14 @@ unprompted; see `SKILL.md`'s safety protocol.
 
 ## Notes on real-world behavior
 
+- **Split routes TX to VFO B's frequency, not VFO A's — check it before
+  transmitting.** If split is enabled, everything you've set on VFO A
+  (frequency, mode) stays displayed correctly, but the radio actually
+  transmits on VFO B's frequency instead. This caused a real incident: a
+  test session transmitted on a different band than intended because split
+  had been on since before the session started, and nothing in routine
+  `status` output made that obvious. Check TCI's `query tx_frequency`
+  against VFO A before transmitting if split state is unknown.
 - **CAT connect banner.** If Thetis's "Send Welcome" option is on, connecting
   to the CAT port gets you an unsolicited `#Thetis TCP/IP Cat - <version>#;`
   line before any command reply. `thetisctl` already accounts for this.

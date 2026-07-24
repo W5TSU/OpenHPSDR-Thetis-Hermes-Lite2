@@ -130,7 +130,9 @@ $ ./thetisctl tci --host 192.168.1.50 tx-audio send 0 --file cq.wav \
 
 `tci tune <rx> on|off` and `tci ptt <rx> on|off` are also TX-capable (the
 latter with `--audio` to declare this connection as the TX audio source) —
-same safety protocol applies.
+same safety protocol applies. `tune` is a bare, unmodulated carrier — the
+highest-nuisance thing this tool can transmit — so it's hard-capped at 5
+seconds total on-time regardless of `--hold`, non-configurable.
 
 CW — Thetis's own macro keyer sends the text and manages PTT itself, so
 `--confirm-tx` here authorizes the whole message, not per-character:
@@ -169,6 +171,24 @@ key the transmitter. Since neither network protocol has authentication,
 4. If anything about frequency, band, mode, or power is ambiguous or could
    put the transmission out of the amateur band or outside what the operator
    is licensed for, stop and ask rather than guessing.
+5. **Check `split` before assuming TX frequency matches VFO A.** If split is
+   enabled, the radio transmits on VFO B's frequency, not VFO A's — even
+   though CAT `status`/`freq get` and everything you've been setting on
+   VFO A stays exactly where you left it. This produced a real incident: a
+   test session transmitted on a completely different frequency/band than
+   intended, undetected until the operator noticed, because split had been
+   on since before the session started and nothing in routine status output
+   flagged the mismatch. Cross-check TCI's `tx_frequency` (or `query
+   tx_frequency`) against VFO A before any real transmission if split status
+   is unknown or was set by someone/something else.
+6. **Never trust a fire-and-forget unkey.** Sending an unkey command and
+   closing the connection immediately afterward can silently drop it — see
+   the gotcha below. Every TX-capable command's unkey path (`tune off`,
+   `ptt off`, auto-unkey-after-`--hold`, `tx-audio`'s completion/interrupt
+   unkey, `cw send`'s stop-on-error) verifies the radio actually unkeyed
+   before returning, retrying if not yet confirmed — any new TX-capable
+   command must do the same (`confirmTCIUnkeyed`/`confirmCATUnkeyed` in
+   `cmd/thetisctl/{tci,cat}_cmd.go`), never a bare fire-and-forget send.
 
 ## Extending the command set
 
@@ -249,6 +269,26 @@ reading the protocol alone:
   function's doc comment for the residual ambiguity it can't fully resolve
   (matching by command name only, not by leading arguments, since `query`
   accepts arbitrary commands whose argument shape it doesn't know).
+- **Sending a TCI command and closing the connection immediately afterward
+  can silently drop the command.** This was a real, live safety incident,
+  not a theoretical concern: every TX-capable command originally sent its
+  unkey (`tune:rx,false;`, `trx:rx,false;`, etc.) and then let the CLI's
+  `defer conn.Close()` fire right after — and against a real radio, this
+  dropped the unkey more than once, leaving TUNE keyed indefinitely with no
+  time bound until a human operator noticed and intervened manually via
+  Thetis's own UI. Confirmed by direct testing: the identical unkey command
+  sent over a connection kept open a couple of seconds afterward worked
+  reliably every time; immediate-close did not. Root cause not fully
+  pinned down (client-side write/close race vs. a server-side frame
+  ordering issue when a data frame is immediately followed by a close
+  frame) — the fix doesn't depend on knowing which: every unkey now goes
+  through `confirmTCIUnkeyed`/`confirmCATUnkeyed`
+  (`cmd/thetisctl/{tci,cat}_cmd.go`), which sends, then verifies via a query
+  that the state actually changed, retrying until confirmed or a timeout is
+  hit (in which case it returns an error — it never silently claims
+  success). Any new TX-capable command must use this pattern; a bare
+  fire-and-forget send followed by closing the connection is not safe for
+  anything that unkeys the transmitter.
 
 ## Verification / reporting
 
