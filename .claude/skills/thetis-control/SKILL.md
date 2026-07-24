@@ -63,6 +63,7 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> atten get` / `atten set <0-31>` | RX1 step attenuator (dB) |
 | `cat --host <ip> preamp set <0-9>` | RX1 preamp level |
 | `cat --host <ip> band get` / `band set <name>` | Band (160-2, GEN, WWV, V0-V13) |
+| `cat --host <ip> power get` / `power on\|off` | Start/stop Thetis's radio engine (software power, not mains) |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
 
 ```bash
@@ -73,6 +74,16 @@ Pure Go, no cgo, no external dependencies.
 
 `ptt on|off` also exists on the CAT channel but is TX-capable — see the
 safety protocol below before using it.
+
+`power on|off` starts/stops Thetis's *software* radio engine (the main Power
+button — `console.PowerOn`) — it does NOT toggle mains/PoE power to the
+physical HL2 board; if the board itself has no power at all, this cannot
+bring it up. It is not TX-capable (it can't key the transmitter), but it is a
+bigger action than the other Tier 1 controls — it starts/stops the actual
+hardware connection and DSP audio engine — so treat it with the same "ask
+before doing it" judgment as any other state-changing remote action, even
+though it doesn't need `--confirm-tx`. Powering on can take a few seconds;
+pass a longer `--timeout` if `power on`'s readback confirmation times out.
 
 ## Tier 2 — audio and transmit usage (TCI)
 
@@ -88,6 +99,7 @@ safety protocol below before using it.
 | `tci --host <ip> atten <rx> <dB>` / `preamp <rx> <dB<=0>` | Step attenuator / preamp gain |
 | `tci --host <ip> agc <rx> <mode>` / `agc-gain <rx> <-20..120>` | AGC |
 | `tci --host <ip> drive <rx> <0-100>` | TX drive power |
+| `tci --host <ip> power on\|off` | Start/stop Thetis's radio engine (software power, not mains); waits for confirmation |
 | `tci --host <ip> cw send <rx> "<text>" --speed <wpm> --mode <cw\|cwu\|cwl>` | Key CW text via Thetis's own macro keyer |
 | `tci --host <ip> query <cmd> [args...]` | Raw passthrough for anything not listed above |
 
@@ -190,6 +202,40 @@ reading the protocol alone:
   matter how long you wait. `cw send` instead polls the bare `trx:<rx>;`
   query (1-arg = get, `handleTrxMessage` TCIServer.cs:3690-3693) and watches
   live PTT/MOX go true then false.
+- **The classic Kenwood `PS` (power) command is a disabled stub; `ZZPS` is
+  the real, active one.** Same pattern as `RT`/`XT`/`RA`/`PA` above. On TCI,
+  the equivalent is the bare `start;`/`stop;` command (not `power:...;`) —
+  it's also what the server broadcasts unsolicited to every connected client
+  whenever the state changes via any source (`PowerChange` →
+  `sendStart`/`sendStop`, TCIServer.cs:1500-1504, 1911-1917), so a client
+  sending `start;` must wait for that broadcast echo rather than assume the
+  send alone means it worked (see `SetPower`'s doc comment).
+- **TCI's "send initial state on connect" burst can shadow real replies.**
+  If enabled (`chkTCIsendInitialStateOnConnect`), Thetis dumps ~100+
+  unsolicited status frames (one per control) immediately after connect,
+  terminated by a bare `ready;` frame. A client that sends a "get" query
+  right after connecting and just grabs the first reply matching that
+  command name can easily grab a **stale** value from this burst instead of
+  the genuine reply — this produced a full page of false "set didn't work"
+  failures in the live test suite until fixed by draining the burst (through
+  `ready;`) before issuing any query. Confirmed via cross-check: the
+  underlying `Set` calls were working correctly the whole time (verified
+  independently over CAT while the TCI connection stayed open).
+- **`rx_preamp_att_ex` (TCI) / `ZZPA` (CAT) preamp values are quantized, not
+  continuous.** Server-side they resolve through `PreampMode` — discrete
+  steps only (0, -10, -20, -30, -40, -50 dB, plus SA-prefixed variants,
+  `Project Files/Source/Console/enums.cs:236-251`) — not an arbitrary
+  integer. Sending an in-between value (e.g. -1) gets silently snapped to
+  the nearest valid step; don't treat that as a bug.
+- **CAT's step-attenuator getter (`ZZRX`) can hang indefinitely on a live
+  radio.** Reproduced repeatedly against a real, actively-receiving HL2 —
+  independent of Thetis's software power state (confirmed on both). At the
+  same time, the equivalent TCI value (`rx_step_att_ex`) was observed
+  changing on its own with no client touching it, suggesting an automatic
+  overload-protection feature reacting to real signal conditions and
+  possibly saturating the console's UI-thread `Invoke` queue that CAT's
+  getter blocks on. Unresolved — if you hit this, don't assume it's
+  `thetisctl`'s bug; cross-check via TCI first.
 
 ## Verification / reporting
 
@@ -198,3 +244,28 @@ After any control change, re-query the state (`cat status`, or the relevant
 assume a set command succeeded. Both CAT sets and most TCI sets are
 fire-and-forget with no reply, so a follow-up read is the only way to know
 Thetis actually applied the change.
+
+## Live test suite
+
+`internal/cat/live_test.go` and `internal/tci/live_test.go` exercise every
+exported client function (freq/mode/RIT/XIT/split/AGC/atten/preamp/band/power
+over CAT; vfo/modulation/split/RIT/XIT/filter/atten/preamp/AGC/drive/CW speed/
+RX audio over TCI) against a real, running Thetis instance. Excluded from
+normal `go test ./...` and CI by the `live` build tag — run explicitly:
+
+```bash
+THETIS_HOST=192.168.2.12 go test -tags=live ./internal/cat/... -v
+THETIS_HOST=192.168.2.12 go test -tags=live ./internal/tci/... -v
+```
+
+(`THETIS_CAT_PORT`/`THETIS_TCI_PORT` and `THETIS_LIVE_TIMEOUT` override the
+defaults if needed.) Every settable function round-trips: read the current
+value, change it, verify, then restore the original via `t.Cleanup` — never
+assume a specific starting state. TX-capable functions are never exercised
+for real (`SetPTT`/`SetTrx`/`SetTune` are only ever called with `false`;
+`SendCWMacro`/TX audio frames aren't called at all) — same reasoning as the
+CLI's `--confirm-tx` gate applies here: an unattended test run can't provide
+the per-invocation human confirmation that TX requires. `SetBand` is
+intentionally read-only in the test (see its doc comment — it can retune the
+VFO to a stored per-band frequency, a bigger disruption than the other
+reversible toggles).

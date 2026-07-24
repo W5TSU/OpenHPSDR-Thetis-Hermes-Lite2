@@ -51,11 +51,21 @@ go build -o thetisctl ./cmd/thetisctl
 CI: `.github/workflows/thetisctl.yml` runs the above on push/PR touching this
 directory, independent of the Windows-only `build.yml`.
 
-Manual end-to-end checklist against a real Thetis+HL2 instance (see
-`.claude/skills/thetis-control/SKILL.md` for the full protocol): CAT
-freq/mode set with visual confirmation in Thetis's UI; TCI dry-run TX
-confirming Thetis's PTT/MOX indicator stays unkeyed; a real low-power TX test
-only with the operator present and explicit in-session go-ahead.
+`internal/cat/live_test.go` and `internal/tci/live_test.go` (build tag
+`live`, excluded from the above) round-trip every exported client function
+against a real, running Thetis instance — the primary regression check for
+this package now that it exists, run it after any wire-format change:
+
+```bash
+THETIS_HOST=<radio-ip> go test -tags=live ./internal/cat/... -v
+THETIS_HOST=<radio-ip> go test -tags=live ./internal/tci/... -v
+```
+
+Never exercises TX-capable functions for real (see the test files' doc
+comments). A real low-power TX test (CW, tune, tx-audio, or CAT/TCI PTT) is
+still manual-only, and only with the operator present and explicit
+in-session go-ahead for that specific transmission — see
+`.claude/skills/thetis-control/SKILL.md`'s safety protocol.
 
 ## Child DOX Index
 

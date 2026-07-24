@@ -64,6 +64,8 @@ Both `cat` and `tci` take:
 | `preamp set <0-9>` | Set RX1 preamp level (0=off, 1=on, 2-6=-10..-50dB, 7-9=SA -10..-30dB) |
 | `band get` | Read current band |
 | `band set <name>` | Set band: `160`,`80`,`60`,`40`,`30`,`20`,`17`,`15`,`12`,`10`,`6`,`2`,`GEN`,`WWV`,`V0`-`V13` |
+| `power get` | Read whether Thetis's radio engine is running |
+| `power on\|off` | Start/stop Thetis's radio engine — the main Power button, **not mains power** to the HL2 board |
 | `status` | Rig ID + frequency/mode/RIT/XIT/split/TX in one call |
 | `ptt on\|off` | **TX-capable** — see [Transmitting](#transmitting-tx-capable-commands) |
 
@@ -92,6 +94,7 @@ Both `cat` and `tci` take:
 | `agc <rx> <mode>` | AGC mode: `off`/`fixed`, `long`, `slow`, `medium`/`normal`, `fast`, `custom` |
 | `agc-gain <rx> <-20..120>` | AGC gain/threshold |
 | `drive <rx> <0-100>` | TX drive power |
+| `power on\|off` | Start/stop Thetis's radio engine, **not mains power**; waits for the server's confirmation broadcast |
 | `rx-audio capture <rx> --duration <d> --out <file.wav>` | Record RX audio to a WAV file |
 | `rx-audio stream <rx> --duration <d>` | Stream RX audio as raw float32 LE PCM to stdout |
 | `tune <rx> on\|off` | **TX-capable** — key TUNE (bare carrier) |
@@ -140,6 +143,27 @@ Every TX-capable command also unkeys automatically on completion, error, or
 Ctrl-C — the radio is never deliberately left keyed by a crashed or
 interrupted invocation.
 
+## Live tests
+
+`internal/cat/live_test.go` and `internal/tci/live_test.go` exercise every
+exported client function against a real, running Thetis instance — frequency,
+mode, RIT/XIT, split, AGC, attenuator, preamp, band, power over CAT; VFO,
+modulation, split/RIT/XIT, filter, attenuator, preamp, AGC, drive, CW speed,
+and RX audio streaming over TCI. Excluded from `go test ./...` and CI by the
+`live` build tag:
+
+```bash
+THETIS_HOST=192.168.2.12 go test -tags=live ./internal/cat/... -v
+THETIS_HOST=192.168.2.12 go test -tags=live ./internal/tci/... -v
+```
+
+Every settable function is round-tripped (read → change → verify → restore
+original) rather than asserting a fixed value. TX-capable functions
+(`SetPTT`/`SetTrx`/`SetTune`, CW sending, TX audio) are never exercised for
+real, matching the CLI's own safety posture. See the test file doc comments
+for exceptions (e.g. `SetBand` is read-only in the test; preamp attenuation
+is quantized, not continuous — see below).
+
 ## Notes on real-world behavior
 
 - **CAT connect banner.** If Thetis's "Send Welcome" option is on, connecting
@@ -153,6 +177,30 @@ interrupted invocation.
 - **Switching to CW mode** can shift the displayed/tuned frequency by
   Thetis's CW pitch offset (commonly 600 Hz) — this is normal sidetone-offset
   behavior, not a bug in `thetisctl`.
+- **The classic Kenwood `PS` (power) CAT command is a disabled stub** — use
+  `power` (which wraps the real, active `ZZPS`/TCI `start;`/`stop;`
+  commands) instead.
+- **TCI's initial-state burst can shadow a "get" reply right after connect.**
+  If "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
+  status frames (ending in a `ready;` sentinel) immediately after the
+  WebSocket handshake. A query issued too early can match a stale value from
+  that burst instead of a genuine reply — `thetisctl`'s TCI client issues
+  requests only after normal use (not an issue in practice for CLI
+  invocations, which don't query immediately post-connect the way the live
+  test suite's first attempt did — see that suite's `drainInitialBurst` for
+  the fix if you're writing new TCI client code that queries right after
+  dialing).
+- **Preamp attenuation is quantized, not continuous.** Both CAT's `ZZPA` and
+  TCI's `rx_preamp_att_ex` resolve to a small set of discrete steps (0, -10,
+  -20, -30, -40, -50 dB, plus SA-prefixed variants) server-side — an
+  in-between value gets silently snapped to the nearest step.
+- **CAT's `atten get`/`atten set` (`ZZRX`) can hang indefinitely on a live,
+  actively-receiving radio**, independent of `power` state. Suspected cause:
+  an automatic overload-protection feature was observed changing the
+  equivalent TCI value (`rx_step_att_ex`) on its own in real time, possibly
+  saturating the UI-thread queue CAT's getter blocks on. Unconfirmed — if you
+  hit this, cross-check via TCI (`tci atten <rx> ...`) before assuming
+  `thetisctl` is at fault.
 
 ## Extending thetisctl
 

@@ -50,6 +50,8 @@ func runCAT(rawArgs []string) error {
 		return catPreamp(c, args)
 	case "band":
 		return catBand(c, args)
+	case "power":
+		return catToggle("power", args, c.SetPowerOn, c.GetPowerOn)
 	case "status":
 		return catStatus(c)
 	case "ptt":

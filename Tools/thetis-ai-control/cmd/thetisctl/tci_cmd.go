@@ -63,6 +63,8 @@ func runTCI(rawArgs []string) error {
 		return tciSetIntInt("agc-gain", args, client.SetAGCGain)
 	case "drive":
 		return tciSetIntInt("drive", args, client.SetDrive)
+	case "power":
+		return tciPower(client, args, a)
 	case "tune":
 		return tciTune(client, args, a)
 	case "ptt":
@@ -290,6 +292,49 @@ func tciQuery(client *tci.Client, args []string) error {
 	}
 	fmt.Printf("%s: %v\n", cmd, replyArgs)
 	return nil
+}
+
+// tciPower turns Thetis's radio engine on/off (client.SetPower — the same
+// action as the main Power button, not mains power to the hardware). Unlike
+// most set commands, SetPower has no synchronous reply: Thetis broadcasts an
+// unsolicited "start;"/"stop;" frame to every connected TCI client once the
+// change actually takes effect, so this waits for that echo rather than
+// assuming the send alone means it worked. Starting the hardware connection
+// can take a few seconds — pass a longer --timeout if this times out.
+func tciPower(client *tci.Client, args []string, a parsedArgs) error {
+	if len(args) != 1 {
+		return fmt.Errorf("power: usage: power on|off")
+	}
+	var on bool
+	switch args[0] {
+	case "on":
+		on = true
+	case "off":
+		on = false
+	default:
+		return fmt.Errorf("power: unknown value %q (want on|off)", args[0])
+	}
+
+	if err := client.SetPower(on); err != nil {
+		return err
+	}
+	want := "stop"
+	if on {
+		want = "start"
+	}
+	for {
+		cmd, _, err := client.RecvCmd()
+		if err != nil {
+			if isTimeoutErr(err) {
+				return fmt.Errorf("power: sent %q but timed out waiting for confirmation — it may still be taking effect; check with a longer --timeout or 'thetisctl cat power get'", want)
+			}
+			return err
+		}
+		if cmd == want {
+			fmt.Printf("power: %v (confirmed)\n", on)
+			return nil
+		}
+	}
 }
 
 func tciRxAudio(client *tci.Client, args []string, a parsedArgs) error {

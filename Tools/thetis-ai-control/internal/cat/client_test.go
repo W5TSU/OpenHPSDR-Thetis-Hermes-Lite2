@@ -91,6 +91,22 @@ func TestSplitRoundTrip(t *testing.T) {
 	}
 }
 
+func TestPowerRoundTrip(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZPS": "ZZPS1"})
+	defer cleanup()
+
+	if err := c.SetPowerOn(true); err != nil {
+		t.Fatalf("SetPowerOn: %v", err)
+	}
+	on, err := c.GetPowerOn()
+	if err != nil {
+		t.Fatalf("GetPowerOn: %v", err)
+	}
+	if !on {
+		t.Errorf("GetPowerOn = false, want true")
+	}
+}
+
 func TestQueryUnexpectedReplyIsError(t *testing.T) {
 	c, cleanup := newTestClient(t, map[string]string{"ZZ": "XX1"})
 	defer cleanup()

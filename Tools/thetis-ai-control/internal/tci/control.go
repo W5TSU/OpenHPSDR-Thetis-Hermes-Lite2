@@ -198,6 +198,23 @@ func (c *Client) StopCWMacros() error {
 	return c.SendBareCmd("cw_macros_stop")
 }
 
+// SetPower turns Thetis's radio engine on/off — the same action as the main
+// Power button (console.PowerOn / chkPower), starting or stopping the HPSDR
+// hardware connection and DSP audio engine. It does NOT touch mains power to
+// the radio hardware itself. Sent as a bare command with no colon — see
+// SendBareCmd's doc comment. Thetis broadcasts the same "start;"/"stop;"
+// frame to every connected TCI client (including this one) once the state
+// actually changes (PowerChange → sendStart/sendStop, TCIServer.cs:1500-1504,
+// 1911-1917) — callers that need confirmation should watch for that frame
+// via RecvCmd rather than assume this call was synchronous.
+// Wire: "start;" (on) / "stop;" (off) (handleStart/handleStop, TCIServer.cs:3227-3236).
+func (c *Client) SetPower(on bool) error {
+	if on {
+		return c.SendBareCmd("start")
+	}
+	return c.SendBareCmd("stop")
+}
+
 // encodeCWText escapes the wire protocol's own delimiter characters out of
 // free-text CW message content, matching decodeTciText's inverse mapping
 // (TCIServer.cs:8647-8651): ':' -> '^', ',' -> '~', ';' -> '*'. Without this,

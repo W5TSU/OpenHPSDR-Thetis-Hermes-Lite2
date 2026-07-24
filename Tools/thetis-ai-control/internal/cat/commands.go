@@ -278,6 +278,26 @@ func (c *Client) GetID() (string, error) {
 	return c.Query("ID")
 }
 
+// SetPowerOn turns Thetis's radio engine on/off — this is the software-side
+// "power" (the main Power button, console.PowerOn / chkPower), which starts
+// or stops the HPSDR hardware connection and DSP audio engine. It does NOT
+// touch mains power to the radio hardware itself — if the physical HL2 board
+// has no mains/PoE power at all, this cannot bring it up. Wire command ZZPS
+// (CATCommands.cs:5722-5744, active); the legacy Kenwood "PS" command is a
+// disabled stub in this codebase and does nothing.
+func (c *Client) SetPowerOn(on bool) error {
+	return c.Set("ZZPS", boolDigit(on))
+}
+
+// GetPowerOn reads whether Thetis's radio engine is powered on.
+func (c *Client) GetPowerOn() (bool, error) {
+	reply, err := c.Query("ZZPS")
+	if err != nil {
+		return false, err
+	}
+	return digitBool(reply)
+}
+
 // IFStatus is the parsed form of the Kenwood "IF" composite status reply
 // (CATCommands.cs:321-402, 35 ASCII bytes).
 type IFStatus struct {

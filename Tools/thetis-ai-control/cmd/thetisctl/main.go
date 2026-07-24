@@ -54,6 +54,7 @@ CAT commands (control-only, Tier 1):
   atten get                       atten set <0-31>
   preamp set <0-9>
   band get                        band set <160|80|60|40|30|20|17|15|12|10|6|2|GEN|WWV|V0-V13>
+  power get                       power on|off  (starts/stops Thetis's radio engine, not mains power)
   status
   ptt on --confirm-tx=<phrase> [--hold 3s]     ptt off
 
@@ -67,6 +68,7 @@ TCI commands (control + audio + transmit, Tier 2; rx: 0=RX1, 1=RX2):
   agc <rx> <off|fixed|long|slow|medium|fast|custom>
   agc-gain <rx> <-20..120>
   drive <rx> <0-100>
+  power on|off                    (starts/stops Thetis's radio engine, not mains power; waits for confirmation)
   tune <rx> on|off --confirm-tx=<phrase> [--hold 3s]
   ptt <rx> on|off --confirm-tx=<phrase> [--hold 3s] [--audio]
   rx-audio capture <rx> --duration 10s --out capture.wav [--sample-type float32]
