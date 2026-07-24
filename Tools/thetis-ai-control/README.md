@@ -145,24 +145,41 @@ interrupted invocation.
 
 ## Live tests
 
-`internal/cat/live_test.go` and `internal/tci/live_test.go` exercise every
-exported client function against a real, running Thetis instance — frequency,
-mode, RIT/XIT, split, AGC, attenuator, preamp, band, power over CAT; VFO,
-modulation, split/RIT/XIT, filter, attenuator, preamp, AGC, drive, CW speed,
-and RX audio streaming over TCI. Excluded from `go test ./...` and CI by the
-`live` build tag:
+Four files, all build-tag `live` (excluded from `go test ./...` and CI):
+
+| File | Covers |
+|---|---|
+| `internal/cat/live_test.go` | Every exported CAT client function |
+| `internal/tci/live_test.go` | Every exported TCI client function |
+| `cmd/thetisctl/live_test.go` | CLI-layer code the library tests bypass: `rx-audio capture`/`stream`, `query`, and a dry run of every TX-capable command |
+| `cmd/thetisctl/txlive_test.go` | **Opt-in only** — actually keys the transmitter for real; see below |
 
 ```bash
 THETIS_HOST=192.168.2.12 go test -tags=live ./internal/cat/... -v
 THETIS_HOST=192.168.2.12 go test -tags=live ./internal/tci/... -v
+THETIS_HOST=192.168.2.12 go test -tags=live ./cmd/thetisctl/... -v
 ```
 
 Every settable function is round-tripped (read → change → verify → restore
-original) rather than asserting a fixed value. TX-capable functions
-(`SetPTT`/`SetTrx`/`SetTune`, CW sending, TX audio) are never exercised for
-real, matching the CLI's own safety posture. See the test file doc comments
-for exceptions (e.g. `SetBand` is read-only in the test; preamp attenuation
-is quantized, not continuous — see below).
+original) rather than asserting a fixed value. The first three files never
+transmit for real — TX-capable functions/commands are only ever exercised in
+their safe form (`SetPTT`/`SetTrx`/`SetTune` called with `false`; CLI
+dry-runs with no `--confirm-tx`). See the test file doc comments for
+exceptions (e.g. `SetBand` is read-only in the test; preamp attenuation is
+quantized, not continuous — see below).
+
+**`txlive_test.go` actually transmits.** It requires a *second*, independent
+env var beyond `THETIS_HOST`, set to the exact confirm phrase, or every test
+in it skips:
+
+```bash
+THETIS_HOST=192.168.2.12 THETIS_LIVE_ALLOW_TX=I-UNDERSTAND-THIS-KEYS-THE-RADIO \
+    go test -tags=live ./cmd/thetisctl/... -run TestLiveTX -v
+```
+
+Run this yourself, deliberately, when you want real end-to-end TX
+regression coverage — it's not something an AI agent should ever run
+unprompted; see `SKILL.md`'s safety protocol.
 
 ## Notes on real-world behavior
 
@@ -180,27 +197,29 @@ is quantized, not continuous — see below).
 - **The classic Kenwood `PS` (power) CAT command is a disabled stub** — use
   `power` (which wraps the real, active `ZZPS`/TCI `start;`/`stop;`
   commands) instead.
-- **TCI's initial-state burst can shadow a "get" reply right after connect.**
-  If "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
+- **TCI's initial-state burst can shadow a reply right after connect.** If
+  "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
   status frames (ending in a `ready;` sentinel) immediately after the
-  WebSocket handshake. A query issued too early can match a stale value from
-  that burst instead of a genuine reply — `thetisctl`'s TCI client issues
-  requests only after normal use (not an issue in practice for CLI
-  invocations, which don't query immediately post-connect the way the live
-  test suite's first attempt did — see that suite's `drainInitialBurst` for
-  the fix if you're writing new TCI client code that queries right after
-  dialing).
+  WebSocket handshake. A request issued too early can match a stale value
+  from that burst instead of the genuine reply — this was a real bug in `tci
+  query`'s raw passthrough (fixed: it now matches replies by command name
+  instead of taking whichever frame arrives first; see `tciQuery`'s doc
+  comment for the residual ambiguity that fix can't fully resolve) and was
+  also hit by the live test suite's own query helper (see
+  `drainInitialBurst` in `internal/tci/live_test.go`).
 - **Preamp attenuation is quantized, not continuous.** Both CAT's `ZZPA` and
   TCI's `rx_preamp_att_ex` resolve to a small set of discrete steps (0, -10,
   -20, -30, -40, -50 dB, plus SA-prefixed variants) server-side — an
   in-between value gets silently snapped to the nearest step.
-- **CAT's `atten get`/`atten set` (`ZZRX`) can hang indefinitely on a live,
-  actively-receiving radio**, independent of `power` state. Suspected cause:
-  an automatic overload-protection feature was observed changing the
-  equivalent TCI value (`rx_step_att_ex`) on its own in real time, possibly
-  saturating the UI-thread queue CAT's getter blocks on. Unconfirmed — if you
-  hit this, cross-check via TCI (`tci atten <rx> ...`) before assuming
-  `thetisctl` is at fault.
+- **CAT's `atten get` (`ZZRX` query) can hang indefinitely on a live,
+  actively-receiving radio — but `atten set` doesn't.** Independent of
+  `power` state; confirmed `SetAttenuatorDB` always returns instantly (it's
+  fire-and-forget over CAT and never waits for a reply) while `GetAttenuatorDB`
+  hangs. Suspected cause: an automatic overload-protection feature was
+  observed changing the equivalent TCI value (`rx_step_att_ex`) on its own in
+  real time, possibly saturating the UI-thread queue the CAT getter blocks
+  on. Unconfirmed — if you hit this, cross-check via TCI (`tci atten <rx>
+  ...`) before assuming `thetisctl` is at fault.
 
 ## Extending thetisctl
 

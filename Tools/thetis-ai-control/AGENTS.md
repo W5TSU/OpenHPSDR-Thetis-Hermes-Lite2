@@ -51,20 +51,28 @@ go build -o thetisctl ./cmd/thetisctl
 CI: `.github/workflows/thetisctl.yml` runs the above on push/PR touching this
 directory, independent of the Windows-only `build.yml`.
 
-`internal/cat/live_test.go` and `internal/tci/live_test.go` (build tag
-`live`, excluded from the above) round-trip every exported client function
+`internal/cat/live_test.go`, `internal/tci/live_test.go`, and
+`cmd/thetisctl/live_test.go` (build tag `live`, excluded from the above)
+round-trip every exported client function and every non-TX CLI code path
 against a real, running Thetis instance — the primary regression check for
-this package now that it exists, run it after any wire-format change:
+this package now that it exists, run it after any wire-format or CLI change:
 
 ```bash
 THETIS_HOST=<radio-ip> go test -tags=live ./internal/cat/... -v
 THETIS_HOST=<radio-ip> go test -tags=live ./internal/tci/... -v
+THETIS_HOST=<radio-ip> go test -tags=live ./cmd/thetisctl/... -v
 ```
 
-Never exercises TX-capable functions for real (see the test files' doc
-comments). A real low-power TX test (CW, tune, tx-audio, or CAT/TCI PTT) is
-still manual-only, and only with the operator present and explicit
-in-session go-ahead for that specific transmission — see
+None of these three ever exercise TX-capable functions for real (see the
+test files' doc comments — TX-capable calls/commands are only ever made in
+their safe `false`/dry-run form). `cmd/thetisctl/txlive_test.go` is a
+separate, fourth file that actually keys the transmitter; it requires a
+second env var (`THETIS_LIVE_ALLOW_TX`, exact match against
+`internal/safety.ConfirmPhrase`) beyond `THETIS_HOST` or every test in it
+skips. It exists solely for a human operator to run deliberately for
+end-to-end TX regression coverage — an agent must never run it, or set that
+env var, without the same explicit, per-invocation, in-conversation
+go-ahead required for `--confirm-tx` itself; see
 `.claude/skills/thetis-control/SKILL.md`'s safety protocol.
 
 ## Child DOX Index

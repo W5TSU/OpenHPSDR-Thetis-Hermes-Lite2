@@ -279,19 +279,45 @@ func audioSuffix(useAudio bool) string {
 	return ""
 }
 
+// tciQuery is a raw passthrough for any TCI text command not covered by a
+// typed subcommand. Waits for a reply whose command name matches what was
+// sent, skipping anything else — otherwise, if Thetis's optional
+// "send initial state on connect" burst is still arriving, the very first
+// frame received could be an unrelated leftover from that burst instead of
+// the genuine reply (this was a real bug, caught by the live test suite:
+// "query vfo 0 0" right after connecting returned "protocol: [ExpertSDR3
+// 2.0]", the burst's first line, instead of a "vfo:..." reply). This only
+// matches by command name, not by leading arguments the way internal/tci's
+// test-only queryTCI does, since query accepts arbitrary commands whose
+// argument shape (which args identify the request vs. carry a value) isn't
+// known here — for commands with multiple simultaneous instances in flight
+// (e.g. "vfo" for several rx/chan pairs), the first same-named reply wins,
+// which may not always be the exact one you asked for.
 func tciQuery(client *tci.Client, args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("query: usage: query <cmd> [args...]")
 	}
-	if err := client.SendCmd(args[0], args[1:]...); err != nil {
+	wantCmd := args[0]
+	if err := client.SendCmd(wantCmd, args[1:]...); err != nil {
 		return err
 	}
-	cmd, replyArgs, err := client.RecvCmd()
-	if err != nil {
-		return err
+	for {
+		cmd, replyArgs, err := client.RecvCmd()
+		if err != nil {
+			if isTimeoutErr(err) {
+				return fmt.Errorf("query %s: no reply matching %q within timeout — "+
+					"either %q produces no reply at all (some TCI commands are fire-and-forget), "+
+					"or you queried right after connecting while Thetis's initial-state burst was "+
+					"still arriving; retry, or pass a longer --timeout", wantCmd, wantCmd, wantCmd)
+			}
+			return err
+		}
+		if cmd != wantCmd {
+			continue
+		}
+		fmt.Printf("%s: %v\n", cmd, replyArgs)
+		return nil
 	}
-	fmt.Printf("%s: %v\n", cmd, replyArgs)
-	return nil
 }
 
 // tciPower turns Thetis's radio engine on/off (client.SetPower — the same

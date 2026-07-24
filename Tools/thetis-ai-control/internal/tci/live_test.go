@@ -496,6 +496,51 @@ func queryTCIBare(t *testing.T, client *Client, cmd string) []string {
 	return nil
 }
 
+// TestLivePowerRoundTrip exercises SetPower over its actual TCI wire path
+// (bare "start;"/"stop;" — see SetPower's doc comment), toggling the engine
+// off then back on and waiting for the server's broadcast confirmation each
+// time. The underlying console.PowerOn property is already validated by
+// internal/cat's TestLivePowerRoundTrip (CAT's ZZPS); this test exists
+// because SetPower is a genuinely different wire encoding (a bare command,
+// not "cmd:args;") that was never itself exercised. t.Cleanup always
+// attempts to leave the engine powered on afterward, even if this test
+// fails partway through (SetPower(true) is a no-op if already on).
+func TestLivePowerRoundTrip(t *testing.T) {
+	client := liveClient(t)
+
+	t.Cleanup(func() {
+		client.SetPower(true)
+	})
+
+	if err := client.SetPower(false); err != nil {
+		t.Fatalf("SetPower(false): %v", err)
+	}
+	waitForPowerBroadcast(t, client, "stop")
+
+	if err := client.SetPower(true); err != nil {
+		t.Fatalf("SetPower(true): %v", err)
+	}
+	waitForPowerBroadcast(t, client, "start")
+}
+
+func waitForPowerBroadcast(t *testing.T, client *Client, want string) {
+	t.Helper()
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		cmd, _, err := client.RecvCmd()
+		if err != nil {
+			if isLiveTimeoutErr(err) {
+				continue
+			}
+			t.Fatalf("RecvCmd while waiting for %q broadcast: %v", want, err)
+		}
+		if cmd == want {
+			return
+		}
+	}
+	t.Fatalf("timed out waiting for %q broadcast", want)
+}
+
 // TestLiveStopCWMacrosIsSafe exercises StopCWMacros as a no-op: since this
 // connection never owns an active CW send (SendCWMacro is never called in
 // this suite), Stop() should simply return without error or side effects.

@@ -228,14 +228,27 @@ reading the protocol alone:
   integer. Sending an in-between value (e.g. -1) gets silently snapped to
   the nearest valid step; don't treat that as a bug.
 - **CAT's step-attenuator getter (`ZZRX`) can hang indefinitely on a live
-  radio.** Reproduced repeatedly against a real, actively-receiving HL2 —
-  independent of Thetis's software power state (confirmed on both). At the
-  same time, the equivalent TCI value (`rx_step_att_ex`) was observed
-  changing on its own with no client touching it, suggesting an automatic
-  overload-protection feature reacting to real signal conditions and
-  possibly saturating the console's UI-thread `Invoke` queue that CAT's
-  getter blocks on. Unresolved — if you hit this, don't assume it's
-  `thetisctl`'s bug; cross-check via TCI first.
+  radio — but only the getter.** Reproduced repeatedly against a real,
+  actively-receiving HL2, independent of Thetis's software power state
+  (confirmed on both). `SetAttenuatorDB` was separately confirmed to return
+  instantly every time (it's fire-and-forget over CAT, never waits for a
+  reply) — the hang is specific to `Query("ZZRX")` waiting on a reply that
+  never comes. At the same time, the equivalent TCI value
+  (`rx_step_att_ex`) was observed changing on its own with no client
+  touching it, suggesting an automatic overload-protection feature reacting
+  to real signal conditions and possibly saturating the console's UI-thread
+  `Invoke` queue that CAT's getter blocks on (an `Invoke`-based getter blocks
+  the caller; a `Send`-based setter does not). Unresolved — if you hit this,
+  don't assume it's `thetisctl`'s bug; cross-check via TCI first.
+- **`tci query`'s raw passthrough can return the wrong reply if used right
+  after connecting.** Caught by the live test suite: `query vfo 0 0` right
+  after dialing returned `protocol: [ExpertSDR3 2.0]` — the first line of
+  the initial-state burst above — instead of a `vfo:...` reply. Fixed in
+  `tciQuery` (`cmd/thetisctl/tci_cmd.go`) to loop until a reply's command
+  name matches what was sent, not just take the first frame; see that
+  function's doc comment for the residual ambiguity it can't fully resolve
+  (matching by command name only, not by leading arguments, since `query`
+  accepts arbitrary commands whose argument shape it doesn't know).
 
 ## Verification / reporting
 
@@ -247,25 +260,50 @@ Thetis actually applied the change.
 
 ## Live test suite
 
-`internal/cat/live_test.go` and `internal/tci/live_test.go` exercise every
-exported client function (freq/mode/RIT/XIT/split/AGC/atten/preamp/band/power
-over CAT; vfo/modulation/split/RIT/XIT/filter/atten/preamp/AGC/drive/CW speed/
-RX audio over TCI) against a real, running Thetis instance. Excluded from
-normal `go test ./...` and CI by the `live` build tag — run explicitly:
+Three files, all build-tag `live` (excluded from normal `go test ./...` and
+CI), together covering every remote function this tool exposes:
+
+- `internal/cat/live_test.go` — every exported CAT client function.
+- `internal/tci/live_test.go` — every exported TCI client function.
+- `cmd/thetisctl/live_test.go` — CLI-layer code the two above bypass by
+  calling library functions directly: `rx-audio capture`/`stream` (WAV file
+  I/O, stdout PCM streaming) and `query` (raw passthrough), plus a dry run
+  (never `--confirm-tx`) of every TX-capable command.
 
 ```bash
 THETIS_HOST=192.168.2.12 go test -tags=live ./internal/cat/... -v
 THETIS_HOST=192.168.2.12 go test -tags=live ./internal/tci/... -v
+THETIS_HOST=192.168.2.12 go test -tags=live ./cmd/thetisctl/... -v
 ```
 
 (`THETIS_CAT_PORT`/`THETIS_TCI_PORT` and `THETIS_LIVE_TIMEOUT` override the
 defaults if needed.) Every settable function round-trips: read the current
 value, change it, verify, then restore the original via `t.Cleanup` — never
-assume a specific starting state. TX-capable functions are never exercised
-for real (`SetPTT`/`SetTrx`/`SetTune` are only ever called with `false`;
-`SendCWMacro`/TX audio frames aren't called at all) — same reasoning as the
-CLI's `--confirm-tx` gate applies here: an unattended test run can't provide
-the per-invocation human confirmation that TX requires. `SetBand` is
-intentionally read-only in the test (see its doc comment — it can retune the
-VFO to a stored per-band frequency, a bigger disruption than the other
-reversible toggles).
+assume a specific starting state. Two exceptions, both documented in their
+test's doc comment: `SetBand` is read-only in the test (can retune the VFO
+to a stored per-band frequency — bigger disruption than the other reversible
+toggles); the CAT attenuator's `Get` is allowed to `t.Skip` on its known hang
+(see the gotcha above) rather than fail, with a separate test confirming
+`Set` alone doesn't hang.
+
+**None of these three files ever transmits for real.** TX-capable functions
+are only ever called in their safe form (`SetPTT`/`SetTrx`/`SetTune` with
+`false`; the CLI dry-run path for `ptt`/`tune`/`cw send`/`tx-audio send`,
+never with `--confirm-tx`) — an unattended test run can't provide the
+per-invocation human confirmation real TX requires.
+
+A fourth file, `cmd/thetisctl/txlive_test.go`, exists **only** for a human
+operator to run deliberately when they want real end-to-end TX coverage —
+it is never something an agent should run on its own. Skips unconditionally
+unless a *second*, independent env var is set to the exact confirm phrase:
+
+```bash
+THETIS_HOST=192.168.2.12 THETIS_LIVE_ALLOW_TX=I-UNDERSTAND-THIS-KEYS-THE-RADIO \
+    go test -tags=live ./cmd/thetisctl/... -run TestLiveTX -v
+```
+
+If an agent is ever asked to "run all the live tests" or similar, that
+instruction covers the first three files, not this one — running
+`txlive_test.go` requires the same explicit, per-invocation, in-conversation
+go-ahead as passing `--confirm-tx` directly, because that's exactly what it
+does.
