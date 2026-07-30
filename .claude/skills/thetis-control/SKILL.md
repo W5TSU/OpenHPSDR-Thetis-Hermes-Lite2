@@ -64,6 +64,8 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> preamp set <0-9>` | RX1 preamp level |
 | `cat --host <ip> band get` / `band set <name>` | Band (160-2, GEN, WWV, V0-V13) |
 | `cat --host <ip> power get` / `power on\|off` | Start/stop Thetis's radio engine (software power, not mains) |
+| `cat --host <ip> quickplay get` / `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna |
+| `cat --host <ip> quickrec get` / `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
 
 ```bash
@@ -84,6 +86,19 @@ hardware connection and DSP audio engine — so treat it with the same "ask
 before doing it" judgment as any other state-changing remote action, even
 though it doesn't need `--confirm-tx`. Powering on can take a few seconds;
 pass a longer `--timeout` if `power on`'s readback confirmation times out.
+
+`quickplay on|off` and `quickrec on|off` are also not TX-capable — Quick
+Play injects a fixed audio file as RX I/Q *before* the antenna input, and
+Quick Rec records RX audio to that same file; neither touches the
+transmitter. This is how a remote FreeDV decode test can now be run without
+anyone at the Thetis machine: `quickplay on` injects the FreeDV bench test
+signal (`Tools/FreeDV/README.md`) straight into the RX DSP chain, then `tci
+rx-audio capture` (below) grabs whatever comes out the other end — clean
+decoded speech means the FreeDV decoder synced, raw modem tones mean it
+didn't. If the target file doesn't exist or playback otherwise fails,
+Thetis shows a local error dialog and reverts the checkbox — `quickplay on`
+itself won't report an error for that (the CAT set is fire-and-forget); use
+`quickplay get` afterward to confirm it's actually still running.
 
 ## Tier 2 — audio and transmit usage (TCI)
 
@@ -249,6 +264,16 @@ reading the protocol alone:
   `sendStart`/`sendStop`, TCIServer.cs:1500-1504, 1911-1917), so a client
   sending `start;` must wait for that broadcast echo rather than assume the
   send alone means it worked (see `SetPower`'s doc comment).
+- **Not every fully-implemented CAT command is actually reachable — check
+  `CATParser.cs`'s dispatch switch, not just `CATCommands.cs`.** `ZZQA`
+  (Quick Play) and `ZZQB` (Quick Rec) had complete, correct implementations
+  in `CATCommands.cs` that were simply never wired into `CATParser.cs`'s
+  switch and had no `CATStructs.xml` entry — unlike the `RT`/`XT`/`RA`/`PA`/`PS`
+  stubs above, this wasn't even commented out as deliberately disabled, just
+  orphaned. No CAT client, `thetisctl` or otherwise, could reach them until
+  wired in (2026-07-30). If a command you expect to work doesn't, check all
+  three places (`CATCommands.cs` implementation, `CATParser.cs` dispatch,
+  `CATStructs.xml` param widths) before assuming it's a `thetisctl` bug.
 - **TCI's "send initial state on connect" burst can shadow real replies.**
   If enabled (`chkTCIsendInitialStateOnConnect`), Thetis dumps ~100+
   unsolicited status frames (one per control) immediately after connect,

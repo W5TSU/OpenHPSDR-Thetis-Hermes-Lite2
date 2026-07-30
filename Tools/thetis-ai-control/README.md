@@ -66,6 +66,10 @@ Both `cat` and `tci` take:
 | `band set <name>` | Set band: `160`,`80`,`60`,`40`,`30`,`20`,`17`,`15`,`12`,`10`,`6`,`2`,`GEN`,`WWV`,`V0`-`V13` |
 | `power get` | Read whether Thetis's radio engine is running |
 | `power on\|off` | Start/stop Thetis's radio engine — the main Power button, **not mains power** to the HL2 board |
+| `quickplay get` | Read whether Quick Play is active |
+| `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna — this is how FreeDV decode tests can now be triggered remotely, see [Notes](#notes-on-real-world-behavior) |
+| `quickrec get` | Read whether Quick Rec is active |
+| `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `status` | Rig ID + frequency/mode/RIT/XIT/split/TX in one call |
 | `ptt on\|off` | **TX-capable** — see [Transmitting](#transmitting-tx-capable-commands) |
 
@@ -226,6 +230,13 @@ unprompted; see `SKILL.md`'s safety protocol.
 - **The classic Kenwood `PS` (power) CAT command is a disabled stub** — use
   `power` (which wraps the real, active `ZZPS`/TCI `start;`/`stop;`
   commands) instead.
+- **A fully-implemented CAT command can still be unreachable.** `quickplay`/
+  `quickrec`'s underlying `ZZQA`/`ZZQB` had complete, correct
+  implementations in Thetis's `CATCommands.cs` that were simply never
+  wired into the dispatch switch or given a `CATStructs.xml` entry — no CAT
+  client, this tool included, could reach them until that was fixed
+  (2026-07-30). Worth remembering if a command that looks fully implemented
+  in source still doesn't respond over the wire.
 - **TCI's initial-state burst can shadow a reply right after connect.** If
   "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
   status frames (ending in a `ready;` sentinel) immediately after the

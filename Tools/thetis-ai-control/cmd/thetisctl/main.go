@@ -55,6 +55,8 @@ CAT commands (control-only, Tier 1):
   preamp set <0-9>
   band get                        band set <160|80|60|40|30|20|17|15|12|10|6|2|GEN|WWV|V0-V13>
   power get                       power on|off  (starts/stops Thetis's radio engine, not mains power)
+  quickplay get                   quickplay on|off  (Quick Play: inject Music\Thetis\quickrecord\SDRQuickAudio.wav as RX I/Q, bypassing the antenna)
+  quickrec get                    quickrec on|off   (Quick Rec: record RX audio to that same fixed file)
   status
   ptt on --confirm-tx=<phrase> [--hold 3s]     ptt off
 

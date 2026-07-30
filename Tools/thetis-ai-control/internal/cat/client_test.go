@@ -107,6 +107,38 @@ func TestPowerRoundTrip(t *testing.T) {
 	}
 }
 
+func TestQuickPlayRoundTrip(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZQA": "ZZQA1"})
+	defer cleanup()
+
+	if err := c.SetQuickPlay(true); err != nil {
+		t.Fatalf("SetQuickPlay: %v", err)
+	}
+	on, err := c.GetQuickPlay()
+	if err != nil {
+		t.Fatalf("GetQuickPlay: %v", err)
+	}
+	if !on {
+		t.Errorf("GetQuickPlay = false, want true")
+	}
+}
+
+func TestQuickRecRoundTrip(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZQB": "ZZQB1"})
+	defer cleanup()
+
+	if err := c.SetQuickRec(true); err != nil {
+		t.Fatalf("SetQuickRec: %v", err)
+	}
+	on, err := c.GetQuickRec()
+	if err != nil {
+		t.Fatalf("GetQuickRec: %v", err)
+	}
+	if !on {
+		t.Errorf("GetQuickRec = false, want true")
+	}
+}
+
 func TestQueryUnexpectedReplyIsError(t *testing.T) {
 	c, cleanup := newTestClient(t, map[string]string{"ZZ": "XX1"})
 	defer cleanup()

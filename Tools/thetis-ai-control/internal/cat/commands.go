@@ -298,6 +298,49 @@ func (c *Client) GetPowerOn() (bool, error) {
 	return digitBool(reply)
 }
 
+// SetQuickPlay starts/stops Thetis's Quick Play feature (the ckQuickPlay
+// checkbox) — plays a fixed file (Music\Thetis\quickrecord\SDRQuickAudio.wav
+// by convention) as I/Q injected at the head of the RX DSP chain, bypassing
+// the antenna entirely; see Tools/FreeDV/README.md for how the FreeDV bench
+// test-signal generator uses this for controlled, RF-free decode testing.
+// If the file doesn't exist or playback otherwise fails, Thetis shows a
+// local error dialog and the checkbox reverts — this call itself won't
+// error in that case, since the set is fire-and-forget over CAT; confirm
+// with GetQuickPlay afterward if you need to know it actually started.
+// Wire command ZZQA (CATCommands.cs:7289-7311), newly wired into
+// CATParser.cs's dispatch — previously unreachable dead code, found while
+// investigating remote FreeDV decode testing (2026-07-30).
+func (c *Client) SetQuickPlay(on bool) error {
+	return c.Set("ZZQA", boolDigit(on))
+}
+
+// GetQuickPlay reads whether Quick Play is currently active.
+func (c *Client) GetQuickPlay() (bool, error) {
+	reply, err := c.Query("ZZQA")
+	if err != nil {
+		return false, err
+	}
+	return digitBool(reply)
+}
+
+// SetQuickRec starts/stops Thetis's Quick Rec feature (the ckQuickRec
+// checkbox) — records audio to a fixed file for later Quick Play. Same
+// fire-and-forget caveat as SetQuickPlay. Wire command ZZQB
+// (CATCommands.cs:7312-7334), newly wired into CATParser.cs's dispatch —
+// previously unreachable dead code (see SetQuickPlay).
+func (c *Client) SetQuickRec(on bool) error {
+	return c.Set("ZZQB", boolDigit(on))
+}
+
+// GetQuickRec reads whether Quick Rec is currently active.
+func (c *Client) GetQuickRec() (bool, error) {
+	reply, err := c.Query("ZZQB")
+	if err != nil {
+		return false, err
+	}
+	return digitBool(reply)
+}
+
 // IFStatus is the parsed form of the Kenwood "IF" composite status reply
 // (CATCommands.cs:321-402, 35 ASCII bytes).
 type IFStatus struct {

@@ -52,6 +52,10 @@ func runCAT(rawArgs []string) error {
 		return catBand(c, args)
 	case "power":
 		return catToggle("power", args, c.SetPowerOn, c.GetPowerOn)
+	case "quickplay":
+		return catToggle("quickplay", args, c.SetQuickPlay, c.GetQuickPlay)
+	case "quickrec":
+		return catToggle("quickrec", args, c.SetQuickRec, c.GetQuickRec)
 	case "status":
 		return catStatus(c)
 	case "ptt":
