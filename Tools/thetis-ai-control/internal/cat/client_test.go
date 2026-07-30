@@ -139,6 +139,81 @@ func TestQuickRecRoundTrip(t *testing.T) {
 	}
 }
 
+func TestFreeDVDecodeRoundTrip(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZFD": "ZZFD1"})
+	defer cleanup()
+
+	if err := c.SetFreeDVDecode(true); err != nil {
+		t.Fatalf("SetFreeDVDecode: %v", err)
+	}
+	on, err := c.GetFreeDVDecode()
+	if err != nil {
+		t.Fatalf("GetFreeDVDecode: %v", err)
+	}
+	if !on {
+		t.Errorf("GetFreeDVDecode = false, want true")
+	}
+}
+
+func TestFreeDVStatusSynced(t *testing.T) {
+	// "1+153" = synced, 15.3dB SNR.
+	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS1+153"})
+	defer cleanup()
+
+	st, err := c.GetFreeDVStatus()
+	if err != nil {
+		t.Fatalf("GetFreeDVStatus: %v", err)
+	}
+	if !st.Sync {
+		t.Errorf("Sync = false, want true")
+	}
+	if st.SNRdB != 15.3 {
+		t.Errorf("SNRdB = %v, want 15.3", st.SNRdB)
+	}
+}
+
+func TestFreeDVStatusNotSynced(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS0+000"})
+	defer cleanup()
+
+	st, err := c.GetFreeDVStatus()
+	if err != nil {
+		t.Fatalf("GetFreeDVStatus: %v", err)
+	}
+	if st.Sync {
+		t.Errorf("Sync = true, want false")
+	}
+	if st.SNRdB != 0 {
+		t.Errorf("SNRdB = %v, want 0", st.SNRdB)
+	}
+}
+
+func TestFreeDVStatusNegativeSNR(t *testing.T) {
+	// "1-025" = synced, -2.5dB SNR.
+	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS1-025"})
+	defer cleanup()
+
+	st, err := c.GetFreeDVStatus()
+	if err != nil {
+		t.Fatalf("GetFreeDVStatus: %v", err)
+	}
+	if !st.Sync {
+		t.Errorf("Sync = false, want true")
+	}
+	if st.SNRdB != -2.5 {
+		t.Errorf("SNRdB = %v, want -2.5", st.SNRdB)
+	}
+}
+
+func TestFreeDVStatusMalformedReply(t *testing.T) {
+	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFSxx"})
+	defer cleanup()
+
+	if _, err := c.GetFreeDVStatus(); err == nil {
+		t.Fatal("GetFreeDVStatus with malformed reply: want error, got nil")
+	}
+}
+
 func TestQueryUnexpectedReplyIsError(t *testing.T) {
 	c, cleanup := newTestClient(t, map[string]string{"ZZ": "XX1"})
 	defer cleanup()

@@ -66,6 +66,8 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> power get` / `power on\|off` | Start/stop Thetis's radio engine (software power, not mains) |
 | `cat --host <ip> quickplay get` / `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna |
 | `cat --host <ip> quickrec get` / `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
+| `cat --host <ip> freedv get` / `freedv on\|off` | Enable/disable FreeDV RX decode (RX1 only) |
+| `cat --host <ip> freedv status` | Read FreeDV sync + SNR (read-only) |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
 
 ```bash
@@ -87,18 +89,29 @@ before doing it" judgment as any other state-changing remote action, even
 though it doesn't need `--confirm-tx`. Powering on can take a few seconds;
 pass a longer `--timeout` if `power on`'s readback confirmation times out.
 
-`quickplay on|off` and `quickrec on|off` are also not TX-capable — Quick
-Play injects a fixed audio file as RX I/Q *before* the antenna input, and
-Quick Rec records RX audio to that same file; neither touches the
-transmitter. This is how a remote FreeDV decode test can now be run without
-anyone at the Thetis machine: `quickplay on` injects the FreeDV bench test
-signal (`Tools/FreeDV/README.md`) straight into the RX DSP chain, then `tci
-rx-audio capture` (below) grabs whatever comes out the other end — clean
-decoded speech means the FreeDV decoder synced, raw modem tones mean it
-didn't. If the target file doesn't exist or playback otherwise fails,
-Thetis shows a local error dialog and reverts the checkbox — `quickplay on`
-itself won't report an error for that (the CAT set is fire-and-forget); use
-`quickplay get` afterward to confirm it's actually still running.
+`quickplay on|off`, `quickrec on|off`, and `freedv on|off|status` are also
+not TX-capable — Quick Play injects a fixed audio file as RX I/Q *before*
+the antenna input, Quick Rec records RX audio to that same file, and
+`freedv` controls/reads Thetis's FreeDV RX decode block (`fdv.c`); none of
+these touch the transmitter. Together they close the loop on a fully remote,
+RF-free FreeDV decode test:
+
+```bash
+./thetisctl cat --host 192.168.1.50 freedv on
+./thetisctl cat --host 192.168.1.50 quickplay on    # injects Tools/FreeDV's bench test signal
+sleep 3                                             # let the decoder attempt sync
+./thetisctl cat --host 192.168.1.50 freedv status   # "SYNC  SNR 15.3 dB" or "no sync" — objective, no listening required
+./thetisctl cat --host 192.168.1.50 quickplay off
+```
+
+`tci rx-audio capture` (below) can still be used alongside this to actually
+listen to what came out — useful for judging decode *quality*, not just
+sync — but `freedv status` alone is enough to script a pass/fail loop when
+iterating on `fdv.c`. If Quick Play's target file doesn't exist or playback
+otherwise fails, Thetis shows a local error dialog and reverts the
+checkbox — `quickplay on` itself won't report an error for that (the CAT
+set is fire-and-forget); use `quickplay get` afterward to confirm it's
+actually still running.
 
 ## Tier 2 — audio and transmit usage (TCI)
 

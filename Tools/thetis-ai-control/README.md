@@ -70,6 +70,9 @@ Both `cat` and `tci` take:
 | `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna — this is how FreeDV decode tests can now be triggered remotely, see [Notes](#notes-on-real-world-behavior) |
 | `quickrec get` | Read whether Quick Rec is active |
 | `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
+| `freedv get` | Read whether FreeDV RX decode is enabled |
+| `freedv on\|off` | Enable/disable FreeDV RX decode (`fdv.c`), RX1 only |
+| `freedv status` | Read FreeDV sync + SNR — read-only, e.g. `SYNC  SNR 15.3 dB` or `no sync` |
 | `status` | Rig ID + frequency/mode/RIT/XIT/split/TX in one call |
 | `ptt on\|off` | **TX-capable** — see [Transmitting](#transmitting-tx-capable-commands) |
 
@@ -237,6 +240,11 @@ unprompted; see `SKILL.md`'s safety protocol.
   client, this tool included, could reach them until that was fixed
   (2026-07-30). Worth remembering if a command that looks fully implemented
   in source still doesn't respond over the wire.
+- **`freedv on|off|status` (`ZZFD`/`ZZFS`) is new, not revived** — added
+  2026-07-30 specifically to make FreeDV RX decode testing (`fdv.c`, still
+  under active development on the FreeDV branch) scriptable without a human
+  watching the Setup DSP tab: `freedv on`, `quickplay on` to inject the bench
+  test signal, then `freedv status` for an objective sync/SNR readout.
 - **TCI's initial-state burst can shadow a reply right after connect.** If
   "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
   status frames (ending in a `ready;` sentinel) immediately after the

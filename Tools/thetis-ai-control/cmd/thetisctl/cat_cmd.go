@@ -56,6 +56,8 @@ func runCAT(rawArgs []string) error {
 		return catToggle("quickplay", args, c.SetQuickPlay, c.GetQuickPlay)
 	case "quickrec":
 		return catToggle("quickrec", args, c.SetQuickRec, c.GetQuickRec)
+	case "freedv":
+		return catFreeDV(c, args)
 	case "status":
 		return catStatus(c)
 	case "ptt":
@@ -153,6 +155,30 @@ func catToggle(name string, args []string, set func(bool) error, get func() (boo
 	}
 	fmt.Printf("%s: %v\n", name, v)
 	return nil
+}
+
+// catFreeDV controls and reports on Thetis's FreeDV RX decode block (fdv.c).
+// "status" is read-only (sync/SNR); on|off|get toggles/reads whether the
+// decoder is running at all — same shape as quickplay/quickrec above.
+// Combine with "quickplay on" to inject the FreeDV bench test signal and
+// this to check whether it synced, entirely without touching the Thetis UI.
+func catFreeDV(c *cat.Client, args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("freedv: usage: freedv on|off|get | freedv status")
+	}
+	if args[0] == "status" {
+		st, err := c.GetFreeDVStatus()
+		if err != nil {
+			return err
+		}
+		if st.Sync {
+			fmt.Printf("freedv: SYNC  SNR %.1f dB\n", st.SNRdB)
+		} else {
+			fmt.Println("freedv: no sync")
+		}
+		return nil
+	}
+	return catToggle("freedv", args, c.SetFreeDVDecode, c.GetFreeDVDecode)
 }
 
 func catAGC(c *cat.Client, args []string) error {

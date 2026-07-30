@@ -7332,6 +7332,42 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets the FreeDV RX decode (fdv.c) enable state. RX1/subrx0
+        // only, matching the Setup DSP tab's current single-channel prototype
+        // scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). // W5TSU
+        public string ZZFD(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                console.radio.GetDSPRX(0, 0).RXAFDVRun = (s == "1") ? 1 : 0;
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (console.radio.GetDSPRX(0, 0).RXAFDVRun != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads FreeDV RX decode sync/SNR status (get-only): "<sync 0|1><sign><snr*10, 3 digits>".
+        // SNR is only meaningful once synced (mirrors freedvStatusTimer_Tick in
+        // setup.cs, which likewise only reads GetRXAFDVSnr when synced) and is
+        // reported as 0 while unsynced. // W5TSU
+        public string ZZFS()
+        {
+            int ch = WDSP.id(0, 0);
+            bool sync = WDSP.GetRXAFDVSync(ch) != 0;
+            double snr = sync ? WDSP.GetRXAFDVSnr(ch) : 0.0;
+
+            int snrTenths = (int)Math.Round(snr * 10.0);
+            string sign = snrTenths < 0 ? "-" : "+";
+            snrTenths = Math.Abs(snrTenths);
+            snrTenths = Math.Min(snrTenths, 999);
+
+            return (sync ? "1" : "0") + sign + AddLeadingZeros(snrTenths, 3);
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>
