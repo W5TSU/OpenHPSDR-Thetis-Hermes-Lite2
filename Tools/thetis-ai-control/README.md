@@ -97,6 +97,7 @@ Both `cat` and `tci` take:
 | `power on\|off` | Start/stop Thetis's radio engine, **not mains power**; waits for the server's confirmation broadcast |
 | `rx-audio capture <rx> --duration <d> --out <file.wav>` | Record RX audio to a WAV file |
 | `rx-audio stream <rx> --duration <d>` | Stream RX audio as raw float32 LE PCM to stdout |
+| `freedv-scan [--dwell 6s] [--out-dir <dir>]` | RX-only — tunes RX1 through the FreeDV calling frequencies, records a WAV per band, reports peak/RMS, restores original freq/mode when done |
 | `tune <rx> on\|off` | **TX-capable** — key TUNE (bare carrier); hard-capped at 5s total on-time |
 | `ptt <rx> on\|off [--audio]` | **TX-capable** — key PTT (`--audio` marks this connection as the TX audio source) |
 | `cw send <rx> "<text>" --speed <wpm> --mode <cw\|cwu\|cwl>` | **TX-capable** — key CW text via Thetis's own macro keyer |
@@ -108,7 +109,16 @@ Both `cat` and `tci` take:
 ./thetisctl tci --host 192.168.1.50 modulation 0 usb
 ./thetisctl tci --host 192.168.1.50 rx-audio capture 0 --duration 10s --out capture.wav
 ./thetisctl tci --host 192.168.1.50 rx-audio stream 0 --duration 10s > raw.pcm
+./thetisctl tci --host 192.168.1.50 freedv-scan --out-dir /tmp/freedv-scan
 ```
+
+`freedv-scan`'s peak/RMS numbers are a prioritization hint for which
+captures to listen to, not FreeDV identification — spectral shape alone
+can't reliably tell a real digital-voice signal apart from a mistuned SSB
+voice transmission or plain band noise (confirmed the hard way: a capture
+that looked "flat, broadband, no speech pauses" turned out to just be
+mistuned voice). Listen to the files yourself, or run them through actual
+FreeDV software, to confirm.
 
 ## Transmitting (TX-capable commands)
 

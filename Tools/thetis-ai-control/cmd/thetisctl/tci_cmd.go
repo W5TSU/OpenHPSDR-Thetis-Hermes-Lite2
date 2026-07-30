@@ -8,7 +8,10 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"thetisctl/internal/safety"
@@ -71,6 +74,8 @@ func runTCI(rawArgs []string) error {
 		return tciPTT(client, args, a)
 	case "rx-audio":
 		return tciRxAudio(client, args, a)
+	case "freedv-scan":
+		return tciFreeDVScan(client, a)
 	case "tx-audio":
 		return tciTxAudio(client, args, a)
 	case "cw":
@@ -449,19 +454,65 @@ func tciRxAudio(client *tci.Client, args []string, a parsedArgs) error {
 		return fmt.Errorf("rx-audio capture: --out <file.wav> is required")
 	}
 
-	if err := client.SetAudioSampleType(sampleType); err != nil {
+	if mode == "stream" {
+		if err := client.SetAudioSampleType(sampleType); err != nil {
+			return err
+		}
+		if err := client.StartAudio(rx); err != nil {
+			return err
+		}
+		defer client.StopAudio(rx)
+
+		deadline := time.Now().Add(duration)
+		for time.Now().Before(deadline) {
+			h, data, err := client.RecvAudioFrame()
+			if err != nil {
+				if isTimeoutErr(err) {
+					continue
+				}
+				return err
+			}
+			if h.StreamType != tci.StreamRXAudio || h.ReceiverID != rx {
+				continue
+			}
+			samples := tci.DecodeSamples(data, h.SampleType)
+			if err := writeFloat32LE(os.Stdout, samples); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	out := a.flag("out", "")
+	format, samples, err := captureRXAudio(client, rx, sampleType, duration)
+	if err != nil {
 		return err
 	}
-	if err := client.StartAudio(rx); err != nil {
+	if err := tci.WriteWAV(out, format, samples); err != nil {
 		return err
+	}
+	fmt.Printf("captured %.2fs (%d samples, %d Hz, %d ch) to %s\n",
+		float64(len(samples))/float64(format.Channels)/float64(format.SampleRate), len(samples), format.SampleRate, format.Channels, out)
+	return nil
+}
+
+// captureRXAudio subscribes to RX audio for rx and buffers duration's worth
+// of decoded samples, returning them alongside the actual format Thetis
+// reported (sample rate/channels can differ from the 48kHz/mono fallback
+// used if no frame ever arrives). Shared by "rx-audio capture" and
+// "freedv-scan", which both need buffered (not streamed) audio.
+func captureRXAudio(client *tci.Client, rx int, sampleType tci.SampleType, duration time.Duration) (tci.WAVFormat, []float32, error) {
+	if err := client.SetAudioSampleType(sampleType); err != nil {
+		return tci.WAVFormat{}, nil, err
+	}
+	if err := client.StartAudio(rx); err != nil {
+		return tci.WAVFormat{}, nil, err
 	}
 	defer client.StopAudio(rx)
 
-	var (
-		buffered   []float32
-		sampleRate = 48000
-		channels   = 1
-	)
+	format := tci.WAVFormat{SampleRate: 48000, Channels: 1, BitsPerSample: 32, Float: true}
+	var buffered []float32
+
 	deadline := time.Now().Add(duration)
 	for time.Now().Before(deadline) {
 		h, data, err := client.RecvAudioFrame()
@@ -469,35 +520,179 @@ func tciRxAudio(client *tci.Client, args []string, a parsedArgs) error {
 			if isTimeoutErr(err) {
 				continue
 			}
-			return err
+			return tci.WAVFormat{}, nil, err
 		}
 		if h.StreamType != tci.StreamRXAudio || h.ReceiverID != rx {
 			continue
 		}
 		if h.SampleRate > 0 {
-			sampleRate = h.SampleRate
+			format.SampleRate = h.SampleRate
 		}
 		if h.Channels > 0 {
-			channels = h.Channels
+			format.Channels = h.Channels
 		}
-		samples := tci.DecodeSamples(data, h.SampleType)
-		if mode == "stream" {
-			if err := writeFloat32LE(os.Stdout, samples); err != nil {
-				return err
-			}
-		} else {
-			buffered = append(buffered, samples...)
+		buffered = append(buffered, tci.DecodeSamples(data, h.SampleType)...)
+	}
+	return format, buffered, nil
+}
+
+// freqEntry is one row of freeDVCallingFrequencies.
+type freqEntry struct {
+	Band string
+	Hz   uint64
+	Mode string // "usb" or "lsb", as accepted by SetModulation
+}
+
+// freeDVCallingFrequencies are the standard FreeDV digital-voice calling
+// frequencies by band (user-provided reference, saved to project memory
+// 2026-07-30). QO-100 is a geostationary-satellite frequency requiring an
+// external transverter — the HL2's own tunable range is 0-38.4 MHz (TCI's
+// vfo_limits, confirmed live) — so it's listed for completeness but always
+// skipped by freedv-scan, not attempted.
+var freeDVCallingFrequencies = []freqEntry{
+	{"160m", 1870000, "lsb"},
+	{"80m", 3625000, "lsb"},
+	{"80m", 3643000, "lsb"},
+	{"80m", 3693000, "lsb"},
+	{"80m", 3697000, "lsb"},
+	{"80m", 3803000, "lsb"},
+	{"60m", 5403500, "usb"},
+	{"60m", 5368500, "usb"},
+	{"40m", 7177000, "lsb"},
+	{"40m", 7197000, "lsb"},
+	{"20m", 14236000, "usb"},
+	{"20m", 14240000, "usb"},
+	{"17m", 18118000, "usb"},
+	{"15m", 21313000, "usb"},
+	{"12m", 24933000, "usb"},
+	{"10m", 28330000, "usb"},
+	{"10m", 28720000, "usb"},
+	{"QO-100", 10489640000, "usb"}, // satellite — always skipped, see comment above
+}
+
+// tciFreeDVScan tunes RX1 (rx 0) to each of freeDVCallingFrequencies in
+// turn, dwells long enough to capture audio, and records a WAV file per
+// frequency plus a peak/RMS signal-presence summary — receive-only, never
+// keys the transmitter. This does NOT identify FreeDV specifically: telling
+// a real digital-voice signal apart from a mistuned SSB voice transmission
+// or plain band noise from spectral shape alone proved unreliable in
+// practice (see SKILL.md's gotchas) — the summary is only a prioritization
+// aid for which captures are worth listening to yourself. Restores the
+// radio's original frequency and mode when done.
+func tciFreeDVScan(client *tci.Client, a parsedArgs) error {
+	dwell := parseDuration(a.flag("dwell", "6s"), 6*time.Second)
+	outDir := a.flag("out-dir", "")
+	if outDir == "" {
+		var err error
+		outDir, err = os.MkdirTemp("", "freedv-scan-")
+		if err != nil {
+			return fmt.Errorf("freedv-scan: create output dir: %w", err)
 		}
+	} else if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return fmt.Errorf("freedv-scan: create output dir: %w", err)
 	}
 
-	if mode == "capture" {
-		out := a.flag("out", "")
-		format := tci.WAVFormat{SampleRate: sampleRate, Channels: channels, BitsPerSample: 32, Float: true}
-		if err := tci.WriteWAV(out, format, buffered); err != nil {
-			return err
+	origArgs := queryTCICmd(client, "vfo", []string{"0", "0"})
+	origFreq, haveOrigFreq := int64(0), false
+	if len(origArgs) >= 3 {
+		if v, err := strconv.ParseInt(origArgs[2], 10, 64); err == nil {
+			origFreq, haveOrigFreq = v, true
 		}
-		fmt.Printf("captured %.2fs (%d samples, %d Hz, %d ch) to %s\n",
-			float64(len(buffered))/float64(channels)/float64(sampleRate), len(buffered), sampleRate, channels, out)
+	}
+	modArgs := queryTCICmd(client, "modulation", []string{"0"})
+	origMode, haveOrigMode := "", false
+	if len(modArgs) >= 2 {
+		origMode, haveOrigMode = modArgs[1], true
+	}
+	if haveOrigFreq && haveOrigMode {
+		defer func() {
+			client.SetModulation(0, origMode)
+			client.SetVFOFreqHz(0, 0, origFreq)
+		}()
+	}
+
+	type result struct {
+		entry freqEntry
+		file  string
+		peak  float32
+		rms   float64
+	}
+	var results []result
+
+	fmt.Printf("freedv-scan: %d frequencies, %s dwell each, saving to %s\n",
+		len(freeDVCallingFrequencies)-1, dwell, outDir)
+
+	for _, e := range freeDVCallingFrequencies {
+		if e.Band == "QO-100" {
+			fmt.Printf("[skip] QO-100 %d Hz — satellite frequency, outside HL2 direct-tune range (0-38.4MHz)\n", e.Hz)
+			continue
+		}
+		if err := client.SetModulation(0, e.Mode); err != nil {
+			return fmt.Errorf("freedv-scan: set modulation for %s: %w", e.Band, err)
+		}
+		if err := client.SetVFOFreqHz(0, 0, int64(e.Hz)); err != nil {
+			return fmt.Errorf("freedv-scan: set frequency for %s: %w", e.Band, err)
+		}
+		time.Sleep(400 * time.Millisecond) // let AGC/DSP settle after retune
+
+		format, samples, err := captureRXAudio(client, 0, tci.SampleFloat32, dwell)
+		if err != nil {
+			return fmt.Errorf("freedv-scan: capture at %d Hz: %w", e.Hz, err)
+		}
+
+		file := filepath.Join(outDir, fmt.Sprintf("%s_%dHz_%s.wav", e.Band, e.Hz, strings.ToUpper(e.Mode)))
+		if err := tci.WriteWAV(file, format, samples); err != nil {
+			return fmt.Errorf("freedv-scan: write %s: %w", file, err)
+		}
+
+		var peak float32
+		var sumSq float64
+		for _, s := range samples {
+			if abs := float32(math.Abs(float64(s))); abs > peak {
+				peak = abs
+			}
+			sumSq += float64(s) * float64(s)
+		}
+		rms := 0.0
+		if len(samples) > 0 {
+			rms = math.Sqrt(sumSq / float64(len(samples)))
+		}
+		fmt.Printf("[%2d/%2d] %-6s %10.4f MHz %s: peak=%.4f rms=%.4f -> %s\n",
+			len(results)+1, len(freeDVCallingFrequencies)-1, e.Band, float64(e.Hz)/1e6, strings.ToUpper(e.Mode), peak, rms, file)
+
+		results = append(results, result{e, file, peak, rms})
+	}
+
+	sort.Slice(results, func(i, j int) bool { return results[i].rms > results[j].rms })
+	fmt.Println("\nSummary, sorted by RMS (most active first — listen to these first, this is a prioritization hint, not a FreeDV identification):")
+	for _, r := range results {
+		fmt.Printf("  %-6s %10.4f MHz %s  peak=%.4f rms=%.4f  %s\n",
+			r.entry.Band, float64(r.entry.Hz)/1e6, strings.ToUpper(r.entry.Mode), r.peak, r.rms, r.file)
+	}
+	return nil
+}
+
+// queryTCICmd sends "cmd:args...;" and returns the first reply's args whose
+// command name matches — best-effort, no retry/burst-draining (freedv-scan
+// only uses this to capture original state for later restoration, where
+// "couldn't determine original state, skip restoring" is an acceptable
+// fallback, unlike a query result a user is relying on for a real decision).
+func queryTCICmd(client *tci.Client, cmd string, sendArgs []string) []string {
+	if err := client.SendCmd(cmd, sendArgs...); err != nil {
+		return nil
+	}
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		gotCmd, args, err := client.RecvCmd()
+		if err != nil {
+			if isTimeoutErr(err) {
+				continue
+			}
+			return nil
+		}
+		if gotCmd == cmd {
+			return args
+		}
 	}
 	return nil
 }

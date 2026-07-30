@@ -101,6 +101,7 @@ pass a longer `--timeout` if `power on`'s readback confirmation times out.
 | `tci --host <ip> drive <rx> <0-100>` | TX drive power |
 | `tci --host <ip> power on\|off` | Start/stop Thetis's radio engine (software power, not mains); waits for confirmation |
 | `tci --host <ip> cw send <rx> "<text>" --speed <wpm> --mode <cw\|cwu\|cwl>` | Key CW text via Thetis's own macro keyer |
+| `tci --host <ip> freedv-scan [--dwell 6s] [--out-dir <dir>]` | RX-only: tune RX1 through the FreeDV calling frequencies, record + report peak/RMS per band |
 | `tci --host <ip> query <cmd> [args...]` | Raw passthrough for anything not listed above |
 
 ```bash
@@ -115,6 +116,24 @@ RX audio capture:
 ./thetisctl tci --host 192.168.1.50 rx-audio capture 0 --duration 10s --out capture.wav
 ./thetisctl tci --host 192.168.1.50 rx-audio stream 0 --duration 10s > raw.pcm   # float32 LE PCM
 ```
+
+FreeDV calling-frequency scan — RX-only, tunes RX1 through each frequency in
+`freeDVCallingFrequencies` (`cmd/thetisctl/tci_cmd.go`; the table is also
+saved to project memory, `freedv-calling-frequencies`), records a WAV per
+band, and restores the original frequency/mode when done:
+
+```bash
+./thetisctl tci --host 192.168.1.50 freedv-scan --out-dir /tmp/freedv-scan
+```
+
+**This does not identify FreeDV.** Peak/RMS is only a prioritization hint
+for which captures are worth listening to — telling a real FreeDV signal
+apart from a mistuned SSB voice transmission or plain band noise from
+spectral shape alone was tried and found unreliable in practice (a captured
+signal that looked "flat and broadband, no speech pauses" turned out on
+listening to be a mistuned voice transmission, not FreeDV). Report the
+files and their peak/RMS back to the user; let them (or real FreeDV
+software) make the actual identification.
 
 TX audio — **always run without `--confirm-tx` first**:
 
