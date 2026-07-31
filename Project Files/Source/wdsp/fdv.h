@@ -71,6 +71,7 @@ typedef struct _fdv
 
     // input level normalisation into the short domain for freedv_rx
     float agc_gain_db;
+    int agc_seeded;              // 0 until the first block has set agc_gain_db directly
 
     int primed;                 // out_ring has built enough depth to stream
     int sync;

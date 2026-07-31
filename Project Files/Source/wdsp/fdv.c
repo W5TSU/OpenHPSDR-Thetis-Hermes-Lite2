@@ -134,6 +134,7 @@ static void fdv_reset(FDV a)
     a->primed = 0;
     a->sync = 0;
     a->snr = -100.0f;
+    a->agc_seeded = 0;
 }
 
 FDV create_fdv(int run, int size, double* in, double* out, int rate)
@@ -148,6 +149,7 @@ FDV create_fdv(int run, int size, double* in, double* out, int rate)
     a->mode = FREEDV_MODE_700E;
     a->snr = -100.0f;
     a->agc_gain_db = 40.0f;
+    a->agc_seeded = 0;
 
     a->f = freedv_open(a->mode);
     a->modem_rate = freedv_get_modem_sample_rate(a->f);
@@ -241,7 +243,19 @@ void xfdv(FDV a)
             float rms = fdv_block_rms(a->nin_buf, nin) * 32767.0f;
             float cur_db = 20.0f * log10f(rms);          // block level at unity gain, in short counts
             float desired_db = FDV_TARGET_RMS_DB - cur_db;
-            a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+            if (!a->agc_seeded)
+            {
+                // lock onto the block's own level immediately instead of
+                // smoothing down from a fixed guess, which was overshooting
+                // by ~45dB and clipping demod_in for the first ~15 blocks -
+                // squarely inside the modem's OFDM sync acquisition window
+                a->agc_gain_db = desired_db;
+                a->agc_seeded = 1;
+            }
+            else
+            {
+                a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+            }
             if (a->agc_gain_db < FDV_GAIN_MIN_DB) a->agc_gain_db = FDV_GAIN_MIN_DB;
             if (a->agc_gain_db > FDV_GAIN_MAX_DB) a->agc_gain_db = FDV_GAIN_MAX_DB;
             float g = 32767.0f * powf(10.0f, a->agc_gain_db / 20.0f);
