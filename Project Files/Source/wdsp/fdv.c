@@ -38,6 +38,13 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 #define FDV_SHORT_CEIL      (32000.0f)
 #define FDV_SPEECH_GAIN     (0.30f)     // decoded speech level into midbuff
 
+// W5TSU: DEBUG - temporary diagnostic dump state, remove before merge.
+// Process-lifetime counters, not per-channel: reset via ResetRXAFDVDebug()
+// so each Quick-Play session starts a fresh capture instead of exhausting
+// the cap on the first run and silently going quiet on every run after.
+static int fdv_dbg_count = 0;
+static int fdv_dbg_audio_count = 0;
+
 //ringbuffer (same scheme as rnnr.c)
 static void fdv_rb_init(fdv_ring_buffer* rb, int capacity)
 {
@@ -252,8 +259,7 @@ void xfdv(FDV a)
 
             // W5TSU: DEBUG - temporary diagnostic dump, remove before merge
             {
-                static int dbg_audio_count = 0;
-                if (dbg_audio_count < 150)
+                if (fdv_dbg_audio_count < 150)
                 {
                     const char* dir = getenv("TEMP");
                     char path[512];
@@ -265,12 +271,11 @@ void xfdv(FDV a)
                         fwrite(a->demod_in, sizeof(short), nin, rawf);
                         fclose(rawf);
                     }
-                    dbg_audio_count++;
+                    fdv_dbg_audio_count++;
                 }
             }
             {
-                static int dbg_count = 0;
-                if (dbg_count < 40)
+                if (fdv_dbg_count < 40)
                 {
                     const char* dir = getenv("TEMP");
                     char path[512];
@@ -280,13 +285,13 @@ void xfdv(FDV a)
                     if (dbgf)
                     {
                         fprintf(dbgf, "block=%d nin=%d rms=%.1f cur_db=%.1f agc_gain_db=%.1f in[0..3]=%.5f,%.5f,%.5f,%.5f demod_in[0..3]=%d,%d,%d,%d sync=%d snr=%.1f\n",
-                            dbg_count, nin, rms, cur_db, a->agc_gain_db,
+                            fdv_dbg_count, nin, rms, cur_db, a->agc_gain_db,
                             a->in[0], a->in[2], a->in[4], a->in[6],
                             (int)a->demod_in[0], (int)a->demod_in[1], (int)a->demod_in[2], (int)a->demod_in[3],
                             a->sync, a->snr);
                         fclose(dbgf);
                     }
-                    dbg_count++;
+                    fdv_dbg_count++;
                 }
             }
 
@@ -360,4 +365,28 @@ PORT
 double GetRXAFDVSnr(int channel)
 {
     return (double)rxa[channel].fdv.p->snr;
+}
+
+// W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
+// Call at the start of a Quick-Play test session so fdv_debug.txt/
+// fdv_debug_audio.raw capture that run instead of staying silent because
+// an earlier run in the same process already used up the counters.
+PORT
+void ResetRXAFDVDebug(void)
+{
+    fdv_dbg_count = 0;
+    fdv_dbg_audio_count = 0;
+
+    const char* dir = getenv("TEMP");
+    char path[512];
+
+    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug.txt", dir);
+    else snprintf(path, sizeof(path), "C:\\fdv_debug.txt");
+    FILE* dbgf = fopen(path, "w");
+    if (dbgf) fclose(dbgf);
+
+    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_audio.raw", dir);
+    else snprintf(path, sizeof(path), "C:\\fdv_debug_audio.raw");
+    FILE* rawf = fopen(path, "wb");
+    if (rawf) fclose(rawf);
 }

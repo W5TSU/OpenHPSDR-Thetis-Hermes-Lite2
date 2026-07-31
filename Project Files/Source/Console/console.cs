@@ -37715,6 +37715,7 @@ namespace Thetis
             {
                 ckQuickRec.Enabled = false;
                 ckQuickPlay.BackColor = button_selected_color;
+                WDSP.ResetRXAFDVDebug(); // W5TSU: DEBUG - fresh fdv_debug.txt capture per Quick-Play session, remove before merge
                 //string file = Path.Combine(AppDataPath, "SDRQuickAudio.wav");
                 string file = Path.Combine(ARP.AudioFolder, "quickrecord", "SDRQuickAudio.wav");
                 bool ok = ARP.PlayFileViaWDSP("quick", file, 0, out string error);

@@ -266,6 +266,10 @@ namespace Thetis
 
         [DllImport("wdsp.dll", EntryPoint = "GetRXAFDVSnr", CallingConvention = CallingConvention.Cdecl)]
         public static extern double GetRXAFDVSnr(int channel);
+
+        // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
+        [DllImport("wdsp.dll", EntryPoint = "ResetRXAFDVDebug", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void ResetRXAFDVDebug();
         //
 
         //libspecbleach

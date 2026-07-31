@@ -87,4 +87,7 @@ extern void setBuffers_fdv (FDV a, double* in, double* out);
 extern void setSize_fdv (FDV a, int size);
 extern void setSamplerate_fdv (FDV a, int rate);
 
+// W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
+extern void ResetRXAFDVDebug (void);
+
 #endif //_fdv_h
