@@ -90,19 +90,61 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
    - ANF, NR/NR2/NR3, NB, SNB, MNF (manual notch), CTUN — all confirmed off via
      console screenshots (ANF/MNF were the leading suspects — a notch filter
      sitting on the OFDM carriers — but both were off)
-   - AGC set to Slow; not yet tested with AGC fully off/fixed gain
+   - AGC set to Slow; not yet tested with AGC fully off/fixed gain — **now the
+     top suspect, see below**
    - Code audit: `fdv.c`'s resampler direction, RMS/gain-normalization math, and
      the `freedv_nin()`/`freedv_rx()` block loop were checked line-by-line against
      codec2's own reference `freedv_rx.c` CLI tool — structurally identical, no
      bug found by inspection
-   - **Still open**: confirm the actual DSP processing rate (Setup → DSP →
-     Options) matches the 48 kHz `fdv.c` assumes; try AGC fully off; run the same
-     bench file/tuning through the **external FreeDV desktop app** (via the VAC
-     path, `Thetis_VB-Audio_config.md` §7) as a differential test — an
-     independent decoder syncing on our signal would isolate the bug to `fdv.c`
-     itself, while a shared failure would point back at the demod chain or the
-     synthetic file's realism (built with an idealized brick-wall filter, not a
-     realistic FIR response)
+   - **Deeper code audit (this session)** — re-checked with fresh eyes, all
+     confirmed correct, not the bug: `freedv_open(FREEDV_MODE_700E)` is right;
+     the 48 kHz→8 kHz resample uses `create_resampleF` with the real channel
+     rate read at runtime (`ch[channel].dsp_rate`, not hardcoded), not naive
+     decimation; `freedv_nin()` is called before every `freedv_rx()` and the
+     code correctly waits for a full `nin` before consuming, respecting
+     codec2's variable-block-size contract; `xfdv()`'s post-AGC/post-NR
+     placement in `RXA.c`'s chain is confirmed correct and its channel
+     mono-extraction is byte-identical to `rnnr.c`'s established convention.
+     One residual risk flagged, not yet a confirmed bug: `fdv.c` is the
+     **only caller of `create_resampleF` anywhere in this codebase** — that
+     decimate-by-6 path has never been exercised by any other working
+     feature, so it's unverified-elsewhere code even though inspection found
+     no bug in it.
+   - **Runtime debug data captured (this session)** — used the new CAT-based
+     remote tooling (see below) to trigger two fresh Quick-Play runs and pull
+     `%TEMP%\fdv_debug.txt`. Finding: `rms` at `fdv.c`'s own AGC input swings
+     by up to ~4.7× (≈13 dB) between *consecutive* 80 ms blocks (e.g. block
+     3→4: 2687.8→12644.3 in run 1; 921.2→5816.3 in run 2) — well before
+     `fdv.c`'s own smoothing gets a chance to act. A continuous, pause-free
+     OFDM test signal shouldn't naturally swing like that; this is consistent
+     with the channel AGC (upstream of `fdv.c`, still set to Slow) fighting a
+     signal shape it isn't tuned for. `sync`/`snr` stay completely flat
+     (`sync=0`, `snr=-5.0`) across every block in both runs — no partial
+     correlation visible at all.
+   - **Still open, ranked**: (1) **AGC fully off** — direct next test, cheap
+     to run now with the new remote tooling (`agc set FIXED` then re-run
+     Quick-Play + poll status), and the RMS-instability finding above makes
+     this the leading suspect, not just an unexplored checkbox; (2) confirm
+     the actual DSP processing rate (Setup → DSP → Options) matches the
+     48 kHz `fdv.c` assumes; (3) run the same bench file/tuning through the
+     **external FreeDV desktop app** (via the VAC path,
+     `Thetis_VB-Audio_config.md` §7) as a differential test — an independent
+     decoder syncing on our signal would isolate the bug to `fdv.c` itself,
+     while a shared failure would point back at the demod chain or the
+     synthetic file's realism; (4) if AGC-off doesn't resolve it, dump
+     `fdv.c`'s own resampler output (`a->rs_down_out`, the 8 kHz signal
+     *before* the RMS normalizer) and spectrally compare it against the
+     known-good 8 kHz modem audio `make_fdv_test_iq.py` was built from, to
+     rule the untested `create_resampleF` path in or out directly
+   - **New: remote testing tooling** (`Tools/thetis-ai-control`,
+     `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
+     on|off|get` / `quickrec on|off|get` (revived orphaned `ZZQA`/`ZZQB`,
+     previously implemented but never wired into the dispatch switch) and
+     `freedv on|off|get` / `freedv status` (new `ZZDV`/`ZZDS`, reads
+     `GetRXAFDVSync`/`GetRXAFDVSnr` — same calls `freedvStatusTimer_Tick`
+     uses) let Quick-Play + sync/SNR be triggered and read entirely over the
+     network, no one needing to sit at the Setup DSP tab. Steps 4-6 below can
+     now be scripted once bench decode is unblocked.
 4. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
    live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
    more-realistic differential test signal (real channel effects) and the
