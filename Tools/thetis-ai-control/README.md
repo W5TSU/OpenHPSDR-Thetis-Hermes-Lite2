@@ -240,11 +240,16 @@ unprompted; see `SKILL.md`'s safety protocol.
   client, this tool included, could reach them until that was fixed
   (2026-07-30). Worth remembering if a command that looks fully implemented
   in source still doesn't respond over the wire.
-- **`freedv on|off|status` (`ZZFD`/`ZZFS`) is new, not revived** — added
+- **`freedv on|off|status` (`ZZDV`/`ZZDS`) is new, not revived** — added
   2026-07-30 specifically to make FreeDV RX decode testing (`fdv.c`, still
   under active development on the FreeDV branch) scriptable without a human
   watching the Setup DSP tab: `freedv on`, `quickplay on` to inject the bench
   test signal, then `freedv status` for an objective sync/SNR readout.
+  `ZZFD`/`ZZFS` were already taken by unrelated existing commands (FM
+  deviation, RX2 filter low) — a real near-miss caught only because CI
+  failed to compile (`CS0111: already defines a member`), a good reminder
+  to grep for an unused code before claiming one, the same way `quickplay`/
+  `quickrec`'s revival required checking `ZZQA`/`ZZQB` weren't already live.
 - **TCI's initial-state burst can shadow a reply right after connect.** If
   "send initial state on connect" is on, Thetis pushes ~100+ unsolicited
   status frames (ending in a `ready;` sentinel) immediately after the

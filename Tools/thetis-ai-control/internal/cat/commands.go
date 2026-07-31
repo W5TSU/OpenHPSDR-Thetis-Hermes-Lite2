@@ -345,49 +345,49 @@ func (c *Client) GetQuickRec() (bool, error) {
 // RX1/subrx0 only — matches the Setup DSP tab's current single-channel
 // prototype scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). Once enabled and
 // synced, decoded speech replaces what RX audio you hear/capture; see
-// GetFreeDVStatus for sync/SNR. Wire command ZZFD, added 2026-07-30
+// GetFreeDVStatus for sync/SNR. Wire command ZZDV, added 2026-07-30
 // alongside GetFreeDVStatus specifically to make remote FreeDV decode
 // testing possible (combine with SetQuickPlay to inject a known test
 // signal, then poll GetFreeDVStatus for sync).
 func (c *Client) SetFreeDVDecode(on bool) error {
-	return c.Set("ZZFD", boolDigit(on))
+	return c.Set("ZZDV", boolDigit(on))
 }
 
 // GetFreeDVDecode reads whether FreeDV RX decode is currently enabled.
 func (c *Client) GetFreeDVDecode() (bool, error) {
-	reply, err := c.Query("ZZFD")
+	reply, err := c.Query("ZZDV")
 	if err != nil {
 		return false, err
 	}
 	return digitBool(reply)
 }
 
-// FreeDVStatus is the parsed form of the ZZFS reply.
+// FreeDVStatus is the parsed form of the ZZDS reply.
 type FreeDVStatus struct {
 	Sync  bool
 	SNRdB float64 // only meaningful when Sync is true; 0 otherwise
 }
 
-// GetFreeDVStatus reads FreeDV RX decode sync/SNR status. Wire command ZZFS
-// (get-only; CATCommands.cs's ZZFS, mirroring the Setup DSP tab's
+// GetFreeDVStatus reads FreeDV RX decode sync/SNR status. Wire command ZZDS
+// (get-only; CATCommands.cs's ZZDS, mirroring the Setup DSP tab's
 // freedvStatusTimer_Tick — same WDSP.GetRXAFDVSync/GetRXAFDVSnr calls),
 // reply format "<sync 0|1><sign><snr*10, 3 digits>" e.g. "1+153" = synced,
 // 15.3dB SNR; "0+000" = not synced.
 func (c *Client) GetFreeDVStatus() (FreeDVStatus, error) {
-	reply, err := c.Query("ZZFS")
+	reply, err := c.Query("ZZDS")
 	if err != nil {
 		return FreeDVStatus{}, err
 	}
 	if len(reply) != 5 {
-		return FreeDVStatus{}, fmt.Errorf("cat: ZZFS reply %q: want 5 chars, got %d", reply, len(reply))
+		return FreeDVStatus{}, fmt.Errorf("cat: ZZDS reply %q: want 5 chars, got %d", reply, len(reply))
 	}
 	sync, err := digitBool(reply[0:1])
 	if err != nil {
-		return FreeDVStatus{}, fmt.Errorf("cat: ZZFS reply %q: %w", reply, err)
+		return FreeDVStatus{}, fmt.Errorf("cat: ZZDS reply %q: %w", reply, err)
 	}
 	tenths, err := strconv.Atoi(reply[1:5])
 	if err != nil {
-		return FreeDVStatus{}, fmt.Errorf("cat: ZZFS reply %q: parse SNR: %w", reply, err)
+		return FreeDVStatus{}, fmt.Errorf("cat: ZZDS reply %q: parse SNR: %w", reply, err)
 	}
 	return FreeDVStatus{Sync: sync, SNRdB: float64(tenths) / 10.0}, nil
 }

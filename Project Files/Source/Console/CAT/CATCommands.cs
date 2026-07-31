@@ -7334,8 +7334,10 @@ namespace Thetis
         }
         // Reads or sets the FreeDV RX decode (fdv.c) enable state. RX1/subrx0
         // only, matching the Setup DSP tab's current single-channel prototype
-        // scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). // W5TSU
-        public string ZZFD(string s)
+        // scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). ZZFD/ZZFS were
+        // already taken (FM deviation, RX2 filter low) -- using ZZDV/ZZDS
+        // instead. // W5TSU
+        public string ZZDV(string s)
         {
             if (s.Length == parser.nSet && (s == "0" || s == "1"))
             {
@@ -7355,7 +7357,7 @@ namespace Thetis
         // SNR is only meaningful once synced (mirrors freedvStatusTimer_Tick in
         // setup.cs, which likewise only reads GetRXAFDVSnr when synced) and is
         // reported as 0 while unsynced. // W5TSU
-        public string ZZFS()
+        public string ZZDS()
         {
             int ch = WDSP.id(0, 0);
             bool sync = WDSP.GetRXAFDVSync(ch) != 0;

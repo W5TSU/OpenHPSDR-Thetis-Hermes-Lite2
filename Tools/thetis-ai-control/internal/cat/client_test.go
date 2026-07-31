@@ -140,7 +140,7 @@ func TestQuickRecRoundTrip(t *testing.T) {
 }
 
 func TestFreeDVDecodeRoundTrip(t *testing.T) {
-	c, cleanup := newTestClient(t, map[string]string{"ZZFD": "ZZFD1"})
+	c, cleanup := newTestClient(t, map[string]string{"ZZDV": "ZZDV1"})
 	defer cleanup()
 
 	if err := c.SetFreeDVDecode(true); err != nil {
@@ -157,7 +157,7 @@ func TestFreeDVDecodeRoundTrip(t *testing.T) {
 
 func TestFreeDVStatusSynced(t *testing.T) {
 	// "1+153" = synced, 15.3dB SNR.
-	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS1+153"})
+	c, cleanup := newTestClient(t, map[string]string{"ZZDS": "ZZDS1+153"})
 	defer cleanup()
 
 	st, err := c.GetFreeDVStatus()
@@ -173,7 +173,7 @@ func TestFreeDVStatusSynced(t *testing.T) {
 }
 
 func TestFreeDVStatusNotSynced(t *testing.T) {
-	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS0+000"})
+	c, cleanup := newTestClient(t, map[string]string{"ZZDS": "ZZDS0+000"})
 	defer cleanup()
 
 	st, err := c.GetFreeDVStatus()
@@ -190,7 +190,7 @@ func TestFreeDVStatusNotSynced(t *testing.T) {
 
 func TestFreeDVStatusNegativeSNR(t *testing.T) {
 	// "1-025" = synced, -2.5dB SNR.
-	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFS1-025"})
+	c, cleanup := newTestClient(t, map[string]string{"ZZDS": "ZZDS1-025"})
 	defer cleanup()
 
 	st, err := c.GetFreeDVStatus()
@@ -206,7 +206,7 @@ func TestFreeDVStatusNegativeSNR(t *testing.T) {
 }
 
 func TestFreeDVStatusMalformedReply(t *testing.T) {
-	c, cleanup := newTestClient(t, map[string]string{"ZZFS": "ZZFSxx"})
+	c, cleanup := newTestClient(t, map[string]string{"ZZDS": "ZZDSxx"})
 	defer cleanup()
 
 	if _, err := c.GetFreeDVStatus(); err == nil {
