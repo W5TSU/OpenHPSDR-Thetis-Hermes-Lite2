@@ -1,4 +1,5 @@
-# THIS IS A FORK - DO NOT consider the version number as updates to other code
+# THIS IS A FORK
+DO NOT consider this version as an update to other versions just because of the version number! Read the release notes. Consider this ALPHA code.
 
 I'm maintaining this fork for my own use. The purpose is to merge the "BEST" parts of many of the others working on Thetis.
 
