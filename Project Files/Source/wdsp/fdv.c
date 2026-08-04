@@ -44,6 +44,7 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 // the cap on the first run and silently going quiet on every run after.
 static int fdv_dbg_count = 0;
 static int fdv_dbg_audio_count = 0;
+static int fdv_dbg_resamp_count = 0;
 
 //ringbuffer (same scheme as rnnr.c)
 static void fdv_rb_init(fdv_ring_buffer* rb, int capacity)
@@ -230,6 +231,32 @@ void xfdv(FDV a)
             a->rs_down_in[i] = (float)a->in[2 * i + 0];
         a->rs_down->size = a->size;
         int n8k = xresampleF(a->rs_down);
+
+        // W5TSU: DEBUG - temporary diagnostic dump, remove before merge.
+        // Raw resampler output (a->rs_down_out): the 8 kHz signal exactly as
+        // create_resampleF produces it, before fdv's own RMS/AGC normalizer
+        // touches it and before it's chunked into nin-sized modem blocks.
+        // Written as contiguous float32 so it can be diffed sample-for-sample
+        // against a known-good 8 kHz modem reference (e.g. Tools/FreeDV's
+        // ve9qrp raw/wav) to confirm or rule out the untested
+        // create_resampleF decimate-by-6 path.
+        {
+            if (fdv_dbg_resamp_count < 150)
+            {
+                const char* dir = getenv("TEMP");
+                char path[512];
+                if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_resamp.raw", dir);
+                else snprintf(path, sizeof(path), "C:\\fdv_debug_resamp.raw");
+                FILE* rsf = fopen(path, "ab");
+                if (rsf)
+                {
+                    fwrite(a->rs_down_out, sizeof(float), n8k, rsf);
+                    fclose(rsf);
+                }
+                fdv_dbg_resamp_count++;
+            }
+        }
+
         for (i = 0; i < n8k; i++)
             fdv_rb_put(&a->demod_ring, a->rs_down_out[i]);
 
@@ -383,13 +410,15 @@ double GetRXAFDVSnr(int channel)
 
 // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
 // Call at the start of a Quick-Play test session so fdv_debug.txt/
-// fdv_debug_audio.raw capture that run instead of staying silent because
-// an earlier run in the same process already used up the counters.
+// fdv_debug_audio.raw/fdv_debug_resamp.raw capture that run instead of
+// staying silent because an earlier run in the same process already used
+// up the counters.
 PORT
 void ResetRXAFDVDebug(void)
 {
     fdv_dbg_count = 0;
     fdv_dbg_audio_count = 0;
+    fdv_dbg_resamp_count = 0;
 
     const char* dir = getenv("TEMP");
     char path[512];
@@ -403,4 +432,9 @@ void ResetRXAFDVDebug(void)
     else snprintf(path, sizeof(path), "C:\\fdv_debug_audio.raw");
     FILE* rawf = fopen(path, "wb");
     if (rawf) fclose(rawf);
+
+    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_resamp.raw", dir);
+    else snprintf(path, sizeof(path), "C:\\fdv_debug_resamp.raw");
+    FILE* rsf = fopen(path, "wb");
+    if (rsf) fclose(rsf);
 }
