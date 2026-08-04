@@ -169,6 +169,16 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
        above already captured. Plausible way `fdv.c`'s own AGC could be
        self-sabotaging sync even if the upstream channel AGC turns out
        innocent.
+   - **AGC-off tested live (this session) — negative result.** Using the
+     remote tooling against the live instance (192.168.2.12): confirmed
+     mode DIGU / filter 300–2700 Hz, ran a baseline Quick-Play under the
+     instance's then-current AGC (MEDIUM) — "no sync" throughout, matching
+     the documented symptom. Set `agc set FIXED`, re-ran Quick-Play for
+     ~12 s, polled `freedv status` three times — **"no sync" every time**.
+     Restored AGC to MEDIUM afterward. This confirms the
+     `ofdm_sync_search_shorts()` code reading above: AGC state does not
+     gate initial sync acquisition. **AGC is no longer a live suspect at
+     all** (not just demoted) — the bug is elsewhere in the chain.
    - **Still open, ranked** (updated this session): (1) dump `fdv.c`'s own
      resampler output (`a->rs_down_out`, the 8 kHz signal *before* the RMS
      normalizer) and diff it sample-for-sample (not just spectrally) against
@@ -177,18 +187,17 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      `create_resampleF` path in or out directly; (2) freeze `fdv.c`'s gain
      after the first block (skip the `FDV_GAIN_SMOOTH` re-lock loop
      entirely) to match freedv-gui's no-AGC convention and test whether a
-     constant per-session gain changes anything; (3) **AGC fully off** —
-     still cheap to run with the remote tooling (`agc set FIXED` then
-     re-run Quick-Play + poll status), but demoted from top suspect now
-     that `ofdm_sync_search_shorts()` is confirmed to ignore gain entirely
-     during sync acquisition; (4) confirm the actual DSP processing rate
-     (Setup → DSP → Options) matches the 48 kHz `fdv.c` assumes; (5) run the
-     same bench file/tuning through the **external FreeDV desktop app**
-     (via the VAC path, `Thetis_VB-Audio_config.md` §7) as a differential
-     test — an independent decoder syncing on our signal would isolate the
-     bug to Thetis's chain entirely, now less useful as a "bad synthetic
-     file" check (already ruled out above) but still useful as a full-chain
-     sanity check
+     constant per-session gain changes anything; (3) confirm the actual DSP
+     processing rate (Setup → DSP → Options) matches the 48 kHz `fdv.c`
+     assumes; (4) run the same bench file/tuning through the **external
+     FreeDV desktop app** (via the VAC path, `Thetis_VB-Audio_config.md`
+     §7) as a differential test — an independent decoder syncing on our
+     signal would isolate the bug to Thetis's chain entirely, now less
+     useful as a "bad synthetic file" check (already ruled out above) but
+     still useful as a full-chain sanity check. Items (1) and (2) both need
+     a `fdv.c` code change and a Windows rebuild before they're testable —
+     the remote tooling alone can't make further progress on this list
+     until one of those lands.
    - **New: remote testing tooling** (`Tools/thetis-ai-control`,
      `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
      on|off|get` / `quickrec on|off|get` (revived orphaned `ZZQA`/`ZZQB`,
