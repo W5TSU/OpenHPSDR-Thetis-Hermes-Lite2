@@ -121,21 +121,74 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      signal shape it isn't tuned for. `sync`/`snr` stay completely flat
      (`sync=0`, `snr=-5.0`) across every block in both runs — no partial
      correlation visible at all.
-   - **Still open, ranked**: (1) **AGC fully off** — direct next test, cheap
-     to run now with the new remote tooling (`agc set FIXED` then re-run
-     Quick-Play + poll status), and the RMS-instability finding above makes
-     this the leading suspect, not just an unexplored checkbox; (2) confirm
-     the actual DSP processing rate (Setup → DSP → Options) matches the
-     48 kHz `fdv.c` assumes; (3) run the same bench file/tuning through the
-     **external FreeDV desktop app** (via the VAC path,
-     `Thetis_VB-Audio_config.md` §7) as a differential test — an independent
-     decoder syncing on our signal would isolate the bug to `fdv.c` itself,
-     while a shared failure would point back at the demod chain or the
-     synthetic file's realism; (4) if AGC-off doesn't resolve it, dump
-     `fdv.c`'s own resampler output (`a->rs_down_out`, the 8 kHz signal
-     *before* the RMS normalizer) and spectrally compare it against the
-     known-good 8 kHz modem audio `make_fdv_test_iq.py` was built from, to
-     rule the untested `create_resampleF` path in or out directly
+   - **Cross-check against freedv-gui (this session)** — a local checkout of
+     upstream's `freedv-gui` (with vendored `codec2-1.2.0`) was used as a
+     second, independent reference, and its own bundled sample WAVs as
+     ground truth. Built `libcodec2`/`freedv_tx`/`freedv_rx` on Linux (no
+     Windows box needed) and ran real decodes:
+     - `freedv-gui/wav/ve9qrp_700e.wav` (upstream-shipped, pre-encoded 700E
+       modem audio, same `ve9qrp` voice source, ~112 s) decodes cleanly
+       against the reference `freedv_rx` — full sync, all 1405 frames, full
+       899200 samples of real speech out. Added to the repo (gitignored) as
+       a second bench file: `Tools/FreeDV/ve9qrp_700e_golden_test_iq.wav`,
+       built via the existing `make_fdv_test_iq.py` from this file — play it
+       through Quick-Play as an alternate to `fdv700e_test_iq.wav`.
+     - Reproduced `fdv700e_test_iq.wav`'s own recipe exactly (`freedv_tx
+       700E codec2/raw/ve9qrp.raw`, no `--clip`) and decoded that too —
+       also clean, full sync throughout, RMS 4458/peak 16383. **This rules
+       out "bad test file" as the bug**: the modem audio `fdv.c` is being
+       fed is provably correct where `freedv_tx` produces it. It also
+       confirms `FDV_TARGET_RMS_DB` (~4000 counts) is well-matched to this
+       signal's real level (within ~1 dB), so the AGC *target* isn't
+       mistuned either — the bug is downstream, somewhere in
+       IQ → wdsp SSB demod → `fdv.c` resample/AGC/ring buffers →
+       `freedv_rx`.
+     - Read codec2's `ofdm_sync_search_shorts()` (`ofdm.c`, the function
+       `freedv_rx()` actually calls while hunting for 700E sync): it
+       normalises input as `rxbuf_in[j] / 32767.0f` and its own comment
+       states **"Gain is not used here"** — the `gain` value `fdv.c`
+       carefully computes only affects `ofdm_demod_shorts()`, which only
+       runs *after* sync is already found. **`fdv.c`'s per-block AGC
+       precision cannot be what's blocking initial sync acquisition**, as
+       long as levels aren't clipped or near-zero. This tempers the
+       AGC-off hypothesis below — still worth ruling out, but a null result
+       there wouldn't be surprising — and re-weights suspicion toward
+       something structural: discontinuities/dropped samples across
+       `fdv.c`'s ring buffers, or the unverified `create_resampleF`
+       decimate-by-6 path.
+     - Diffed against `freedv-gui/src/pipeline/FreeDVReceiveStep.cpp`
+       (upstream's own RX chain): it applies **no dynamic per-block AGC at
+       all** — raw samples go straight into a FIFO at unity gain, relying on
+       codec2's documented tolerance for "wide but not clipping" levels.
+       `fdv.c` instead re-locks its gain target *every* ~80 ms `nin` block
+       (`FDV_GAIN_SMOOTH` = 30% step). If that produces a real amplitude
+       discontinuity at block boundaries, it lands inside
+       `ofdm->rxbuf`'s multi-block sliding correlation window, which wants
+       amplitude-consistent samples — not segments independently rescaled
+       up to 13 dB apart, which is exactly the swing the runtime debug data
+       above already captured. Plausible way `fdv.c`'s own AGC could be
+       self-sabotaging sync even if the upstream channel AGC turns out
+       innocent.
+   - **Still open, ranked** (updated this session): (1) dump `fdv.c`'s own
+     resampler output (`a->rs_down_out`, the 8 kHz signal *before* the RMS
+     normalizer) and diff it sample-for-sample (not just spectrally) against
+     `Tools/FreeDV`'s known-good 8 kHz modem audio — now backed by an actual
+     reference decode, not just inspection, to rule the untested
+     `create_resampleF` path in or out directly; (2) freeze `fdv.c`'s gain
+     after the first block (skip the `FDV_GAIN_SMOOTH` re-lock loop
+     entirely) to match freedv-gui's no-AGC convention and test whether a
+     constant per-session gain changes anything; (3) **AGC fully off** —
+     still cheap to run with the remote tooling (`agc set FIXED` then
+     re-run Quick-Play + poll status), but demoted from top suspect now
+     that `ofdm_sync_search_shorts()` is confirmed to ignore gain entirely
+     during sync acquisition; (4) confirm the actual DSP processing rate
+     (Setup → DSP → Options) matches the 48 kHz `fdv.c` assumes; (5) run the
+     same bench file/tuning through the **external FreeDV desktop app**
+     (via the VAC path, `Thetis_VB-Audio_config.md` §7) as a differential
+     test — an independent decoder syncing on our signal would isolate the
+     bug to Thetis's chain entirely, now less useful as a "bad synthetic
+     file" check (already ruled out above) but still useful as a full-chain
+     sanity check
    - **New: remote testing tooling** (`Tools/thetis-ai-control`,
      `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
      on|off|get` / `quickrec on|off|get` (revived orphaned `ZZQA`/`ZZQB`,
@@ -214,3 +267,8 @@ SNR readings; findings fixed or recorded as Phase 4 work.
 - Activity: FreeDV Reporter <https://qso.freedv.org>
 - Using the external FreeDV app with Thetis instead:
   `Documentation/Thetis_VB-Audio_config.md` §7
+- Local `freedv-gui` checkout (`~/Development/freedv-gui`, vendored
+  `codec2-1.2.0`) — used as a second reference implementation and source of
+  known-good sample audio (`wav/ve9qrp_700e.wav` etc.); its bundled codec2
+  can be built standalone on Linux (`cmake` + `make freedv_tx freedv_rx`) for
+  fast ground-truth decodes without the Windows toolchain
