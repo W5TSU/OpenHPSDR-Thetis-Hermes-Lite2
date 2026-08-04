@@ -179,25 +179,37 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      `ofdm_sync_search_shorts()` code reading above: AGC state does not
      gate initial sync acquisition. **AGC is no longer a live suspect at
      all** (not just demoted) — the bug is elsewhere in the chain.
-   - **Still open, ranked** (updated this session): (1) dump `fdv.c`'s own
-     resampler output (`a->rs_down_out`, the 8 kHz signal *before* the RMS
-     normalizer) and diff it sample-for-sample (not just spectrally) against
-     `Tools/FreeDV`'s known-good 8 kHz modem audio — now backed by an actual
-     reference decode, not just inspection, to rule the untested
-     `create_resampleF` path in or out directly; (2) freeze `fdv.c`'s gain
-     after the first block (skip the `FDV_GAIN_SMOOTH` re-lock loop
-     entirely) to match freedv-gui's no-AGC convention and test whether a
-     constant per-session gain changes anything; (3) confirm the actual DSP
-     processing rate (Setup → DSP → Options) matches the 48 kHz `fdv.c`
-     assumes; (4) run the same bench file/tuning through the **external
-     FreeDV desktop app** (via the VAC path, `Thetis_VB-Audio_config.md`
-     §7) as a differential test — an independent decoder syncing on our
-     signal would isolate the bug to Thetis's chain entirely, now less
-     useful as a "bad synthetic file" check (already ruled out above) but
-     still useful as a full-chain sanity check. Items (1) and (2) both need
-     a `fdv.c` code change and a Windows rebuild before they're testable —
-     the remote tooling alone can't make further progress on this list
-     until one of those lands.
+   - **Resampler-output dump added (this session, `3eb8fae0`)** — a third
+     temporary diagnostic dump alongside `fdv_debug.txt`/
+     `fdv_debug_audio.raw`: `fdv_debug_resamp.raw` captures `a->rs_down_out`
+     (the 8 kHz signal exactly as `create_resampleF` produces it) as
+     contiguous float32, written right after `xresampleF()` — before fdv's
+     own RMS/AGC normalizer or the nin-block chunking touch it. Same
+     reset-per-Quick-Play-session wiring via `ResetRXAFDVDebug()`, same
+     150-call cap. **Still needs a Windows build + a Quick-Play run to
+     produce data** — nothing has been diffed yet, this only adds the
+     capture point.
+   - **Still open, ranked** (updated this session): (1) build, run a
+     Quick-Play session, pull `fdv_debug_resamp.raw` off the Windows box,
+     and diff it sample-for-sample (not just spectrally) against
+     `Tools/FreeDV`'s known-good 8 kHz modem audio (e.g.
+     `np.fromfile(path, dtype='<f4')`, scale ×32768 to compare against the
+     int16 reference) — now backed by an actual reference decode, not just
+     inspection, to rule the untested `create_resampleF` path in or out
+     directly; (2) freeze `fdv.c`'s gain after the first block (skip the
+     `FDV_GAIN_SMOOTH` re-lock loop entirely) to match freedv-gui's no-AGC
+     convention and test whether a constant per-session gain changes
+     anything; (3) confirm the actual DSP processing rate (Setup → DSP →
+     Options) matches the 48 kHz `fdv.c` assumes; (4) run the same bench
+     file/tuning through the **external FreeDV desktop app** (via the VAC
+     path, `Thetis_VB-Audio_config.md` §7) as a differential test — an
+     independent decoder syncing on our signal would isolate the bug to
+     Thetis's chain entirely, now less useful as a "bad synthetic file"
+     check (already ruled out above) but still useful as a full-chain
+     sanity check. Item (1)'s dump point now exists (item 2 still needs a
+     code change too) — both need a Windows build before they're
+     testable; the remote tooling alone can't make further progress on
+     this list until a build with the new dump has actually been run.
    - **New: remote testing tooling** (`Tools/thetis-ai-control`,
      `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
      on|off|get` / `quickrec on|off|get` (revived orphaned `ZZQA`/`ZZQB`,
