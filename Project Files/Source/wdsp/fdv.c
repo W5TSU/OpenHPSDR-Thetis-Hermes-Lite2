@@ -27,6 +27,7 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 #define _CRT_SECURE_NO_WARNINGS
 #include "comm.h"
 #include "codec2/freedv_api.h"
+#include "codec2/modem_stats.h"
 
 // freedv_rx() wants 16-bit-range samples; normalise each nin block to
 // this RMS (in short counts) with a smoothed gain so post-AGC level
@@ -45,6 +46,19 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 static int fdv_dbg_count = 0;
 static int fdv_dbg_audio_count = 0;
 static int fdv_dbg_resamp_count = 0;
+
+// W5TSU: DEBUG - scratch buffer for freedv_get_modem_extended_stats(), which
+// exposes the OFDM demod's own internal sync/timing/freq-offset estimates
+// (sync_metric, foff, rx_timing, clock_offset) instead of just the coarse
+// sync flag freedv_get_modem_stats() gives. Wide margin between "sync never
+// even gets close" (sync_metric pegged near 0, foff/rx_timing nonsensical -
+// points at a structurally wrong signal) and "sync is close but not quite
+// there" (sync_metric elevated, foff/timing sane - points at level/SNR).
+// File-scope like the other debug state above: not per-channel, reset
+// alongside it. ~140KB (mostly MODEM_STATS_NR_MAX x MODEM_STATS_NC_MAX
+// symbol history) - too big to want on the stack per block, and only one
+// FreeDV RX channel is realistically under test at a time.
+static struct MODEM_STATS fdv_dbg_stats;
 
 //ringbuffer (same scheme as rnnr.c)
 static void fdv_rb_init(fdv_ring_buffer* rb, int capacity)
@@ -323,6 +337,13 @@ void xfdv(FDV a)
             {
                 if (fdv_dbg_count < 40)
                 {
+                    // W5TSU: DEBUG - pull the OFDM demod's own internal
+                    // sync/timing/freq-offset estimates. Only computed when
+                    // actually about to be logged (see comment on
+                    // fdv_dbg_stats) - freedv_get_modem_stats() above is
+                    // still called unconditionally, it's cheap.
+                    freedv_get_modem_extended_stats(a->f, &fdv_dbg_stats);
+
                     const char* dir = getenv("TEMP");
                     char path[512];
                     if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug.txt", dir);
@@ -330,11 +351,21 @@ void xfdv(FDV a)
                     FILE* dbgf = fopen(path, "a");
                     if (dbgf)
                     {
-                        fprintf(dbgf, "block=%d nin=%d rms=%.1f cur_db=%.1f agc_gain_db=%.1f in[0..3]=%.5f,%.5f,%.5f,%.5f demod_in[0..3]=%d,%d,%d,%d sync=%d snr=%.1f\n",
+                        // W5TSU: DEBUG - self-report the rates this session
+                        // is actually running with, once, instead of
+                        // requiring a separate Setup -> DSP -> Options check
+                        // to confirm fdv.c's 48 kHz assumption holds.
+                        if (fdv_dbg_count == 0)
+                            fprintf(dbgf, "rates: dsp_rate=%d modem_rate=%d speech_rate=%d dsp_size=%d\n",
+                                a->rate, a->modem_rate, a->speech_rate, a->size);
+
+                        fprintf(dbgf, "block=%d nin=%d rms=%.1f cur_db=%.1f agc_gain_db=%.1f in[0..3]=%.5f,%.5f,%.5f,%.5f demod_in[0..3]=%d,%d,%d,%d sync=%d snr=%.1f sync_metric=%.3f foff=%.1f rx_timing=%.2f clock_offset=%.1f\n",
                             fdv_dbg_count, nin, rms, cur_db, a->agc_gain_db,
                             a->in[0], a->in[2], a->in[4], a->in[6],
                             (int)a->demod_in[0], (int)a->demod_in[1], (int)a->demod_in[2], (int)a->demod_in[3],
-                            a->sync, a->snr);
+                            a->sync, a->snr,
+                            fdv_dbg_stats.sync_metric, fdv_dbg_stats.foff,
+                            fdv_dbg_stats.rx_timing, fdv_dbg_stats.clock_offset);
                         fclose(dbgf);
                     }
                     fdv_dbg_count++;
