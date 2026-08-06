@@ -64,7 +64,8 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> preamp set <0-9>` | RX1 preamp level |
 | `cat --host <ip> band get` / `band set <name>` | Band (160-2, GEN, WWV, V0-V13) |
 | `cat --host <ip> power get` / `power on\|off` | Start/stop Thetis's radio engine (software power, not mains) |
-| `cat --host <ip> quickplay get` / `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna |
+| `cat --host <ip> quickplay get` / `quickplay off` | Quick Play: read state / stop (always safe) |
+| `cat --host <ip> quickplay on` | **TX-capable** — see the safety protocol below before using it |
 | `cat --host <ip> quickrec get` / `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `cat --host <ip> freedv get` / `freedv on\|off` | Enable/disable FreeDV RX decode (RX1 only) |
 | `cat --host <ip> freedv status` | Read FreeDV sync + SNR (read-only) |
@@ -89,19 +90,45 @@ before doing it" judgment as any other state-changing remote action, even
 though it doesn't need `--confirm-tx`. Powering on can take a few seconds;
 pass a longer `--timeout` if `power on`'s readback confirmation times out.
 
-`quickplay on|off`, `quickrec on|off`, and `freedv on|off|status` are also
-not TX-capable — Quick Play injects a fixed audio file as RX I/Q *before*
-the antenna input, Quick Rec records RX audio to that same file, and
-`freedv` controls/reads Thetis's FreeDV RX decode block (`fdv.c`); none of
-these touch the transmitter. Together they close the loop on a fully remote,
-RF-free FreeDV decode test:
+`quickrec on|off` and `freedv on|off|status` are not TX-capable — Quick Rec
+records RX audio to a fixed file, and `freedv` controls/reads Thetis's
+FreeDV RX decode block (`fdv.c`); neither touches the transmitter
+(`RecordToFileFromWDSP` was checked and confirmed to never touch
+`_console.MOX`).
+
+**`quickplay on` is TX-capable — do not treat it as safe.** It was
+originally documented here (and believed, based on that documentation) to
+be RX-only: it injects a fixed audio file as RX I/Q *before* the antenna
+input. In practice it calls Thetis's `PlayFileViaWDSP`
+(`Console/clsAudioRecordPlayback.cs`), a function *shared* with a genuine
+TX-audio-preview feature, which contains
+`if (!_console.MOX && MoxOnPlayback) _console.MOX = true;` — and
+`MoxOnPlayback` **defaults to `true`** in this codebase (Setup →
+Recording's "MOX on Playback" checkbox). This was discovered by live
+testing 2026-08-04 *after* several sessions of calling `quickplay on`
+believing it was RF-free — it went through `catToggle` exactly like
+`quickrec`, with no `--confirm-tx` gate at all. It's since been fixed in
+`thetisctl` (`cat_cmd.go`'s `catQuickPlay`) to require `--confirm-tx` and
+auto-stop after `--hold` (default 15s), same as `ptt`/`tune`. Follow the
+full safety protocol below before using it — same as `ptt`. If you need it
+to be genuinely RX-only, ask the operator to confirm "MOX on Playback" is
+unchecked in Thetis's Setup → Recording tab first; `thetisctl` cannot read
+or change that setting remotely, only the resulting MOX state:
 
 ```bash
 ./thetisctl cat --host 192.168.1.50 freedv on
-./thetisctl cat --host 192.168.1.50 quickplay on    # injects Tools/FreeDV's bench test signal
+./thetisctl cat --host 192.168.1.50 quickplay on
+[dry-run] would send: quickplay on
+WARNING: this may key MOX for real. ...
+Pass --confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO to proceed.
+
+# after the operator explicitly confirms, in this conversation, for this
+# specific test:
+./thetisctl cat --host 192.168.1.50 quickplay on \
+    --confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO --hold 15s &
 sleep 3                                             # let the decoder attempt sync
 ./thetisctl cat --host 192.168.1.50 freedv status   # "SYNC  SNR 15.3 dB" or "no sync" — objective, no listening required
-./thetisctl cat --host 192.168.1.50 quickplay off
+wait                                                # quickplay auto-stops after --hold and confirms it
 ```
 
 `tci rx-audio capture` (below) can still be used alongside this to actually
@@ -199,9 +226,9 @@ receiver is already in a CW mode.
 
 ## Safety protocol — read before any TX-capable command
 
-`cat ptt`, `tci tune`, `tci ptt`, `tci cw send`, and `tci tx-audio send` can
-key the transmitter. Since neither network protocol has authentication,
-`thetisctl` enforces:
+`cat ptt`, `cat quickplay on`, `tci tune`, `tci ptt`, `tci cw send`, and `tci
+tx-audio send` can key the transmitter. Since neither network protocol has
+authentication, `thetisctl` enforces:
 
 1. **Dry-run by default.** Without `--confirm-tx`, these commands print
    exactly what they would send and do nothing TX-capable. Always run the

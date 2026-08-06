@@ -53,7 +53,7 @@ func runCAT(rawArgs []string) error {
 	case "power":
 		return catToggle("power", args, c.SetPowerOn, c.GetPowerOn)
 	case "quickplay":
-		return catToggle("quickplay", args, c.SetQuickPlay, c.GetQuickPlay)
+		return catQuickPlay(c, args, a)
 	case "quickrec":
 		return catToggle("quickrec", args, c.SetQuickRec, c.GetQuickRec)
 	case "freedv":
@@ -179,6 +179,74 @@ func catFreeDV(c *cat.Client, args []string) error {
 		return nil
 	}
 	return catToggle("freedv", args, c.SetFreeDVDecode, c.GetFreeDVDecode)
+}
+
+// catQuickPlay is TX-capable, discovered by live testing 2026-08-04 — do
+// not revert this to catToggle. Quick Play "on" calls PlayFileViaWDSP
+// (Console/clsAudioRecordPlayback.cs), a function shared with a genuine
+// TX-audio-preview feature. That function contains:
+//
+//	if (!_console.MOX && MoxOnPlayback) _console.MOX = true;
+//
+// and MoxOnPlayback defaults to true in this codebase (same file,
+// `public bool MoxOnPlayback { get; set; } = true;`) — controlled by
+// Setup → Recording's "MOX on Playback" checkbox. Quick Play is documented
+// elsewhere (and was originally documented here) as RX-only — it injects a
+// wav as RX I/Q ahead of the antenna input — but that describes its
+// *intent*, not a guarantee against this shared function's side effect.
+// Before this fix, "on" went through catToggle with no TX gate at all:
+// every call could have kept MOX regardless of --confirm-tx.
+func catQuickPlay(c *cat.Client, args []string, a parsedArgs) error {
+	if len(args) != 1 {
+		return fmt.Errorf("quickplay: usage: quickplay on --confirm-tx=<phrase> [--hold 15s] | quickplay off | quickplay get")
+	}
+	switch args[0] {
+	case "get":
+		on, err := c.GetQuickPlay()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("quickplay: %v\n", on)
+		return nil
+	case "off":
+		// Stopping Quick Play restores whatever MOX state preceded it
+		// (Console's storeRestoreSettings) — confirm that actually landed
+		// rather than trusting a fire-and-forget send, same reasoning as
+		// confirmCATUnkeyed elsewhere in this file.
+		if err := confirmCATUnkeyed(c, func() error { return c.SetQuickPlay(false) }, 5*time.Second); err != nil {
+			return fmt.Errorf("quickplay off: %w", err)
+		}
+		on, err := c.GetQuickPlay()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("quickplay: %v\n", on)
+		return nil
+	case "on":
+		dec := safety.Check(a.flag("confirm-tx", ""))
+		hold := parseDuration(a.flag("hold", "15s"), 15*time.Second)
+		if dec.DryRun {
+			fmt.Println("[dry-run] would send: quickplay on")
+			fmt.Println("WARNING: this may key MOX for real. PlayFileViaWDSP keys MOX whenever the")
+			fmt.Println("console's \"MOX on Playback\" setting (Setup → Recording) is enabled — which")
+			fmt.Println("defaults to true in this codebase. Verify that setting is off if you need this")
+			fmt.Println("to be genuinely RX-only, or pass --confirm-tx if you accept it may key the radio.")
+			fmt.Println("Pass --confirm-tx=" + safety.ConfirmPhrase + " to proceed.")
+			return nil
+		}
+		if err := c.SetQuickPlay(true); err != nil {
+			return err
+		}
+		fmt.Printf("quickplay: true — auto-stopping after %s\n", hold)
+		time.Sleep(hold)
+		if err := confirmCATUnkeyed(c, func() error { return c.SetQuickPlay(false) }, 5*time.Second); err != nil {
+			return fmt.Errorf("quickplay on succeeded but could not confirm stop: %w", err)
+		}
+		fmt.Println("quickplay: false (confirmed)")
+		return nil
+	default:
+		return fmt.Errorf("quickplay: unknown value %q (want on|off|get)", args[0])
+	}
 }
 
 func catAGC(c *cat.Client, args []string) error {

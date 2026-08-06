@@ -67,7 +67,8 @@ Both `cat` and `tci` take:
 | `power get` | Read whether Thetis's radio engine is running |
 | `power on\|off` | Start/stop Thetis's radio engine — the main Power button, **not mains power** to the HL2 board |
 | `quickplay get` | Read whether Quick Play is active |
-| `quickplay on\|off` | Quick Play: inject `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q, bypassing the antenna — this is how FreeDV decode tests can now be triggered remotely, see [Notes](#notes-on-real-world-behavior) |
+| `quickplay off` | Stop Quick Play (always safe, no confirmation needed) |
+| `quickplay on` | **TX-capable** — see [Transmitting](#transmitting-tx-capable-commands); injects `Music\Thetis\quickrecord\SDRQuickAudio.wav` as RX I/Q ahead of the antenna, which is how FreeDV decode tests can be triggered remotely, but the underlying Thetis function can also key MOX for real — see [Notes](#notes-on-real-world-behavior) |
 | `quickrec get` | Read whether Quick Rec is active |
 | `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `freedv get` | Read whether FreeDV RX decode is enabled |
@@ -129,10 +130,10 @@ FreeDV software, to confirm.
 
 ## Transmitting (TX-capable commands)
 
-`cat ptt`, `tci tune`, `tci ptt`, `tci cw send`, and `tci tx-audio send` can
-key the transmitter. **Every one of them defaults to a dry run** — without
-`--confirm-tx`, they print exactly what they would send and do nothing
-TX-capable:
+`cat ptt`, `cat quickplay on`, `tci tune`, `tci ptt`, `tci cw send`, and `tci
+tx-audio send` can key the transmitter. **Every one of them defaults to a dry
+run** — without `--confirm-tx`, they print exactly what they would send and
+do nothing TX-capable:
 
 ```
 $ ./thetisctl tci --host 192.168.1.50 cw send 0 "CQ CQ DE W5TSU" --speed 5 --mode cwu
@@ -153,7 +154,7 @@ Other TX flags:
 | Flag | Applies to | Meaning |
 |---|---|---|
 | `--confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO` | all TX-capable commands | Required to key for real; anything else stays a dry run |
-| `--hold <duration>` (default `3s`) | `cat ptt`, `tci tune`, `tci ptt` | Auto-unkeys after this long — `tci tune` caps this at 5s **total** (hold + confirm), regardless of what's requested; see below |
+| `--hold <duration>` (default `3s`, `15s` for `cat quickplay on`) | `cat ptt`, `cat quickplay on`, `tci tune`, `tci ptt` | Auto-unkeys/auto-stops after this long — `tci tune` caps this at 5s **total** (hold + confirm), regardless of what's requested; see below |
 | `--max-duration <duration>` (default `10s` for tx-audio, `90s` for cw) | `tci tx-audio send`, `tci cw send` | Hard cap; truncates/stops and unkeys if exceeded |
 
 Every TX-capable command unkeys automatically on completion, error, or
@@ -211,6 +212,26 @@ unprompted; see `SKILL.md`'s safety protocol.
 
 ## Notes on real-world behavior
 
+- **`quickplay on` can key MOX for real — discovered by live testing
+  2026-08-04, previously undocumented and previously ungated.** Quick Play
+  was designed and documented (including earlier in this file) as an
+  RX-only bench-test feature: it injects a wav as RX I/Q ahead of the
+  antenna input, bypassing the antenna entirely. In practice it calls
+  Thetis's `PlayFileViaWDSP` (`Console/clsAudioRecordPlayback.cs`), a
+  function *shared* with a genuine TX-audio-preview feature, which contains
+  `if (!_console.MOX && MoxOnPlayback) _console.MOX = true;` —
+  and `MoxOnPlayback` **defaults to `true`** in this codebase, set via
+  Setup → Recording's "MOX on Playback" checkbox. Before this was caught,
+  `quickplay on` went through `catToggle` exactly like `quickrec` or
+  `freedv`, with no TX gate at all — every call could have kept MOX on,
+  completely bypassing `--confirm-tx`. `quickplay on` is now treated as
+  TX-capable (see [Transmitting](#transmitting-tx-capable-commands));
+  `quickrec` was checked and confirmed to have no equivalent MOX side
+  effect (`RecordToFileFromWDSP` never touches `_console.MOX`), so it
+  stays ungated. If you need Quick Play to be genuinely RX-only, confirm
+  "MOX on Playback" is unchecked in Thetis's Setup → Recording tab — this
+  tool cannot read or change that setting remotely, only the resulting MOX
+  state.
 - **Split routes TX to VFO B's frequency, not VFO A's — check it before
   transmitting.** If split is enabled, everything you've set on VFO A
   (frequency, mode) stays displayed correctly, but the radio actually
@@ -243,8 +264,10 @@ unprompted; see `SKILL.md`'s safety protocol.
 - **`freedv on|off|status` (`ZZDV`/`ZZDS`) is new, not revived** — added
   2026-07-30 specifically to make FreeDV RX decode testing (`fdv.c`, still
   under active development on the FreeDV branch) scriptable without a human
-  watching the Setup DSP tab: `freedv on`, `quickplay on` to inject the bench
-  test signal, then `freedv status` for an objective sync/SNR readout.
+  watching the Setup DSP tab: `freedv on`, `quickplay on --confirm-tx=...`
+  to inject the bench test signal (see the MOX-on-playback note above —
+  this is TX-capable), then `freedv status` for an objective sync/SNR
+  readout.
   `ZZFD`/`ZZFS` were already taken by unrelated existing commands (FM
   deviation, RX2 filter low) — a real near-miss caught only because CI
   failed to compile (`CS0111: already defines a member`), a good reminder
