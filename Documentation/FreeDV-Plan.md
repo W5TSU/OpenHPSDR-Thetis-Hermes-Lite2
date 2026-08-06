@@ -189,44 +189,66 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      150-call cap. **Still needs a Windows build + a Quick-Play run to
      produce data** — nothing has been diffed yet, this only adds the
      capture point.
-   - **Frozen-gain experiment added (this session, `56548b03`)** — the
-     `FDV_GAIN_SMOOTH` re-lock (the `else` branch that chased a fresh
-     `desired_db` every ~80 ms `nin` block) is now skipped entirely once
-     `agc_seeded` is set; the gain stays at whatever the first block locked
-     onto for the rest of the session. Matches freedv-gui's own
-     no-dynamic-AGC convention and removes the block-to-block amplitude
-     discontinuity (up to ~13 dB, from the runtime debug captures) as a
-     variable. `FDV_GAIN_SMOOTH` and the revert line are left in a comment
-     for a quick restore if this doesn't change the "no sync" symptom.
-     **Also still needs a Windows build + Quick-Play run to know if it
-     changes anything** — like the resampler dump, this only lands the
-     code change.
-   - **Still open, ranked** (updated this session): (1) build, run a
-     Quick-Play session with the frozen-gain change in place, and check
-     `freedv status` — if sync is achieved, the bug was `fdv.c`'s own
-     re-locking AGC and this is close to done; if still "no sync", restore
-     `FDV_GAIN_SMOOTH` (comment left in place for this) and move to (2);
-     (2) pull `fdv_debug_resamp.raw` off the Windows box and diff it
-     sample-for-sample (not just spectrally) against `Tools/FreeDV`'s
-     known-good 8 kHz modem audio (e.g. `np.fromfile(path, dtype='<f4')`,
-     scale ×32768 to compare against the int16 reference) — now backed by
-     an actual reference decode, not just inspection, to rule the untested
-     `create_resampleF` path in or out directly; (3) confirm the actual DSP
-     processing rate (Setup → DSP → Options) matches the 48 kHz `fdv.c`
-     assumes; (4) run the same bench file/tuning through the **external
-     FreeDV desktop app** (via the VAC path, `Thetis_VB-Audio_config.md`
-     §7) as a differential test — an independent decoder syncing on our
-     signal would isolate the bug to Thetis's chain entirely, now less
-     useful as a "bad synthetic file" check (already ruled out above) but
-     still useful as a full-chain sanity check. Both (1) and (2) now have
-     their code/dump landed — a Windows build is the only thing standing
-     between here and real progress; the remote tooling alone can't do
-     more until one has been run.
+   - **Frozen-gain experiment added, built, live-tested, and ruled out
+     (this session)** — `56548b03` skipped the `FDV_GAIN_SMOOTH` re-lock
+     entirely once `agc_seeded` was set, matching freedv-gui's own
+     no-dynamic-AGC convention. Built via CI (`gh workflow run build.yml
+     --ref FreeDV`), installed on the Windows box, and live-tested against
+     the real instance (192.168.2.12): Quick-Play under AGC MEDIUM and
+     again under AGC FIXED both still showed "no sync" across multiple
+     `freedv status` polls over ~15s each. **Negative result — reverted in
+     `653e3db2`**, `FDV_GAIN_SMOOTH` smoothing restored. Neither AGC
+     precision nor AGC dynamics (frozen vs. re-locking) explain the "no
+     sync" symptom; the bug is elsewhere.
+   - **⚠️ Safety finding: `quickplay on` is TX-capable, not RX-only as
+     documented (this session)** — while live-testing the frozen-gain
+     build, the operator observed MOX engaging during Quick-Play. Root
+     cause: `PlayFileViaWDSP` (`Console/clsAudioRecordPlayback.cs`, the
+     function Quick Play calls) is shared with a genuine TX-audio-preview
+     feature and contains `if (!_console.MOX && MoxOnPlayback) _console.MOX
+     = true;`, and `MoxOnPlayback` **defaults to `true`** in this codebase.
+     `thetisctl`'s `quickplay on` had no `--confirm-tx` gate at all before
+     this was caught — every prior Quick-Play call in this project's
+     testing history (including the "RF-free" framing used earlier in this
+     document, and in the `thetis-control` skill) was unconfirmed TX, not
+     confirmed RX-only. No RF is believed to have radiated this session —
+     the antenna was on a dummy load, and the operator confirmed the PA/TX
+     indicator didn't light even on manual TUN/2TON on this instance — but
+     that's specific to this hardware setup, not a guarantee. Fixed in
+     `f2ab8735`: `quickplay on` now requires `--confirm-tx` and auto-stops
+     after `--hold` (default 15s), exactly like `ptt`/`tune`; `quickrec`
+     was checked and confirmed to have no equivalent MOX side effect.
+     Persisted to project memory (`quickplay-can-key-mox`) so this survives
+     even outside this conversation. **Any future FreeDV bench-test
+     `quickplay on` call must go through the full TX safety protocol** —
+     dry-run first, explicit operator confirmation of the specific test in
+     the current conversation, `--confirm-tx` only after that — not the
+     fire-and-forget pattern used throughout Phase 3 above.
+   - **Still open, ranked** (updated this session): (1) pull
+     `fdv_debug_resamp.raw` off the Windows box (the dump point from
+     `3eb8fae0` already landed and doesn't need Quick-Play's TX-capable
+     path re-triggered if a capture from the frozen-gain test run is still
+     on disk) and diff it sample-for-sample (not just spectrally) against
+     `Tools/FreeDV`'s known-good 8 kHz modem audio (e.g.
+     `np.fromfile(path, dtype='<f4')`, scale ×32768 to compare against the
+     int16 reference) — now backed by an actual reference decode, not just
+     inspection, to rule the untested `create_resampleF` path in or out
+     directly; (2) confirm the actual DSP processing rate (Setup → DSP →
+     Options) matches the 48 kHz `fdv.c` assumes; (3) run the same bench
+     file/tuning through the **external FreeDV desktop app** (via the VAC
+     path, `Thetis_VB-Audio_config.md` §7) as a differential test — an
+     independent decoder syncing on our signal would isolate the bug to
+     Thetis's chain entirely, now less useful as a "bad synthetic file"
+     check (already ruled out) but still useful as a full-chain sanity
+     check. AGC precision, AGC dynamics, and bad test audio are now all
+     ruled out; item (1) is the last one with a code path already in place
+     to act on.
    - **New: remote testing tooling** (`Tools/thetis-ai-control`,
      `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
-     on|off|get` / `quickrec on|off|get` (revived orphaned `ZZQA`/`ZZQB`,
-     previously implemented but never wired into the dispatch switch) and
-     `freedv on|off|get` / `freedv status` (new `ZZDV`/`ZZDS`, reads
+     on|off|get` (now TX-gated, see above) / `quickrec on|off|get` (revived
+     orphaned `ZZQA`/`ZZQB`, previously implemented but never wired into
+     the dispatch switch) and `freedv on|off|get` / `freedv status` (new
+     `ZZDV`/`ZZDS`, reads
      `GetRXAFDVSync`/`GetRXAFDVSnr` — same calls `freedvStatusTimer_Tick`
      uses) let Quick-Play + sync/SNR be triggered and read entirely over the
      network, no one needing to sit at the Setup DSP tab. Steps 4-6 below can
