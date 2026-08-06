@@ -34,7 +34,7 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 #define FDV_TARGET_RMS_DB   (72.0f)     // ~4000 counts
 #define FDV_GAIN_MIN_DB     (-20.0f)
 #define FDV_GAIN_MAX_DB     (140.0f)
-#define FDV_GAIN_SMOOTH     (0.3f)      // W5TSU: EXPERIMENT - unused while the gain is frozen post-seed, see xfdv()
+#define FDV_GAIN_SMOOTH     (0.3f)
 #define FDV_SHORT_CEIL      (32000.0f)
 #define FDV_SPEECH_GAIN     (0.30f)     // decoded speech level into midbuff
 
@@ -279,22 +279,15 @@ void xfdv(FDV a)
                 a->agc_gain_db = desired_db;
                 a->agc_seeded = 1;
             }
-            // W5TSU: EXPERIMENT - frozen gain, FDV_GAIN_SMOOTH re-lock
-            // deliberately skipped. Once seeded, agc_gain_db no longer
-            // tracks desired_db block-to-block. Two findings from this
-            // session motivate trying this: (1) freedv-gui's own RX chain
-            // (FreeDVReceiveStep.cpp) applies no dynamic per-block AGC at
-            // all - raw samples go in at unity gain; (2) codec2's
-            // ofdm_sync_search_shorts() ignores its gain argument entirely
-            // during sync acquisition ("Gain is not used here", ofdm.c) -
-            // so re-locking every ~80ms nin block buys nothing there and
-            // is the leading remaining candidate for the block-to-block
-            // amplitude discontinuities the runtime debug captures showed
-            // (up to ~13dB between consecutive blocks - FreeDV-Plan.md),
-            // which could be corrupting ofdm->rxbuf's multi-block sliding
-            // correlation window. If freezing here doesn't change the "no
-            // sync" symptom, restore the `else` branch below:
-            //   a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+            else
+            {
+                // W5TSU: the frozen-gain experiment (skip this re-lock
+                // entirely once seeded) was tried and ruled out - "no sync"
+                // persisted with or without AGC, live-tested against a real
+                // instance (FreeDV-Plan.md). Restored to the smoothing
+                // update.
+                a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+            }
             if (a->agc_gain_db < FDV_GAIN_MIN_DB) a->agc_gain_db = FDV_GAIN_MIN_DB;
             if (a->agc_gain_db > FDV_GAIN_MAX_DB) a->agc_gain_db = FDV_GAIN_MAX_DB;
             float g = 32767.0f * powf(10.0f, a->agc_gain_db / 20.0f);
