@@ -1315,8 +1315,11 @@ set month=%25datetime:~4,2%25
 set day=%25datetime:~6,2%25
 set formatted_date=%25month%25/%25day%25/%25year%25
 
+set gitsha=unknown
+for /f "delims=" %25%25g in ('git rev-parse --short HEAD 2^&gt;nul') do set gitsha=%25%25g
+
 echo // &gt;  "$(ProjectDir)VersionInfo.cs"
-echo //Auto Generated Pre-Build event MW0LGE &gt;&gt; "$(ProjectDir)VersionInfo.cs"
+echo //Auto Generated Pre-Build event MW0LGE, extended W5TSU for git SHA &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo // &gt;&gt;  "$(ProjectDir)VersionInfo.cs"
 echo using System; &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo namespace Thetis &gt;&gt; "$(ProjectDir)VersionInfo.cs"
@@ -1324,6 +1327,7 @@ echo { &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo     public static class VersionInfo &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo     { &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo         public static string BuildDate { get { return "%25formatted_date%25"; } }  &gt;&gt; "$(ProjectDir)VersionInfo.cs"
+echo         public static string GitShortSha { get { return "%25gitsha%25"; } }  &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo     } &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 echo } &gt;&gt; "$(ProjectDir)VersionInfo.cs"
 </PreBuildEvent>

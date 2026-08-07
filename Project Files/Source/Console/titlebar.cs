@@ -63,6 +63,7 @@ namespace Thetis
 
             s += " v" + version + sBits;
             s += " (" + VersionInfo.BuildDate + ")<FW>";  //[2.10.2.2]MW0LGE use the auto generated class from pre build event for the BuildDate
+            s += " git:" + VersionInfo.GitShortSha; // W5TSU: exact commit this build was made from, checkable via CAT ZZZV
 
             if (BUILD_NAME != "") s += " " + BUILD_NAME;
 
