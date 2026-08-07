@@ -224,25 +224,101 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      dry-run first, explicit operator confirmation of the specific test in
      the current conversation, `--confirm-tx` only after that — not the
      fire-and-forget pattern used throughout Phase 3 above.
+   - **Extended-stats debug logging (`57f8f029`) confirmed unable to
+     diagnose the "still searching" case — a correction to that commit's
+     own rationale.** Traced `freedv_get_modem_extended_stats()`'s dispatch
+     for OFDM modes in `freedv_api.c`: it only `memcpy`s fresh data from
+     `f->stats`, and `f->stats` is only populated by
+     `ofdm_get_demod_stats()`, which `freedv_700.c` calls **exclusively
+     inside the `if (sync_state == synced || trial)` branch**. While stuck
+     in `search` state — our entire problem — `sync_metric`/`foff`/
+     `rx_timing`/`clock_offset` never update at all, so the block-by-block
+     dump this session added will show flat zeros for the whole capture
+     regardless of whether the correlator is close to locking or nowhere
+     near it. Left the logging in place (harmless, and instantly useful the
+     moment sync is ever achieved even briefly), but it's not the diagnostic
+     tool it was believed to be when added — the `fdv_debug_resamp.raw`
+     diff is still the one live test that can see anything during `search`.
+   - **CFO "dead zone" hypothesis — formed from source, then empirically
+     refuted.** Re-read `ofdm_sync_search_stream()` (`ofdm.c`, the function
+     700E's *voice*-mode search actually uses — not the burst-mode path
+     read earlier in this project). Its coarse frequency search tests only
+     three fixed candidates, `{-40, 0, +40}` Hz, against a ~180 ms
+     correlation window (700E: `Ts=14ms`, `Tcp=6ms`, `Nc=21`); back-of-envelope
+     phase-drift math over that window suggested a residual offset of just
+     a few Hz between candidates could plausibly fail to lock at any of the
+     three — a real, if narrow, structural "dead zone," and a clean
+     candidate explanation not yet considered. **Tested directly and
+     decisively, no radio needed**: built `libcodec2`/`freedv_rx` locally
+     (already done this project) and swept a controlled, genuine
+     single-sideband frequency shift (Hilbert-transform + `exp(j2πft)`,
+     real part) into the known-good `ve9qrp_700e.raw` reference audio from
+     −45 to +45 Hz in 5 Hz steps — **every single offset synced perfectly**
+     (1405/1405 frames). Pushed to ±150 Hz and it still found sync. The
+     hypothesis is refuted — codec2's real capture range is far more
+     tolerant than the source-level math predicted, and nothing in our
+     actual signal chain could plausibly produce anywhere near this much
+     offset regardless. **CFO is now ruled out as decisively as AGC.**
+   - **Virtual Audio Cable input investigated as an alternative test-signal
+     path — ruled out, don't revisit.** Traced `xvacIN()`/`xvacOUT()` calls
+     in `ChannelMaster/pipe.c`: `xvacIN` (a VAC's audio *feeding into*
+     Thetis) is called exclusively inside the transmitter/mic block
+     (`stream == inid(1,0)`, `case 0: // MIC data`) — there is no `xvacIN`
+     anywhere in the RX chain. A VAC can only inject audio into Thetis's
+     mic input → TX chain, never into RXA.c where `fdv.c` lives. Quick-Play
+     remains the only mechanism in this codebase for injecting a controlled
+     signal into the RX chain; VAC input cannot substitute for it. (VAC
+     *output* — RX audio routed **out** to the external FreeDV app for a
+     live differential test, step 5/§7 below — is the opposite direction
+     and unaffected by this finding.)
+   - **Clarified: "no output when Decode FreeDV is on" is likely expected
+     behavior, not a new bug.** Operator observed normal RX audio going
+     silent with the checkbox on. Root cause is probably two documented
+     behaviors stacking, not silence: codec2's `freedv_rx()` echoes raw
+     demod audio as "speech" when unsynced *unless* squelch is enabled
+     (`freedv_api.c` doc comment: "useful for tuning FreeDV signals"), and
+     `fdv.c` then scales whatever it receives by `FDV_SPEECH_GAIN = 0.30f`
+     after two lossy 48k↔8k resample round-trips — likely real but very
+     quiet audio, not literal zero output. Not chased further this session
+     (downstream of, and lower priority than, the sync problem itself);
+     worth a volume/meter check if it resurfaces. **The real proof sync is
+     working is `freedv status` reporting `sync=1`, not audible output** —
+     the CAT status read is ground truth from `ofdm->sync_state` directly,
+     independent of the audio path entirely.
+   - **New standing resource**: `sdr-for-engineers` (Claude Code skill,
+     `~/.claude/skills/sdr-for-engineers/`) — built this session from
+     *Software-Defined Radio for Engineers* (Collins/Getz/Pu/Wyglinski). Its
+     Ch. 10 (OFDM: Schmidl & Cox, cyclic prefix, coarse/fine CFO) and Ch. 6/7
+     (PLL structure, timing/carrier sync) directly informed the CFO
+     dead-zone investigation above. Treat as a standing reference for any
+     further sync-theory reasoning on this bug, not a one-off aside.
+   - **Still-unresolved tooling gap**: no remote file access to the Windows
+     box exists (`thetisctl` speaks only CAT/TCI, no SSH/SMB/etc.
+     configured) — `fdv_debug_resamp.raw` and `fdv_debug.txt` currently
+     require the operator to manually retrieve/relay their contents. Worth
+     solving properly (e.g. a shared/synced folder) if this debugging phase
+     continues much longer.
    - **Still open, ranked** (updated this session): (1) pull
      `fdv_debug_resamp.raw` off the Windows box (the dump point from
-     `3eb8fae0` already landed and doesn't need Quick-Play's TX-capable
-     path re-triggered if a capture from the frozen-gain test run is still
-     on disk) and diff it sample-for-sample (not just spectrally) against
+     `3eb8fae0` already landed; per the finding above, this is now the
+     *only* live test left that can see anything about the "search" state)
+     and diff it sample-for-sample (not just spectrally) against
      `Tools/FreeDV`'s known-good 8 kHz modem audio (e.g.
      `np.fromfile(path, dtype='<f4')`, scale ×32768 to compare against the
-     int16 reference) — now backed by an actual reference decode, not just
-     inspection, to rule the untested `create_resampleF` path in or out
-     directly; (2) confirm the actual DSP processing rate (Setup → DSP →
-     Options) matches the 48 kHz `fdv.c` assumes; (3) run the same bench
+     int16 reference) to rule the untested `create_resampleF` path in or
+     out directly; (2) confirm the actual DSP processing rate (Setup → DSP
+     → Options) matches the 48 kHz `fdv.c` assumes; (3) run the same bench
      file/tuning through the **external FreeDV desktop app** (via the VAC
-     path, `Thetis_VB-Audio_config.md` §7) as a differential test — an
-     independent decoder syncing on our signal would isolate the bug to
-     Thetis's chain entirely, now less useful as a "bad synthetic file"
-     check (already ruled out) but still useful as a full-chain sanity
-     check. AGC precision, AGC dynamics, and bad test audio are now all
-     ruled out; item (1) is the last one with a code path already in place
-     to act on.
+     *output* path, `Thetis_VB-Audio_config.md` §7) as a differential test
+     — an independent decoder syncing on our signal would isolate the bug
+     to Thetis's chain entirely, now less useful as a "bad synthetic file"
+     or "bad frequency placement" check (both ruled out) but still useful
+     as a full-chain sanity check. AGC precision, AGC dynamics, CFO, and bad
+     test audio are now all ruled out — decisively, not just by inspection;
+     item (1) is the only remaining hypothesis class (structural corruption
+     of the sample stream itself — drops/duplicates/discontinuities) with
+     a live test already wired up and ready to act on the moment the data
+     can be retrieved.
    - **New: remote testing tooling** (`Tools/thetis-ai-control`,
      `.claude/skills/thetis-control/SKILL.md`) — CAT commands `quickplay
      on|off|get` (now TX-gated, see above) / `quickrec on|off|get` (revived
@@ -327,3 +403,8 @@ SNR readings; findings fixed or recorded as Phase 4 work.
   known-good sample audio (`wav/ve9qrp_700e.wav` etc.); its bundled codec2
   can be built standalone on Linux (`cmake` + `make freedv_tx freedv_rx`) for
   fast ground-truth decodes without the Windows toolchain
+- `sdr-for-engineers` skill (`~/.claude/skills/sdr-for-engineers/`) — SDR/DSP
+  knowledge base built from *Software-Defined Radio for Engineers*
+  (Collins/Getz/Pu/Wyglinski); standing reference for synchronization theory
+  on this bug (PLL structure, coarse/fine acquisition, Schmidl & Cox OFDM
+  sync) — see project memory `act-as-sdr-expert` for when to reach for it
