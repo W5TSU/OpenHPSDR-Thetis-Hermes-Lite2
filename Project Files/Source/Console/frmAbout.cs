@@ -126,9 +126,11 @@ namespace Thetis
             // W5TSU: exact commit this build was made from - same string CAT ZZZV
             // reports (titlebar.cs), separate from the "build" branding label above
             // (TitleBar.BUILD_NAME) used by the update-check comparison logic below,
-            // which must not be repurposed for this.
-            if (!string.IsNullOrEmpty(VersionInfo.GitShortSha) && VersionInfo.GitShortSha != "unknown")
-                lstVersions.Items.Add("Git Commit: " + VersionInfo.GitShortSha);
+            // which must not be repurposed for this. Always shown (even when
+            // "unknown", e.g. git wasn't on PATH at build time) rather than
+            // suppressed - an absent line and a build that genuinely predates this
+            // feature must not look identical to each other.
+            lstVersions.Items.Add("Git Commit: " + VersionInfo.GitShortSha);
             lstVersions.Items.Add("Database Version: " + db_version);
             lstVersions.Items.Add("Radio Model: " + radio_model);
             if (!string.IsNullOrEmpty(andromeda_version)) lstVersions.Items.Add(andromeda_version); // includes the version: preamble in the string
