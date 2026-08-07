@@ -60,6 +60,10 @@ func runCAT(rawArgs []string) error {
 		return catFreeDV(c, args)
 	case "status":
 		return catStatus(c)
+	case "version":
+		return catVersion(c)
+	case "query":
+		return catQuery(c, args)
 	case "ptt":
 		return catPTT(c, args, a)
 	default:
@@ -352,6 +356,40 @@ func catBand(c *cat.Client, args []string) error {
 	default:
 		return fmt.Errorf("band: unknown subcommand %q", args[0])
 	}
+	return nil
+}
+
+// catVersion reads Thetis's own software version string via ZZZV
+// ("Get Software Version String", CATStructs.xml — already implemented and
+// wired into CATParser.cs's dispatch, just not previously exposed by this
+// tool). As of 2026-08, the string includes the exact git short SHA the
+// running build was made from (Thetis.csproj's PreBuildEvent generates
+// VersionInfo.GitShortSha at build time; titlebar.cs appends it) — this is
+// the way to confirm which commit is actually running on a remote
+// instance, rather than assuming a build/install matches what you expect.
+func catVersion(c *cat.Client) error {
+	v, err := c.Query("ZZZV")
+	if err != nil {
+		return err
+	}
+	fmt.Println("version:", v)
+	return nil
+}
+
+// catQuery is a raw passthrough for any CAT command not wrapped by a
+// dedicated subcommand above, mirroring `tci query`. Sends "<code>;" and
+// prints the reply with the code prefix stripped. Useful for one-off reads
+// of commands (like ZZZV before catVersion existed) without waiting for a
+// dedicated wrapper.
+func catQuery(c *cat.Client, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("query: usage: query <CODE>  (e.g. query ZZZV)")
+	}
+	v, err := c.Query(args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Println(args[0]+":", v)
 	return nil
 }
 

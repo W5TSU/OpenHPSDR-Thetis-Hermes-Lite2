@@ -70,6 +70,8 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> freedv get` / `freedv on\|off` | Enable/disable FreeDV RX decode (RX1 only) |
 | `cat --host <ip> freedv status` | Read FreeDV sync + SNR (read-only) |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
+| `cat --host <ip> version` | Software version string, including the git short SHA the running build was made from (`ZZZV`) — check this before trusting that a remote instance is running the build you expect |
+| `cat --host <ip> query <CODE>` | Raw passthrough for any CAT command not wrapped above (e.g. `query ZZZV`) |
 
 ```bash
 ./thetisctl cat --host 192.168.1.50 freq set A 14074000
