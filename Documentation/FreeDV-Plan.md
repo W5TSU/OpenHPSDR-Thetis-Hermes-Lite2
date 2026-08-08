@@ -329,6 +329,87 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      uses) let Quick-Play + sync/SNR be triggered and read entirely over the
      network, no one needing to sit at the Setup DSP tab. Steps 4-6 below can
      now be scripted once bench decode is unblocked.
+   - **Tooling gap closed: SSH access to the Windows test box (this
+     session)** — set up OpenSSH Server on 192.168.2.12 (`mark`, an
+     Administrator account, key-based auth via
+     `administrators_authorized_keys` + exact ACL — `SYSTEM:F` +
+     `Administrators:F`, no inherited entries, or Windows silently ignores
+     the file). `scp`/`ssh` now work directly (`ssh hl2winbox`, alias in
+     `~/.ssh/config`); a `winps.sh` helper runs PowerShell remotely via
+     `-EncodedCommand` (base64 UTF-16LE) to sidestep ssh→cmd.exe→powershell
+     quoting — Windows OpenSSH's default shell is `cmd.exe`, not
+     PowerShell, and naive quoting breaks silently or gets
+     partially-reinterpreted. This unblocks direct retrieval of
+     `%TEMP%\fdv_debug*.{txt,raw}` — no more manual relay — and can push
+     files too (used below to fix the bench file).
+   - **🎯 Root cause found for a *different*, previously-undiscovered bug:
+     the wrong file was loaded in the Quick-Play slot (this session).**
+     Pulled `C:\Users\mark\Music\Thetis\quickrecord\SDRQuickAudio.wav` via
+     the new SSH access and inspected it directly: **mono, 16-bit PCM,
+     8000 Hz, 49.8 s** — nothing like the properly-built bench file. The
+     correct file (`Tools/FreeDV/fdv700e_test_iq.wav` /
+     `ve9qrp_700e_golden_test_iq.wav`) is **stereo, 32-bit float, 48000 Hz,
+     ~112 s** — a real analytic I/Q pair, matching what `xplaywave`
+     (`ChannelMaster/pipe.c`, "IQ data" case) actually expects: it
+     overwrites RX1's raw ADC-domain complex I/Q buffer in place, upstream
+     of everything (mixer, SSB demod, `fdv.c`). A mono 8 kHz clip fed into
+     that slot is read as if it were interleaved 48 kHz complex samples —
+     every stage downstream (image-reject mixing by
+     `(VFOAFreq*1e6) % sample_rate_rx1`, SSB demod, decimation) operates on
+     nonsense. Confirmed quantitatively before fixing: normalized
+     cross-correlation between `fdv_debug_resamp.raw` and the wrong
+     source file's own samples never exceeded ~0.12 at any lag (a
+     same-signal sanity check on the correlation method itself scored
+     1.0000), i.e. no structural resemblance survived the chain — consistent
+     with, not just consistent with but *explaining*, the total scrambling
+     hypothesis. Copied the golden file over the wrong one via `scp`
+     (`/Users/mark/Music/Thetis/quickrecord/SDRQuickAudio.wav`, 43,161,644
+     bytes, confirmed via remote `Get-Item`). **Not yet reflected in the
+     repo's own `SDRQuickAudio.wav` copy-on-generate step or any
+     documentation warning** — if `make_fdv_test_iq.py` is ever re-run to
+     regenerate the bench files, re-verify the live box's copy didn't get
+     silently replaced by something else again; this class of bug (right
+     file existing in the repo, wrong bytes on the actual test box) won't
+     be visible from source alone.
+   - **Live-tested with the corrected file — still "no sync."** Three more
+     Quick-Play runs against the live instance (14236000 Hz / DIGU,
+     30 s/15 s/20 s holds), monitored via repeated live `freedv status`
+     CAT polls *during* playback (not just after) specifically to avoid
+     trusting a stale post-hoc read. `quickplay get` confirmed genuinely
+     "true" throughout each hold (ruling out a silent playback-start
+     failure); every single live poll across all three runs still read
+     "no sync." **The wrong-test-file bug was real, and fixing it was
+     necessary, but it is not the (sole) explanation for the "no sync"
+     symptom** — with a file already independently cross-validated via
+     freedv-gui's own reference `freedv_rx` (full sync, 1405/1405 frames,
+     step 3 above), Thetis's `fdv.c` still never syncs. The underlying
+     bug is still somewhere in Thetis's own chain.
+   - **New secondary bug found, not yet fixed: `fdv_debug.txt`/
+     `fdv_debug_resamp.raw`/`fdv_debug_audio.raw` only ever capture the
+     *first* Quick-Play session in a given Thetis process lifetime.**
+     All three debug files came back byte-identical (same MD5) across all
+     four Quick-Play runs this session, including the three run *after*
+     the file fix — despite each run genuinely starting and stopping
+     (`quickplay get` toggling true→false correctly each time, confirmed
+     live). `ResetRXAFDVDebug()` (`console.cs`'s
+     `ckQuickPlay_CheckedChanged`) should fire on every false→true
+     transition and truncate+re-arm all three files, but evidently isn't
+     taking effect on repeat sessions — file mtimes on the box stayed
+     pinned to the very first run's timestamps throughout. Not yet
+     root-caused (candidates worth checking first: `ckQuickPlay.Enabled` state
+     across the `arp_PlayingingChanged`/`arp_RecordingChanged` handlers in
+     `console.cs`, or a P/Invoke marshalling/threading issue on the
+     `WDSP.ResetRXAFDVDebug()` call itself) — flagged here so the *next*
+     `fdv_debug_resamp.raw` pull isn't trusted at face value without first
+     confirming (via remote mtime check, now trivial with SSH access) that
+     it's actually fresh. Practical workaround until fixed: restart Thetis
+     between Quick-Play test sessions to guarantee a clean capture.
+   - **Revised next step**: the sample-for-sample `fdv_debug_resamp.raw`
+     diff (previously blocked on file access, now unblocked) is still the
+     right next move, but needs a *fresh* capture — restart Thetis first,
+     given the debug-log staleness bug above, then run one Quick-Play
+     session and immediately pull all three debug files before running
+     anything else.
 4. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
    live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
    more-realistic differential test signal (real channel effects) and the
