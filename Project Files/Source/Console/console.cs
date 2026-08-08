@@ -37709,13 +37709,32 @@ namespace Thetis
             //    WaveForm.QuickPlay = false;
             //    ckQuickPlay.BackColor = SystemColors.Control;
             //}
-            
+
+            // W5TSU: DEBUG - independent of fdv.c's own counters, to nail down
+            // whether this handler (and specifically the ResetRXAFDVDebug()
+            // call below) actually runs on repeat Quick-Play toggles within
+            // one process lifetime. Never capped, always appends. Remove
+            // before merge alongside the other fdv debug instrumentation.
+            try
+            {
+                string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                File.AppendAllText(evtPath, string.Format("{0:O} CheckedChanged enabled={1} checked={2}\n",
+                    DateTime.Now, ckQuickPlay.Enabled, ckQuickPlay.Checked));
+            }
+            catch { }
+
             if (!ckQuickPlay.Enabled) return; // leave if this function called direct
             if (ckQuickPlay.Checked)
             {
                 ckQuickRec.Enabled = false;
                 ckQuickPlay.BackColor = button_selected_color;
                 WDSP.ResetRXAFDVDebug(); // W5TSU: DEBUG - fresh fdv_debug.txt capture per Quick-Play session, remove before merge
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} ResetRXAFDVDebug() called\n", DateTime.Now));
+                }
+                catch { }
                 //string file = Path.Combine(AppDataPath, "SDRQuickAudio.wav");
                 string file = Path.Combine(ARP.AudioFolder, "quickrecord", "SDRQuickAudio.wav");
                 bool ok = ARP.PlayFileViaWDSP("quick", file, 0, out string error);
