@@ -1435,6 +1435,13 @@
     <ngetparms>0</ngetparms>
     <nansparms>5</nansparms>
   </catstruct>
+  <catstruct code="ZZTC">
+    <desc>TCI server listening status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
   <catstruct code="ZZQA">
     <desc>Quick Play button status</desc>
     <active>true</active>

@@ -23450,6 +23450,17 @@ namespace Thetis
             lblToggleToUseTCI.Visible = false;
             console.SetupTCI(chkTCIServerListening.Checked, (int)udTCIRateLimit.Value);
         }
+        // W5TSU: lets a CAT client remotely enable/disable the TCI server
+        // without needing someone at the console to click the Setup checkbox -
+        // e.g. after a restart where the checkbox reverted to unchecked. Setting
+        // this just flips the same checkbox, which fires the existing
+        // CheckedChanged handler above (console.SetupTCI() with whatever rate
+        // limit is already configured) - no logic duplicated.
+        public bool TCIServerListening
+        {
+            get { return chkTCIServerListening.Checked; }
+            set { if (chkTCIServerListening.Checked != value) chkTCIServerListening.Checked = value; }
+        }
         public void StartupTCIServer()
         {
             chkTCIServerListening_CheckedChanged(this, EventArgs.Empty);

@@ -7353,6 +7353,27 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets whether Thetis's TCI server is listening
+        // (Setup.TCIServerListening -> chkTCIServerListening). Lets a CAT
+        // client remotely turn TCI on/off, e.g. after a restart left it
+        // unchecked - CAT doesn't depend on TCI being up already, so this
+        // works even when TCI itself is unreachable. // W5TSU
+        public string ZZTC(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                console.SetupForm.TCIServerListening = (s == "1");
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return console.SetupForm.TCIServerListening ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         // Reads FreeDV RX decode sync/SNR status (get-only): "<sync 0|1><sign><snr*10, 3 digits>".
         // SNR is only meaningful once synced (mirrors freedvStatusTimer_Tick in
         // setup.cs, which likewise only reads GetRXAFDVSnr when synced) and is
