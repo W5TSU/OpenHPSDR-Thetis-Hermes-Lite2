@@ -11920,7 +11920,21 @@ namespace Thetis
 
         public bool QuickPlay
         {
-            get { return ckQuickPlay.Checked; }
+            get
+            {
+                // W5TSU: DEBUG - on-demand state snapshot, so any CAT
+                // "quickplay get" gives a live read of ckQuickPlay.Enabled
+                // without needing another toggle event. Remove alongside the
+                // other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} QuickPlay getter: enabled={1} checked={2} ckQuickRec.Checked={3} ckQuickRec.Enabled={4}\n",
+                        DateTime.Now, ckQuickPlay.Enabled, ckQuickPlay.Checked, ckQuickRec.Checked, ckQuickRec.Enabled));
+                }
+                catch { }
+                return ckQuickPlay.Checked;
+            }
             set
             {
                 ckQuickPlay.Checked = value;
@@ -37775,6 +37789,15 @@ namespace Thetis
             //    if (!_updated_from_wave_form) WaveForm.QuickRec = false;
             //    ckQuickRec.BackColor = SystemColors.Control;
             //}
+
+            // W5TSU: DEBUG - remove alongside the other fdv debug instrumentation.
+            try
+            {
+                string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                File.AppendAllText(evtPath, string.Format("{0:O} ckQuickRec_CheckedChanged enabled={1} checked={2}\n",
+                    DateTime.Now, ckQuickRec.Enabled, ckQuickRec.Checked));
+            }
+            catch { }
 
             if (!ckQuickRec.Enabled) return; // leave if this function called direct
             if (ckQuickRec.Checked)
