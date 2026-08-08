@@ -68,6 +68,7 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> quickplay on` | **TX-capable** — see the safety protocol below before using it |
 | `cat --host <ip> quickrec get` / `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `cat --host <ip> freedv get` / `freedv on\|off` | Enable/disable FreeDV RX decode (RX1 only) |
+| `cat --host <ip> tciserver get` / `tciserver on\|off` | Enable/disable Thetis's TCI server — works even when TCI itself is unreachable (CAT doesn't depend on it), so it can bootstrap TCI back on after a restart left the checkbox unchecked |
 | `cat --host <ip> freedv status` | Read FreeDV sync + SNR (read-only) |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
 | `cat --host <ip> version` | Software version string, including the git short SHA the running build was made from (`ZZZV`) — check this before trusting that a remote instance is running the build you expect |

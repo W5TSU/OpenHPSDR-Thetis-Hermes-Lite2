@@ -72,6 +72,8 @@ Both `cat` and `tci` take:
 | `quickrec get` | Read whether Quick Rec is active |
 | `quickrec on\|off` | Quick Rec: record RX audio to that same fixed file |
 | `freedv get` | Read whether FreeDV RX decode is enabled |
+| `tciserver get` | Read whether Thetis's TCI server is listening |
+| `tciserver on\|off` | Enable/disable the TCI server — works even when TCI itself is unreachable (CAT doesn't depend on it being up), so it can bootstrap TCI back on after a restart left the Setup checkbox unchecked |
 | `freedv on\|off` | Enable/disable FreeDV RX decode (`fdv.c`), RX1 only |
 | `freedv status` | Read FreeDV sync + SNR — read-only, e.g. `SYNC  SNR 15.3 dB` or `no sync` |
 | `status` | Rig ID + frequency/mode/RIT/XIT/split/TX in one call |

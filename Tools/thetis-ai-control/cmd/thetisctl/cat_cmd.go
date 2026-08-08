@@ -58,6 +58,8 @@ func runCAT(rawArgs []string) error {
 		return catToggle("quickrec", args, c.SetQuickRec, c.GetQuickRec)
 	case "freedv":
 		return catFreeDV(c, args)
+	case "tciserver":
+		return catToggle("tciserver", args, c.SetTCIServer, c.GetTCIServer)
 	case "status":
 		return catStatus(c)
 	case "version":

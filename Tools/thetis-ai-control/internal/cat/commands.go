@@ -353,6 +353,23 @@ func (c *Client) SetFreeDVDecode(on bool) error {
 	return c.Set("ZZDV", boolDigit(on))
 }
 
+// SetTCIServer starts/stops Thetis's TCI server (Setup's "TCI Server"
+// checkbox) via ZZTC. Not TX-capable. Useful when TCI itself is
+// unreachable (e.g. right after a restart left the checkbox unchecked) -
+// CAT doesn't depend on TCI being up, so this can bootstrap it back on.
+func (c *Client) SetTCIServer(on bool) error {
+	return c.Set("ZZTC", boolDigit(on))
+}
+
+// GetTCIServer reads whether Thetis's TCI server is currently listening.
+func (c *Client) GetTCIServer() (bool, error) {
+	reply, err := c.Query("ZZTC")
+	if err != nil {
+		return false, err
+	}
+	return digitBool(reply)
+}
+
 // GetFreeDVDecode reads whether FreeDV RX decode is currently enabled.
 func (c *Client) GetFreeDVDecode() (bool, error) {
 	reply, err := c.Query("ZZDV")
