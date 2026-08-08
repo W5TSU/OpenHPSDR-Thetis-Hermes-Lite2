@@ -54755,6 +54755,16 @@ namespace Thetis
                 // disable if recording elsewhere
                 ckQuickPlay.Enabled = !playing;
                 ckQuickRec.Enabled = !playing;
+
+                // W5TSU: DEBUG - trace which non-"quick" id disables ckQuickPlay;
+                // remove alongside the other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} arp_PlayingingChanged id={1} playing={2} -> ckQuickPlay.Enabled={3}\n",
+                        DateTime.Now, id, playing, ckQuickPlay.Enabled));
+                }
+                catch { }
             }
             setPlayRecordStatusBar();
         }
@@ -54798,6 +54808,16 @@ namespace Thetis
                 // disable if recording elsewhere
                 ckQuickPlay.Enabled = !recording;
                 ckQuickRec.Enabled = !recording;
+
+                // W5TSU: DEBUG - trace which non-"quick" id disables ckQuickPlay;
+                // remove alongside the other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} arp_RecordingChanged id={1} recording={2} -> ckQuickPlay.Enabled={3}\n",
+                        DateTime.Now, id, recording, ckQuickPlay.Enabled));
+                }
+                catch { }
             }
 
             if (id == "waverecord_1") //rx1
