@@ -299,48 +299,89 @@ void xfdv(FDV a)
             fdv_dbg_nin_count++;
         }
 
-        while (a->demod_ring.count >= nin && nin > 0)
+        // W5TSU: fix - codec2's own ofdm_demod() legitimately sets nin=0 when
+        // its internal rxbuf already has enough samples buffered for the next
+        // frame (ofdm.c: "use internal rxbuf samples if they are available"),
+        // meaning "call freedv_rx() again right now with zero new samples to
+        // drain me" - not "stop". The previous `nin > 0` guard here treated
+        // that as a terminal condition instead, permanently stalling this
+        // loop (and hence all decode/sync) the instant codec2 first reported
+        // nin=0, which happens routinely once sync engages. Confirmed via
+        // fdv_debug_nin.txt: nin dropped to 0 immediately after a sync gain/
+        // loss and never recovered, while demod_ring kept filling
+        // (unconsumed) toward its capacity for the rest of the session.
+        // freedv-gui's own reference RX loop (FreeDVReceiveStep.cpp) has no
+        // equivalent guard at all - it just checks a FIFO has >= nin bytes
+        // (trivially true for nin=0) and keeps calling the modem.
+        // W5TSU: safety bound on how many *consecutive* nin==0 "drain me"
+        // iterations we'll honour in a row. The reference loop above has no
+        // equivalent cap and assumes nin==0 always self-resolves within a
+        // call or two - true in every case observed so far - but nothing in
+        // the API contract guarantees that, and `count >= nin` is trivially
+        // satisfied forever when nin stays 0, so an unbounded loop here risks
+        // hanging the whole DSP thread if that assumption is ever wrong.
+        // 16 is a generous multiple of what's actually been observed (1-2).
+        int zero_nin_streak = 0;
+        while (a->demod_ring.count >= nin && nin >= 0 && zero_nin_streak < 16)
         {
+            if (nin == 0) zero_nin_streak++; else zero_nin_streak = 0;
+
             fdv_rb_get_bulk(&a->demod_ring, a->nin_buf, nin);
 
-            // normalise the block into the short domain
-            float rms = fdv_block_rms(a->nin_buf, nin) * 32767.0f;
-            float cur_db = 20.0f * log10f(rms);          // block level at unity gain, in short counts
-            float desired_db = FDV_TARGET_RMS_DB - cur_db;
-            if (!a->agc_seeded)
-            {
-                // lock onto the block's own level immediately instead of
-                // smoothing down from a fixed guess, which was overshooting
-                // by ~45dB and clipping demod_in for the first ~15 blocks -
-                // squarely inside the modem's OFDM sync acquisition window
-                a->agc_gain_db = desired_db;
-                a->agc_seeded = 1;
-            }
-            else
-            {
-                // W5TSU: the frozen-gain experiment (skip this re-lock
-                // entirely once seeded) was tried and ruled out - "no sync"
-                // persisted with or without AGC, live-tested against a real
-                // instance (FreeDV-Plan.md). Restored to the smoothing
-                // update.
-                a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
-            }
-            if (a->agc_gain_db < FDV_GAIN_MIN_DB) a->agc_gain_db = FDV_GAIN_MIN_DB;
-            if (a->agc_gain_db > FDV_GAIN_MAX_DB) a->agc_gain_db = FDV_GAIN_MAX_DB;
-            float g = 32767.0f * powf(10.0f, a->agc_gain_db / 20.0f);
+            // declared here (not inside the nin>0 block below) so the debug
+            // logging further down - gated on the same nin>0 condition, but a
+            // separate scope - can still see the values it needs
+            float rms = 0.0f, cur_db = 0.0f;
 
-            for (i = 0; i < nin; i++)
+            if (nin > 0)
             {
-                float v = a->nin_buf[i] * g;
-                if (v > FDV_SHORT_CEIL) v = FDV_SHORT_CEIL;
-                if (v < -FDV_SHORT_CEIL) v = -FDV_SHORT_CEIL;
-                a->demod_in[i] = (short)v;
+                // normalise the block into the short domain
+                rms = fdv_block_rms(a->nin_buf, nin) * 32767.0f;
+                cur_db = 20.0f * log10f(rms);          // block level at unity gain, in short counts
+                float desired_db = FDV_TARGET_RMS_DB - cur_db;
+                if (!a->agc_seeded)
+                {
+                    // lock onto the block's own level immediately instead of
+                    // smoothing down from a fixed guess, which was overshooting
+                    // by ~45dB and clipping demod_in for the first ~15 blocks -
+                    // squarely inside the modem's OFDM sync acquisition window
+                    a->agc_gain_db = desired_db;
+                    a->agc_seeded = 1;
+                }
+                else
+                {
+                    // W5TSU: the frozen-gain experiment (skip this re-lock
+                    // entirely once seeded) was tried and ruled out - "no sync"
+                    // persisted with or without AGC, live-tested against a real
+                    // instance (FreeDV-Plan.md). Restored to the smoothing
+                    // update.
+                    a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+                }
+                if (a->agc_gain_db < FDV_GAIN_MIN_DB) a->agc_gain_db = FDV_GAIN_MIN_DB;
+                if (a->agc_gain_db > FDV_GAIN_MAX_DB) a->agc_gain_db = FDV_GAIN_MAX_DB;
+                float g = 32767.0f * powf(10.0f, a->agc_gain_db / 20.0f);
+
+                for (i = 0; i < nin; i++)
+                {
+                    float v = a->nin_buf[i] * g;
+                    if (v > FDV_SHORT_CEIL) v = FDV_SHORT_CEIL;
+                    if (v < -FDV_SHORT_CEIL) v = -FDV_SHORT_CEIL;
+                    a->demod_in[i] = (short)v;
+                }
             }
+            // nin == 0: nothing to normalise - demod_in is unused (freedv_rx
+            // reads zero samples from it below); calling fdv_block_rms() with
+            // n=0 would divide by zero and poison agc_gain_db with NaN, so
+            // this path is skipped entirely rather than guarded internally.
 
             int nout = freedv_rx(a->f, a->speech_out, a->demod_in);
             freedv_get_modem_stats(a->f, &a->sync, &a->snr);
 
-            // W5TSU: DEBUG - temporary diagnostic dump, remove before merge
+            // W5TSU: DEBUG - temporary diagnostic dump, remove before merge.
+            // Guarded on nin>0: a nin=0 iteration has no real audio content
+            // to record (demod_in wasn't touched this pass, rms/cur_db are
+            // still their zero-initialised defaults).
+            if (nin > 0)
             {
                 if (fdv_dbg_audio_count < 150)
                 {
@@ -357,6 +398,7 @@ void xfdv(FDV a)
                     fdv_dbg_audio_count++;
                 }
             }
+            if (nin > 0)
             {
                 if (fdv_dbg_count < 40)
                 {
