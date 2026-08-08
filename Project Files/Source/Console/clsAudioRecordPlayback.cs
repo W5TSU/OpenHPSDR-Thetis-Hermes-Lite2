@@ -3817,10 +3817,24 @@ namespace Thetis
         private void ReadBuffer(ref BinaryReader r)
         {
             int num_reads = IN_BLOCK;
+            long posBefore = 0;
+            long streamLen = 0;
+            try { posBefore = r.BaseStream.Position; streamLen = r.BaseStream.Length; } catch { }
             int val = r.Read(io_buf, 0, io_buf_size);
 
             if (val < io_buf_size)
             {
+                // W5TSU: DEBUG - pin down why a large (43MB) float WAV hits this
+                // short-read path almost immediately (~8 reads in); remove
+                // alongside the other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} ReadBuffer short-read: val={1} io_buf_size={2} posBefore={3} streamLen={4} _frames_read={5} _total_frames={6}\n",
+                        DateTime.Now, val, io_buf_size, posBefore, streamLen, _frames_read, _total_frames));
+                }
+                catch { }
+
                 eof = true;
                 num_reads = val / _bytes_per_frame;
             }
