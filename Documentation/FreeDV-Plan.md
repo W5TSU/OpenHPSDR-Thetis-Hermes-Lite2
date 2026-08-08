@@ -410,14 +410,92 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      given the debug-log staleness bug above, then run one Quick-Play
      session and immediately pull all three debug files before running
      anything else.
-4. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
+   - **🎯🎯 Root cause found: Quick-Play was silently non-functional this
+     entire debugging effort — every "no sync" result up to this point is
+     void (this session, follow-up).** While chasing the debug-log
+     staleness bug above, discovered the real explanation via the
+     independent instrumentation added along the way (`fdv_debug_events.txt`,
+     since removed): `ckQuickPlay.Enabled` is **`False` by default** —
+     `console.resx` has an explicit `<data name="ckQuickPlay.Enabled">
+     <value>False</value></data>` entry — and `ckQuickPlay_CheckedChanged`'s
+     very first line is `if (!ckQuickPlay.Enabled) return;`. With `Enabled`
+     false, every "Quick Play on" — whether from the physical GUI button,
+     the Andromeda-style `OtherButtonId.PLAY` button-bar action
+     (`DoOtherButtonAction`, also gated on the same `Enabled` check), or
+     CAT's `ZZQA1` — silently no-ops: the `Checked` property still toggles
+     (a separate flag CAT's `quickplay get` reads, which is why every prior
+     poll looked "normal"), but `ResetRXAFDVDebug()` and
+     `ARP.PlayFileViaWDSP()` — the actual file-load-and-inject call — never
+     run. No audio was ever injected, by any test, this entire session,
+     until this was found. The only thing that flips `Enabled` to `true` is
+     completing a Quick-**Rec** session at least once
+     (`arp_RecordingChanged`'s `id=="quick"` branch, `recording` going
+     true→false) — apparently by design, though the intent (if any) isn't
+     documented anywhere in the surrounding code. Confirmed practically:
+     ran `quickrec on` then `quickrec off` (not TX-capable, no antenna/PA
+     involvement) once via CAT — `Enabled` flipped `true` immediately and
+     stayed true for the rest of the process's life. **Workaround for all
+     future testing**: run one harmless Quick-Rec on/off cycle after every
+     Thetis (re)start, before the first Quick-Play attempt. **Real fix
+     still needed** (tracked as Phase 4 cleanup, not yet done): either flip
+     the resx default to `true`, or add an explicit enable at whatever
+     point Quick-Play is actually meant to become available (radio power-on
+     completing seems the more sensible trigger than an unrelated
+     recording feature) — needs a decision on intended UX, not just a
+     bug fix.
+   - **First genuine signal-in-chain confirmation of the whole project,
+     immediately after the fix.** With `Enabled` unstuck, ran Quick-Play
+     again (same bench file, 14236000 Hz / DIGU, 20 s hold) and — for the
+     first time this entire debugging effort — the operator visually
+     confirmed the expected OFDM "picket fence" signal on the panadapter/
+     waterfall during playback. **`freedv status` still read "no sync"
+     throughout, live-polled the whole time.** This is a clean, valuable
+     isolation: injection → mixing → SSB demod → display are all now
+     independently confirmed correct with a real, cross-validated signal;
+     the bug is now known to be specifically in `fdv.c`'s
+     resample/AGC/ring-buffer handling or codec2's `freedv_rx()`
+     sync/acquisition itself, not anywhere upstream of it. Every hypothesis
+     ruled out in earlier sessions (AGC precision, AGC dynamics, CFO, bad
+     test file, wrong Quick-Play file) remains ruled out — this doesn't
+     reopen any of them, it just confirms the signal reaching `fdv.c` now
+     really is the intended one.
+   - **First fresh `fdv_debug_resamp.raw` capture of the project — too
+     short to be conclusive, cap raised (`e2ecd8c6`).** Pulled all three
+     debug files immediately after the above run; confirmed genuinely
+     fresh (new rms/sample values, current mtime — the staleness bug above
+     wasn't hit this time). But `fdv_debug_resamp.raw` was only 6356 bytes
+     = 1589 float32 samples ≈ **0.2 s** of real 8 kHz audio — the
+     `fdv_dbg_resamp_count < 150` cap was tuned assuming a much lower
+     samples-per-call rate than what `create_resampleF` actually produces
+     (~10.7 samples/call at `dsp_size=64`, 48k→8k). A normalized
+     cross-correlation against upstream's known-good
+     `freedv-gui/wav/ve9qrp_700e.wav` (mono/8kHz/112s, the same reference
+     independently confirmed to sync perfectly against `freedv_rx` earlier
+     in this project) came back weak (~0.14) — but with only ~1600 samples
+     to align against a 112 s reference, this result isn't trustworthy
+     either way (the self-match sanity check that validated this exact
+     correlation method earlier in the session doesn't rule out a
+     short-window false negative here). Raised the cap to 4000 calls
+     (~5 s of real audio) — not yet re-tested with the raised cap.
+4. ⬜ **The actual sample-for-sample diff, for real this time** — re-run
+   Quick-Play with the raised resamp cap (`e2ecd8c6`, needs CI build +
+   install first), pull `fdv_debug_resamp.raw` immediately after, and diff
+   the several-seconds capture against `ve9qrp_700e.wav` (or the exact
+   `freedv_tx`-generated raw used to build the golden bench file, sample
+   rate/format matched) for structural corruption — drops, duplicates,
+   discontinuities, or a level/shape mismatch severe enough to explain
+   sync never acquiring. This is now the single most promising next step:
+   every upstream stage is confirmed working, this is the first stage
+   downstream of confirmed-good signal that hasn't been directly examined
+   with real data yet.
+5. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
    live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
    more-realistic differential test signal (real channel effects) and the
    permanent regression file once decode is working.
-5. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
+6. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
    checkbox, confirm the external FreeDV GUI app (VAC path, §7) syncs on the same
    signal. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
-6. ⬜ **Iterate on findings** (once sync is achieved):
+7. ⬜ **Iterate on findings** (once sync is achieved):
    - decoded speech level — `FDV_SPEECH_GAIN` (0.30f, fdv.c) vs passthrough/SSB
      loudness
    - priming latency — ~125 ms buffer before decode engages; listen for swallowed
