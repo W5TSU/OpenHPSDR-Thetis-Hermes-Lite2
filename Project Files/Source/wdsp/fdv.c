@@ -46,6 +46,7 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 static int fdv_dbg_count = 0;
 static int fdv_dbg_audio_count = 0;
 static int fdv_dbg_resamp_count = 0;
+static int fdv_dbg_nin_count = 0; // W5TSU: DEBUG - traces freedv_nin()/ring state on every xfdv() call, to catch the modem-block loop silently never running; remove before merge
 
 // W5TSU: DEBUG - scratch buffer for freedv_get_modem_extended_stats(), which
 // exposes the OFDM demod's own internal sync/timing/freq-offset estimates
@@ -276,6 +277,28 @@ void xfdv(FDV a)
 
         // run the modem for every complete nin block
         int nin = freedv_nin(a->f);
+
+        // W5TSU: DEBUG - unconditional, every xfdv() call (capped), so we can
+        // see nin/ring state even on calls where the while loop below never
+        // runs at all - the thing the block-by-block text log can't show
+        // since it only fires from inside that loop. Remove before merge.
+        if (fdv_dbg_nin_count < 500)
+        {
+            const char* dir = getenv("TEMP");
+            char path[512];
+            if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_nin.txt", dir);
+            else snprintf(path, sizeof(path), "C:\\fdv_debug_nin.txt");
+            FILE* ninf = fopen(path, "a");
+            if (ninf)
+            {
+                fprintf(ninf, "call=%d n8k=%d nin=%d ring_count=%d ring_capacity=%d f=%p loop_will_run=%d\n",
+                    fdv_dbg_nin_count, n8k, nin, a->demod_ring.count, a->demod_ring.capacity, (void*)a->f,
+                    a->demod_ring.count >= nin && nin > 0);
+                fclose(ninf);
+            }
+            fdv_dbg_nin_count++;
+        }
+
         while (a->demod_ring.count >= nin && nin > 0)
         {
             fdv_rb_get_bulk(&a->demod_ring, a->nin_buf, nin);
@@ -455,6 +478,7 @@ void ResetRXAFDVDebug(void)
     fdv_dbg_count = 0;
     fdv_dbg_audio_count = 0;
     fdv_dbg_resamp_count = 0;
+    fdv_dbg_nin_count = 0;
 
     const char* dir = getenv("TEMP");
     char path[512];
@@ -473,4 +497,9 @@ void ResetRXAFDVDebug(void)
     else snprintf(path, sizeof(path), "C:\\fdv_debug_resamp.raw");
     FILE* rsf = fopen(path, "wb");
     if (rsf) fclose(rsf);
+
+    if (dir) snprintf(path, sizeof(path), "%s\\fdv_debug_nin.txt", dir);
+    else snprintf(path, sizeof(path), "C:\\fdv_debug_nin.txt");
+    FILE* ninf2 = fopen(path, "w");
+    if (ninf2) fclose(ninf2);
 }
