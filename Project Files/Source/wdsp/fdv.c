@@ -255,7 +255,7 @@ void xfdv(FDV a)
         // ve9qrp raw/wav) to confirm or rule out the untested
         // create_resampleF decimate-by-6 path.
         {
-            if (fdv_dbg_resamp_count < 150)
+            if (fdv_dbg_resamp_count < 4000) // W5TSU: DEBUG - was 150 (~0.2s of real 8kHz audio at n8k~10.7/call); raised to capture several real seconds for a meaningful sample-for-sample diff
             {
                 const char* dir = getenv("TEMP");
                 char path[512];
