@@ -56,7 +56,7 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 - **Must be reverted (or identity restored) before merging to master** — the release
   installer keeps the production UpgradeCode, name, and `Thetis-HL2` folder
 
-### 🟡 Phase 3 — verification *(in progress; blocked on "no sync")*
+### 🟢 Phase 3 — verification *(bench decode achieved 2026-08-08; live decode + iteration remain)*
 
 > Note: audio can't be injected into the RX chain via Voicemeeter/VAC — VAC input
 > feeds the TX mic path only. The bench route is Thetis's RX wave playback, which
@@ -75,7 +75,7 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
    one. Fixed by writing `-Q` (`df591ac0`); confirmed on the panadapter afterward.
 2. ✅ **Smoke test** — `Thetis-Test` installs and runs the FreeDV tab/checkbox
    without fault; `libcodec2.dll` loads fine.
-3. 🟡 **Bench decode — in progress, currently blocked.** Signal plays and is
+3. ✅ **Bench decode — achieved 2026-08-08.** Signal plays and is
    visually/numerically confirmed correct on every axis checked so far, but the
    sync label sticks on **"no sync"** and never flips. Ruled out so far:
    - Sideband/position: DIGU confirmed, dial re-anchors correctly on replay,
@@ -477,17 +477,57 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      correlation method earlier in the session doesn't rule out a
      short-window false negative here). Raised the cap to 4000 calls
      (~5 s of real audio) — not yet re-tested with the raised cap.
-4. ⬜ **The actual sample-for-sample diff, for real this time** — re-run
-   Quick-Play with the raised resamp cap (`e2ecd8c6`, needs CI build +
-   install first), pull `fdv_debug_resamp.raw` immediately after, and diff
-   the several-seconds capture against `ve9qrp_700e.wav` (or the exact
-   `freedv_tx`-generated raw used to build the golden bench file, sample
-   rate/format matched) for structural corruption — drops, duplicates,
-   discontinuities, or a level/shape mismatch severe enough to explain
-   sync never acquiring. This is now the single most promising next step:
-   every upstream stage is confirmed working, this is the first stage
-   downstream of confirmed-good signal that hasn't been directly examined
-   with real data yet.
+4. ✅ **Two more bugs found and fixed on the way to the fix above — the
+   sample-for-sample diff turned out unnecessary once these were found.**
+   - **`Enabled` guard blocked every Quick-Play attempt this entire
+     debugging effort — worked around, real fix still pending.** See the
+     item directly above for the discovery. Practical result: `quickrec
+     on` then `quickrec off` once per Thetis (re)start reliably unsticks
+     `ckQuickPlay.Enabled`.
+   - **The Quick-Rec workaround silently destroys the bench file — must
+     re-copy it every time before testing.** Quick-Rec and Quick-Play
+     share the exact same file path
+     (`Music\Thetis\quickrecord\SDRQuickAudio.wav`) — the workaround above
+     records over and replaces the golden 43 MB bench file with a
+     near-instant scratch recording of live RX (111,148 bytes observed,
+     ~0.29 s). This produced a second, completely misleading symptom:
+     after "fixing" `Enabled`, Quick-Play would key MOX for well under a
+     second and drop — not a codec2/fdv.c bug at all, just testing against
+     the wrong (tiny, garbage) file. Root-caused via one more targeted
+     instrumentation pass (`ReadBuffer`'s short-read/EOF path,
+     `a8c9a3aa`): logged `streamLen=111148` against an expected ~43M,
+     immediately pointing at the file itself rather than the parser.
+     **Standing test procedure**: after every `quickrec on`/`off`
+     workaround cycle, re-`scp` the golden file
+     (`Tools/FreeDV/ve9qrp_700e_golden_test_iq.wav`) back over
+     `SDRQuickAudio.wav` on the box *before* the next Quick-Play test —
+     forgetting this step silently invalidates the run.
+   - With both worked around (Enabled unstuck, correct file back in
+     place), **Quick-Play finally ran uninterrupted for its full
+     duration, and `freedv status` reported real, stable sync**: `SYNC
+     SNR 11.8 dB` and holding (11.3–12.9 dB across ten consecutive live
+     polls over the full 20 s hold). Confirmed genuine (not a fluke) via
+     the underlying codec2 state in the same `fdv_debug.txt` capture:
+     `sync=1` from block 2 onward, `sync_metric` climbing 0.436 → 0.521 →
+     0.559, `foff` a tiny, realistic 0.1–0.2 Hz, `rx_timing` converged,
+     `clock_offset=0.0` — every internal diagnostic looks exactly like a
+     properly-locked OFDM demodulator, not a marginal/lucky read.
+   - **So the original "no sync" bug never actually existed in `fdv.c` or
+     codec2 at all.** Every hypothesis investigated and ruled out across
+     this entire multi-session effort (AGC precision, AGC dynamics, CFO,
+     bad test file content, wrong Quick-Play file format) was correctly
+     ruled out — none of them were ever the problem. The real blocker,
+     this whole time, was that **Quick-Play itself was never successfully
+     completing a full-duration test run** — first because `Enabled`
+     silently no-op'd it entirely, then because the workaround for that
+     silently corrupted the one file it needed to play. The lesson for
+     next time: when a live test's *result* is suspicious for many
+     sessions in a row despite every plausible internal-logic hypothesis
+     being ruled out, question whether the test itself is actually
+     running as intended before going deeper into the code under test —
+     `Enabled`'s state and the file's actual bytes on disk were both
+     directly, trivially checkable the whole time and would have shortened
+     this significantly.
 5. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
    live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
    more-realistic differential test signal (real channel effects) and the
