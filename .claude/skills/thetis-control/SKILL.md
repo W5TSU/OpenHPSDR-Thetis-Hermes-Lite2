@@ -162,6 +162,20 @@ actually still running.
 | `tci --host <ip> freedv-scan [--dwell 6s] [--out-dir <dir>]` | RX-only: tune RX1 through the FreeDV calling frequencies, record + report peak/RMS per band |
 | `tci --host <ip> query <cmd> [args...]` | Raw passthrough for anything not listed above |
 
+## FreeDV Reporter spotting (RX-only, no antenna/PA involvement)
+
+`freedv-reporter watch [--min-freq 14000000] [--max-freq 14350000] [--tci <ip>]
+[--tci-port 50001] [--mode digu]` watches FreeDV Reporter's (qso.freedv.org) live
+Socket.IO feed (`internal/freedvreporter` — hand-rolled client, no third-party
+dependency, since the site has no REST/JSON API) for stations starting to transmit
+within a frequency range (default 20m). Prints an alert for each. With `--tci`, also
+retunes Thetis's RX1 there automatically over an existing TCI connection — **read/tune
+only, never keys anything**, safe to leave running unattended. Runs until Ctrl-C.
+
+```bash
+./thetisctl freedv-reporter watch --tci 192.168.1.50
+```
+
 ```bash
 ./thetisctl tci --host 192.168.1.50 vfo 0 0 14074000
 ./thetisctl tci --host 192.168.1.50 modulation 0 usb

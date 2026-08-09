@@ -642,14 +642,23 @@ rendering work left to do. This collapses the project to one piece:
   Socket.IO library (e.g. a Go client, or the raw socket.io v4 wire protocol over
   `gorilla/websocket` if no maintained Go client exists), not a plain HTTP poll.
 
-⬜ **Single deliverable**: `thetisctl freedv-reporter watch --tci <ip> [--band 20m]
-[--near-freq 14236000]` — connects to the reporter's Socket.IO feed, and for each
-relevant spot, sends a `spot:...;` command over an existing TCI connection to a
-running Thetis instance. Real callsigns appear directly on the operator's own
-panadapter, live, using Thetis's existing renderer — no Thetis code changes needed at
-all. (A `--watch-only` / no-`--tci` mode that just prints spots to stdout, matching
-the original CLI-watcher idea, is still worth keeping as a lighter fallback/debug
-path within the same command.)
+✅ **Built and verified (2026-08-09), `ee88a402`** — re-scoped once more while building:
+the operator's actual goal was catching a real on-air FreeDV transmission to test/
+listen to, not just seeing labels on the waterfall, so `thetisctl freedv-reporter
+watch [--min-freq/--max-freq, default 20m] [--tci <ip>] [--tci-port 50001]
+[--mode digu]` **auto-tunes RX1 to the activity** rather than pushing `spot:...;`
+markers: it tracks live station state from the reporter's feed
+(`internal/freedvreporter`, a hand-rolled Socket.IO v4 client — no third-party
+dependency, matching `internal/tci`'s existing convention, since the reporter has no
+REST API) and on every transmit-start transition within range, retunes Thetis's VFO
+A + mode there via the existing `tci` package (not TX-capable — read/tune only).
+Verified against the live service in `internal/freedvreporter/live_test.go`
+(`go:build live`, excluded from normal `go test ./...`/CI): a real 15s session
+tracked 37 real stations with correct callsigns/frequencies, including genuine
+`tx=true` transitions on live traffic. Pushing visual `spot:...;` markers onto the
+panadapter (the original framing, still fully supported by
+`SpotManager2.AddSpot`/`handleSpot`) remains available as a separate, easy follow-on
+if wanted later — same event data, different action taken on it.
 
 ## Standing constraints
 
