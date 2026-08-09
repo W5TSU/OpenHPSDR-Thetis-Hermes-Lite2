@@ -607,7 +607,7 @@ SNR readings; findings fixed or recorded as Phase 4 work.
 - Re-coding RADE ourselves was evaluated and rejected: months of duplicated effort and
   a validation problem only upstream's test campaign can solve
 
-## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08)*
+## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
 FreeDV QSO in progress at exactly the moment we're recording — the
@@ -615,40 +615,41 @@ FreeDV QSO in progress at exactly the moment we're recording — the
 is watching it at the right time. A live spotting feed removes that timing luck, both
 for testing and for normal on-air use once Stage B ships a real TX/RX mode.
 
-**Researched this session, not yet built**: the reporter has no simple polling API —
-data arrives over a live **Socket.IO** connection (`cdn.socket.io/4.6.0`, endpoint
-`qso.freedv.org`, connect with `{ auth: { role: "view", protocol_version: 2 } }`).
-Relevant server-pushed events (from `/static/js/index.js`): `bulk_update` (full
-station table snapshot on connect), `new_connection`/`remove_connection`, `freq_change`,
-`rx_report`/`tx_report` (who's hearing/being heard, with SNR). No REST/JSON endpoint
-found — a client needs an actual Socket.IO library, not a plain HTTP poll.
+**Correction (same session)**: initially scoped this as two pieces, the second being
+"build a panadapter overlay, no existing rendering code for this anywhere in the
+codebase." That was wrong — missed on the first search. **Thetis already has a full
+spot-overlay renderer, `Console/SpotManager2.cs`**, and it's *already wired to accept
+spots over TCI* — its only caller in the whole codebase is `TCIServer.cs`'s
+`handleSpot()`. Thetis expects an *external* client to push spots to it; there is no
+rendering work left to do. This collapses the project to one piece:
 
-Two independently-shippable pieces, deliberately scoped apart:
+- **TCI wire format** (`TCIServer.cs::handleSpot`, dispatched on command name `spot`):
+  `spot:<callsign>,<mode>,<freqHz>,<argb_color>,<additional_text>;` — `<mode>` is a
+  `DSPMode` enum name (case-insensitive; `digu` is what FreeDV/PSK/RTTY-style spots
+  use) or a raw string filtered through `SpotManager2.FilterForRawMode` first;
+  `<argb_color>` is a signed 32-bit ARGB int (`Color.FromArgb(...)`); `<additional_text>`
+  is free text, or a `[json]{...}` tag deserialized into `SpotManager2.JsonSpotData`
+  (spotter, country, continent, heading, distance, flag, text colour, SWL fields) for
+  richer display — this is genuinely a general-purpose, already-in-the-wild protocol
+  (the `-swl[` handling comment in `FilterForRawMode` references "other spot sources,"
+  i.e. other tools already push spots to Thetis this way).
+- The reporter's own live feed is **Socket.IO**, not a REST/JSON endpoint
+  (`cdn.socket.io/4.6.0`, connect to `qso.freedv.org` with
+  `{ auth: { role: "view", protocol_version: 2 } }`). Relevant server-pushed events
+  (from `/static/js/index.js`): `bulk_update` (full station table snapshot on
+  connect), `new_connection`/`remove_connection`, `freq_change`, `rx_report`/
+  `tx_report` (who's hearing/being heard, with SNR). A client needs an actual
+  Socket.IO library (e.g. a Go client, or the raw socket.io v4 wire protocol over
+  `gorilla/websocket` if no maintained Go client exists), not a plain HTTP poll.
 
-1. ⬜ **CLI spot watcher** (`thetisctl`, e.g. `thetisctl freedv-reporter watch
-   [--band 20m] [--near-freq 14236000]`) — connects to the live feed, filters/prints
-   spots as they arrive (or on a poll interval), optionally alerts (desktop
-   notification or just stdout) when something shows up near our usual test frequency.
-   Solves the immediate problem (catching a live signal to Quick-Rec/decode against)
-   with no Thetis code changes at all — a Go Socket.IO client
-   (e.g. `github.com/googollee/go-socket.io` client mode, or a raw `gorilla/websocket`
-   + the socket.io v4 wire protocol if a maintained client lib isn't available) plus
-   the event names above should be enough.
-2. ⬜ **Panadapter overlay** (real feature work, larger) — render spot callsigns
-   directly on Thetis's own waterfall/panadapter like a DX cluster overlay, using
-   `rx_report`/`freq_change` events to place labels at the right frequency. No
-   existing cluster-spot rendering code exists anywhere in this codebase to build on
-   (confirmed via search) — this needs: a background feed connection (reusing the
-   watcher's client if built in Go via a small local bridge, or a native C# Socket.IO
-   client added directly to Console), a new rendering layer in `display.cs`
-   (SharpDX/SkiaSharp, per `CLAUDE.md`) using the panadapter's existing
-   frequency-to-pixel mapping, a Setup toggle to enable/disable it, and a decision on
-   how much history/filtering to show (all bands vs. current band, idle-station
-   fade-out, etc. — the reporter's own `index.js` has prior art for this, e.g.
-   `refreshSingleIdleVisibility`).
-
-Do item 1 first — it's useful standalone and de-risks the live-feed/event-parsing
-work before touching Thetis's rendering code for item 2.
+⬜ **Single deliverable**: `thetisctl freedv-reporter watch --tci <ip> [--band 20m]
+[--near-freq 14236000]` — connects to the reporter's Socket.IO feed, and for each
+relevant spot, sends a `spot:...;` command over an existing TCI connection to a
+running Thetis instance. Real callsigns appear directly on the operator's own
+panadapter, live, using Thetis's existing renderer — no Thetis code changes needed at
+all. (A `--watch-only` / no-`--tci` mode that just prints spots to stdout, matching
+the original CLI-watcher idea, is still worth keeping as a lighter fallback/debug
+path within the same command.)
 
 ## Standing constraints
 
