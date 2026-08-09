@@ -555,10 +555,27 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      runs post-fix, 36/36 live `freedv status` polls synced (up from a
      ~50% failure rate immediately before the fix) — SNR held steady
      11–15 dB throughout every run.
-5. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
-   live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
-   more-realistic differential test signal (real channel effects) and the
-   permanent regression file once decode is working.
+5. ✅ **Off-air capture — done 2026-08-08, via the new `freedv-reporter watch`
+   (Stage D).** Ran it with `--tci` against the live instance; it correctly
+   auto-tuned RX1 to 14.236 MHz on every transmit-start over a real 10-minute
+   ongoing QSO (ZL2MQ, W4MLN, VK4GRA, JH2WTQ — confirmed live by the reporter
+   itself, not inferred). Quick-Rec'd ~2 minutes of it:
+   `Tools/FreeDV/offair_14236000_RADEV1_20260808.wav` (local only, matches
+   the existing `*.wav`/`.gitignore` convention for bench audio — not
+   pushed). **Caveat**: this traffic was FreeDV's **RADE V1** mode, not
+   700E — codec2 has no RADE support yet (Stage C, still upstream-blocked),
+   so this file can't validate today's decode path and a spectral-only
+   sanity check on it is inconclusive (RADE's waveform is broadband/
+   noise-like by design, unlike 700E's clean OFDM comb — the same peak-
+   frequency-drift heuristic that flagged the earlier wrong-file bug isn't a
+   useful signal here). Real value: (a) proof `freedv-reporter watch`'s
+   auto-tune genuinely works against live, moving traffic, not just the
+   static bench file; (b) a real, dated regression sample ready the moment
+   RADE support lands in codec2. A **700E** off-air capture (the mode this
+   branch actually decodes) is still open — re-run the same watch/quick-rec
+   combo whenever the reporter shows 700E activity specifically (its
+   `mode` field distinguishes this, e.g. `KG7FMN` was seen on 700E during
+   this session's live tests, per `internal/freedvreporter`'s output).
 6. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
    checkbox, confirm the external FreeDV GUI app (VAC path, §7) syncs on the same
    signal. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
