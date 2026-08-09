@@ -512,22 +512,49 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      0.559, `foff` a tiny, realistic 0.1–0.2 Hz, `rx_timing` converged,
      `clock_offset=0.0` — every internal diagnostic looks exactly like a
      properly-locked OFDM demodulator, not a marginal/lucky read.
-   - **So the original "no sync" bug never actually existed in `fdv.c` or
-     codec2 at all.** Every hypothesis investigated and ruled out across
-     this entire multi-session effort (AGC precision, AGC dynamics, CFO,
-     bad test file content, wrong Quick-Play file format) was correctly
-     ruled out — none of them were ever the problem. The real blocker,
-     this whole time, was that **Quick-Play itself was never successfully
-     completing a full-duration test run** — first because `Enabled`
-     silently no-op'd it entirely, then because the workaround for that
-     silently corrupted the one file it needed to play. The lesson for
-     next time: when a live test's *result* is suspicious for many
-     sessions in a row despite every plausible internal-logic hypothesis
-     being ruled out, question whether the test itself is actually
-     running as intended before going deeper into the code under test —
-     `Enabled`'s state and the file's actual bytes on disk were both
-     directly, trivially checkable the whole time and would have shortened
-     this significantly.
+   - **So the *original* "no sync" bug never actually existed in `fdv.c` or
+     codec2.** Every hypothesis investigated and ruled out across this
+     entire multi-session effort before this point (AGC precision, AGC
+     dynamics, CFO, bad test file content, wrong Quick-Play file format)
+     was correctly ruled out — none of them were ever the problem. The
+     real blocker, this whole time, was that **Quick-Play itself was
+     never successfully completing a full-duration test run** — first
+     because `Enabled` silently no-op'd it entirely, then because the
+     workaround for that silently corrupted the one file it needed to
+     play. The lesson for next time: when a live test's *result* is
+     suspicious for many sessions in a row despite every plausible
+     internal-logic hypothesis being ruled out, question whether the test
+     itself is actually running as intended before going deeper into the
+     code under test — `Enabled`'s state and the file's actual bytes on
+     disk were both directly, trivially checkable the whole time and
+     would have shortened this significantly.
+   - **A second, real `fdv.c` bug found and fixed once genuine signal
+     finally reached the decoder (`15fe65c7`).** With the two blockers
+     above worked around, bench decode was *intermittent* — reproduced
+     2 clean syncs and 2 total failures across four back-to-back runs.
+     Both failures shared an identical signature in the new
+     `fdv_debug_nin.txt` trace: `freedv_nin()` returned **0** immediately
+     after a sync gain/loss transition and never recovered for the rest
+     of the session, while `demod_ring` kept filling, unconsumed, toward
+     its capacity. Root cause: codec2's `ofdm_demod()` legitimately sets
+     `nin=0` when its own internal `rxbuf` already has enough buffered
+     samples for the next frame — signalling "call `freedv_rx()` again
+     right now with zero new samples to drain me," not "stop." `fdv.c`'s
+     modem-block loop required `nin > 0`, misreading that signal as
+     terminal and permanently stalling. Confirmed against
+     `freedv-gui/src/pipeline/FreeDVReceiveStep.cpp` (the actual reference
+     RX loop, not just prior audits of `freedv_rx.c`): it has **no
+     equivalent guard at all** — it simply checks a FIFO has `>= nin`
+     bytes available (trivially true for `nin=0`) and keeps calling the
+     modem. Fixed by changing the loop condition to `nin >= 0`, skipping
+     the RMS/AGC normalisation block for the `nin==0` case (it would
+     divide by zero), and adding a bounded safety cap (16 consecutive
+     `nin==0` iterations) since nothing in the API contract actually
+     guarantees the state self-resolves quickly, even though every case
+     observed took only 1–2 iterations. **Verified**: 3 consecutive clean
+     runs post-fix, 36/36 live `freedv status` polls synced (up from a
+     ~50% failure rate immediately before the fix) — SNR held steady
+     11–15 dB throughout every run.
 5. ⬜ **Off-air capture** — next step in progress: quick-**Rec** a few minutes of
    live 14.236 MHz traffic (check qso.freedv.org first). Doubles as a
    more-realistic differential test signal (real channel effects) and the
