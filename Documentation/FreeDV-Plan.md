@@ -607,6 +607,49 @@ SNR readings; findings fixed or recorded as Phase 4 work.
 - Re-coding RADE ourselves was evaluated and rejected: months of duplicated effort and
   a validation problem only upstream's test campaign can solve
 
+## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08)*
+
+Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
+FreeDV QSO in progress at exactly the moment we're recording — the
+[reporter](https://qso.freedv.org) shows who's currently active, but only if a human
+is watching it at the right time. A live spotting feed removes that timing luck, both
+for testing and for normal on-air use once Stage B ships a real TX/RX mode.
+
+**Researched this session, not yet built**: the reporter has no simple polling API —
+data arrives over a live **Socket.IO** connection (`cdn.socket.io/4.6.0`, endpoint
+`qso.freedv.org`, connect with `{ auth: { role: "view", protocol_version: 2 } }`).
+Relevant server-pushed events (from `/static/js/index.js`): `bulk_update` (full
+station table snapshot on connect), `new_connection`/`remove_connection`, `freq_change`,
+`rx_report`/`tx_report` (who's hearing/being heard, with SNR). No REST/JSON endpoint
+found — a client needs an actual Socket.IO library, not a plain HTTP poll.
+
+Two independently-shippable pieces, deliberately scoped apart:
+
+1. ⬜ **CLI spot watcher** (`thetisctl`, e.g. `thetisctl freedv-reporter watch
+   [--band 20m] [--near-freq 14236000]`) — connects to the live feed, filters/prints
+   spots as they arrive (or on a poll interval), optionally alerts (desktop
+   notification or just stdout) when something shows up near our usual test frequency.
+   Solves the immediate problem (catching a live signal to Quick-Rec/decode against)
+   with no Thetis code changes at all — a Go Socket.IO client
+   (e.g. `github.com/googollee/go-socket.io` client mode, or a raw `gorilla/websocket`
+   + the socket.io v4 wire protocol if a maintained client lib isn't available) plus
+   the event names above should be enough.
+2. ⬜ **Panadapter overlay** (real feature work, larger) — render spot callsigns
+   directly on Thetis's own waterfall/panadapter like a DX cluster overlay, using
+   `rx_report`/`freq_change` events to place labels at the right frequency. No
+   existing cluster-spot rendering code exists anywhere in this codebase to build on
+   (confirmed via search) — this needs: a background feed connection (reusing the
+   watcher's client if built in Go via a small local bridge, or a native C# Socket.IO
+   client added directly to Console), a new rendering layer in `display.cs`
+   (SharpDX/SkiaSharp, per `CLAUDE.md`) using the panadapter's existing
+   frequency-to-pixel mapping, a Setup toggle to enable/disable it, and a decision on
+   how much history/filtering to show (all bands vs. current band, idle-station
+   fade-out, etc. — the reporter's own `index.js` has prior art for this, e.g.
+   `refreshSingleIdleVisibility`).
+
+Do item 1 first — it's useful standalone and de-risks the live-feed/event-parsing
+work before touching Thetis's rendering code for item 2.
+
 ## Standing constraints
 
 - Everything new lives in new files; hooks into shared files are single-line and
