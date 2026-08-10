@@ -884,6 +884,49 @@ landing a clean 36-line diff.
 Thetis pipeline via `thetisctl`'s CAT client (`ZZDW1` to enable, poll `ZZDZ` for
 sync/SNR) instead of a standalone harness.
 
+### 🟢 Scripted through `thetisctl`, same session (2026-08-10)
+
+Two pieces, since the existing off-air capture turned out not to be directly
+usable (see below):
+
+- **`thetisctl cat radae`** / **`radae-sanity`** (`internal/cat/commands.go`,
+  `cmd/thetisctl/{cat_cmd,radaesanity_cmd}.go`): `radae on|off|get`/`status` mirror
+  `freedv`'s shape exactly, wrapping `ZZDW`/`ZZDZ`. `radae-sanity` scripts the whole
+  check — radae on, Quick Play on (**TX-capable**, reuses `quickplay on`'s
+  `--confirm-tx`/dry-run/auto-cleanup gate, documented in
+  `.claude/skills/thetis-control/SKILL.md`), poll `radae status` every `--poll`
+  (default 1s) for `--hold` (default 140s), always stops Quick Play and disables
+  radae decode on the way out (even on error), then prints a sync/SNR summary
+  (first-sync time, % of polls synced, max SNR) — optionally to `--csv` too.
+- **Re-discovered, then fixed, the "not raw I/Q" problem from the `opus_dnn`
+  session above** while building the test: `offair_14236000_RADEV1_20260808.wav`
+  is Quick-Rec'd post-demod audio (duplicated into both channels), not the
+  pre-DSP analytic I/Q Quick Play's injection point expects — playing it back
+  directly would replay duplicated real audio as if it were I/Q. Generalized
+  `Tools/FreeDV/make_fdv_test_iq.py` (previously freedv_tx-raw-modem-only) with
+  an `--input-wav` mode: reads an arbitrary mono/stereo PCM16-or-float32 wav (own
+  minimal reader, no new dependency — numpy only, same as before), averages
+  stereo to mono (warns if the channels differ enough that averaging looks lossy,
+  i.e. the input might not actually be duplicated-mono), and generalized
+  `resample_to_analytic` to accept any `rate_out`/`rate_in` ratio, not just
+  integer multiples (needed since a capture's rate won't generally divide evenly
+  into 48 kHz, though this specific file is already 48 kHz so no resampling
+  actually occurs). Verified against the real file: `--input-wav
+  offair_14236000_RADEV1_20260808.wav` reproduces the exact 133.0 s duration
+  reported in the `opus_dnn` session above, byte-identical container format to
+  the existing 700E bench `.wav`s.
+
+**Not yet run against a live Thetis instance** — this session built and verified
+the tooling (Go build/vet/test green, Python conversion verified against the real
+capture) but didn't have a Windows box with this build available to actually stage
+`SDRQuickAudio.wav` and invoke `radae-sanity` for real. That remains the literal
+next step: copy the `--input-wav`-converted file to `Music\Thetis\quickrecord\` on
+the Windows test box, then `thetisctl cat --host <ip> radae-sanity --confirm-tx=...`.
+Given the acquisition-only harness's negative result against this same audio
+(`opus_dnn` session above), don't expect sync on the first run — the value here is
+having a repeatable, scriptable way to test it the moment RADE's ChannelMaster
+wiring (or a fresher capture) is worth re-checking, not a predicted pass.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

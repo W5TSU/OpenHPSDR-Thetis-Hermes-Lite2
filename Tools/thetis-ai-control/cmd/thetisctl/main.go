@@ -63,6 +63,10 @@ CAT commands (control-only, Tier 1):
   quickrec get                    quickrec on|off   (Quick Rec: record RX audio to that same fixed file)
   freedv get                      freedv on|off  (enable/disable FreeDV RX decode, RX1 only)
   freedv status                   (read FreeDV sync + SNR)
+  radae get                       radae on|off   (enable/disable RADE V1 RX decode, RX1 only)
+  radae status                    (read RADE sync + SNR)
+  radae-sanity --confirm-tx=<phrase> [--hold 140s] [--poll 1s] [--freq <hz>] [--mode <name>] [--csv <path>]
+                                   (scripted off-air sanity check: radae on, quickplay on, poll status, summarize)
   status
   ptt on --confirm-tx=<phrase> [--hold 3s]     ptt off
 

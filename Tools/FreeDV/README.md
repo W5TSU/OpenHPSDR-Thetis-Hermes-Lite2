@@ -42,3 +42,27 @@ writes `SDRQuickAudio.wav`, a ready-named copy for Thetis's quick-Play button.)
 
 The generated `.wav`/`.raw` files are gitignored — only the generator is
 tracked.
+
+## Re-synthesizing I/Q from a captured recording (`--input-wav`)
+
+`make_fdv_test_iq.py --input-wav <capture.wav> out.wav` takes an already-
+demodulated audio capture (mono or stereo, PCM16 or float32, any sample
+rate) instead of `freedv_tx`'s raw modem output, and re-synthesizes matching
+analytic-signal I/Q from it the same way. This is what a RADE off-air sanity
+check needs: `Tools/FreeDV/offair_14236000_RADEV1_20260808.wav` (Quick-Rec'd
+off real traffic, FreeDV-Plan.md Stage C) is *not* raw I/Q despite matching
+the stereo float32/48 kHz container convention — its channels are bit-
+identical, i.e. real mono audio duplicated into both channels, because
+Quick-Rec taps a different (post-demod) pipeline point than Quick-Play's
+pre-DSP IQ-injection point. Feeding it to Quick Play directly would replay
+that duplicated audio as if it were I/Q, which is wrong; `--input-wav`
+resynthesizes the correct signal instead:
+
+```bash
+python3 make_fdv_test_iq.py --input-wav offair_14236000_RADEV1_20260808.wav radae_test_iq.wav
+```
+
+Then drive the result with `thetisctl cat radae-sanity` (see
+`.claude/skills/thetis-control/SKILL.md`) instead of the manual Quick Play +
+`freedv status` loop above — same idea, scripted, for RADE's `ZZDW`/`ZZDZ`
+instead of 700E's `ZZDV`/`ZZDS`.

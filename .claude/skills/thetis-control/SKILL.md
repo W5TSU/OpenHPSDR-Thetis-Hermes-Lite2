@@ -70,6 +70,9 @@ Pure Go, no cgo, no external dependencies.
 | `cat --host <ip> freedv get` / `freedv on\|off` | Enable/disable FreeDV RX decode (RX1 only) |
 | `cat --host <ip> tciserver get` / `tciserver on\|off` | Enable/disable Thetis's TCI server — works even when TCI itself is unreachable (CAT doesn't depend on it), so it can bootstrap TCI back on after a restart left the checkbox unchecked |
 | `cat --host <ip> freedv status` | Read FreeDV sync + SNR (read-only) |
+| `cat --host <ip> radae get` / `radae on\|off` | Enable/disable RADE V1 RX decode (RX1 only, `ChannelMaster/radae.c`) |
+| `cat --host <ip> radae status` | Read RADE sync + SNR (read-only) |
+| `cat --host <ip> radae-sanity` | Scripted RADE off-air sanity check (radae on + quickplay on + poll + summary) — **TX-capable**, see below |
 | `cat --host <ip> status` | Combined ID + frequency/mode/RIT/XIT/split/TX status |
 | `cat --host <ip> version` | Software version string, including the git short SHA the running build was made from (`ZZZV`) — check this before trusting that a remote instance is running the build you expect |
 | `cat --host <ip> query <CODE>` | Raw passthrough for any CAT command not wrapped above (e.g. `query ZZZV`) |
@@ -98,6 +101,30 @@ records RX audio to a fixed file, and `freedv` controls/reads Thetis's
 FreeDV RX decode block (`fdv.c`); neither touches the transmitter
 (`RecordToFileFromWDSP` was checked and confirmed to never touch
 `_console.MOX`).
+
+`radae on|off|status` is likewise not TX-capable — same shape as `freedv`,
+controlling/reading `RXRadaeEnabled` (`ChannelMaster/radae.c`, RX1 only) via
+`ZZDW`/`ZZDZ`. **`radae-sanity` is TX-capable**, because it calls
+`quickplay on` internally to inject a captured off-air signal — it carries
+the exact same `--confirm-tx`/dry-run gate as `quickplay on` itself (see
+below) and always attempts to stop Quick Play and disable radae decode
+before returning, even on error. It scripts the full off-air sanity check
+FreeDV-Plan.md's Stage C describes: enable radae, start Quick Play, poll
+`radae status` every `--poll` (default 1s) for `--hold` (default 140s), then
+print a sync/SNR summary — the tedious loop-and-summarize part of what the
+`freedv` example below shows doing by hand.
+
+```bash
+./thetisctl cat --host 192.168.1.50 radae-sanity \
+    --confirm-tx=I-UNDERSTAND-THIS-KEYS-THE-RADIO --hold 140s --csv run.csv
+```
+
+Needs a genuine analytic-signal I/Q wav already staged as
+`Music\Thetis\quickrecord\SDRQuickAudio.wav` on the Windows box — see
+`Tools/FreeDV/make_fdv_test_iq.py --input-wav`'s doc comment for how to
+synthesize one from a captured off-air recording (a plain audio capture,
+like Quick-Rec produces, is *not* directly playable this way — FreeDV-Plan.md's
+Stage C section explains why).
 
 **`quickplay on` is TX-capable — do not treat it as safe.** It was
 originally documented here (and believed, based on that documentation) to
@@ -243,9 +270,10 @@ receiver is already in a CW mode.
 
 ## Safety protocol — read before any TX-capable command
 
-`cat ptt`, `cat quickplay on`, `tci tune`, `tci ptt`, `tci cw send`, and `tci
-tx-audio send` can key the transmitter. Since neither network protocol has
-authentication, `thetisctl` enforces:
+`cat ptt`, `cat quickplay on`, `cat radae-sanity` (calls `quickplay on`
+internally), `tci tune`, `tci ptt`, `tci cw send`, and `tci tx-audio send`
+can key the transmitter. Since neither network protocol has authentication,
+`thetisctl` enforces:
 
 1. **Dry-run by default.** Without `--confirm-tx`, these commands print
    exactly what they would send and do nothing TX-capable. Always run the

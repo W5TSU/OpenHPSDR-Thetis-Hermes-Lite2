@@ -409,6 +409,60 @@ func (c *Client) GetFreeDVStatus() (FreeDVStatus, error) {
 	return FreeDVStatus{Sync: sync, SNRdB: float64(tenths) / 10.0}, nil
 }
 
+// SetRadaeDecode enables/disables Thetis's RADE V1 RX decode block
+// (ChannelMaster/radae.c), RX1 only — matches the current RX-only prototype
+// scope (console.radio.GetDSPRX(0, 0).RXRadaeEnabled). Unlike FreeDV's fdv.c
+// (SetFreeDVDecode above), this is inert by default: the underlying
+// model/pipeline isn't wired for a full decode yet, so GetRadaeStatus is
+// expected to report "no sync" even when this is on — that's the very thing
+// the off-air sanity check exists to (dis)confirm. Wire command ZZDW, added
+// 2026-08-10 alongside GetRadaeStatus specifically to make that check
+// possible without a debugger (combine with SetQuickPlay to inject a
+// captured off-air signal, then poll GetRadaeStatus for sync).
+func (c *Client) SetRadaeDecode(on bool) error {
+	return c.Set("ZZDW", boolDigit(on))
+}
+
+// GetRadaeDecode reads whether RADE V1 RX decode is currently enabled.
+func (c *Client) GetRadaeDecode() (bool, error) {
+	reply, err := c.Query("ZZDW")
+	if err != nil {
+		return false, err
+	}
+	return digitBool(reply)
+}
+
+// RadaeStatus is the parsed form of the ZZDZ reply.
+type RadaeStatus struct {
+	Sync  bool
+	SNRdB int // only meaningful when Sync is true; 0 otherwise
+}
+
+// GetRadaeStatus reads RADE RX decode sync/SNR status. Wire command ZZDZ
+// (get-only; CATCommands.cs's ZZDZ, calling WDSP.GetRadaeSync/GetRadaeSnrDb
+// directly — ChannelMaster's plain rx index, not a wdsp channel), reply
+// format "<sync 0|1><sign><snr dB, 3 digits>" e.g. "1+012" = synced, 12dB
+// SNR; "0+000" = not synced. Unlike GetFreeDVStatus's ZZDS, the SNR digits
+// are already whole dB (GetRadaeSnrDb has no *10 scaling), so no /10 here.
+func (c *Client) GetRadaeStatus() (RadaeStatus, error) {
+	reply, err := c.Query("ZZDZ")
+	if err != nil {
+		return RadaeStatus{}, err
+	}
+	if len(reply) != 5 {
+		return RadaeStatus{}, fmt.Errorf("cat: ZZDZ reply %q: want 5 chars, got %d", reply, len(reply))
+	}
+	sync, err := digitBool(reply[0:1])
+	if err != nil {
+		return RadaeStatus{}, fmt.Errorf("cat: ZZDZ reply %q: %w", reply, err)
+	}
+	snr, err := strconv.Atoi(reply[1:5])
+	if err != nil {
+		return RadaeStatus{}, fmt.Errorf("cat: ZZDZ reply %q: parse SNR: %w", reply, err)
+	}
+	return RadaeStatus{Sync: sync, SNRdB: snr}, nil
+}
+
 // IFStatus is the parsed form of the Kenwood "IF" composite status reply
 // (CATCommands.cs:321-402, 35 ASCII bytes).
 type IFStatus struct {

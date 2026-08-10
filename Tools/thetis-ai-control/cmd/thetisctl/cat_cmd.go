@@ -58,6 +58,10 @@ func runCAT(rawArgs []string) error {
 		return catToggle("quickrec", args, c.SetQuickRec, c.GetQuickRec)
 	case "freedv":
 		return catFreeDV(c, args)
+	case "radae":
+		return catRadae(c, args)
+	case "radae-sanity":
+		return catRadaeSanity(c, args, a)
 	case "tciserver":
 		return catToggle("tciserver", args, c.SetTCIServer, c.GetTCIServer)
 	case "status":
@@ -185,6 +189,31 @@ func catFreeDV(c *cat.Client, args []string) error {
 		return nil
 	}
 	return catToggle("freedv", args, c.SetFreeDVDecode, c.GetFreeDVDecode)
+}
+
+// catRadae controls and reports on Thetis's RADE V1 RX decode block
+// (ChannelMaster/radae.c) — same shape as catFreeDV above, ZZDW/ZZDZ instead
+// of ZZDV/ZZDS. "status" is read-only (sync/SNR); on|off|get toggles/reads
+// whether the decoder is running at all. Combine with "quickplay on" to
+// inject a captured off-air signal and this to check whether it synced —
+// see radaeSanity for the scripted end-to-end version of that check.
+func catRadae(c *cat.Client, args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("radae: usage: radae on|off|get | radae status")
+	}
+	if args[0] == "status" {
+		st, err := c.GetRadaeStatus()
+		if err != nil {
+			return err
+		}
+		if st.Sync {
+			fmt.Printf("radae: SYNC  SNR %d dB\n", st.SNRdB)
+		} else {
+			fmt.Println("radae: no sync")
+		}
+		return nil
+	}
+	return catToggle("radae", args, c.SetRadaeDecode, c.GetRadaeDecode)
 }
 
 // catQuickPlay is TX-capable, discovered by live testing 2026-08-04 — do
