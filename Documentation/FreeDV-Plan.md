@@ -686,16 +686,92 @@ verdict that RADE V1 modem is broken:**
   transmission window (the reporter confirmed the *QSO* was live over 10 minutes, not
   that this particular recording segment did).
 
-**Net assessment**: adopting sv1eia's RADE V1 work is mechanically clean (file-level)
-but not a shortcut past Stage C's real work — it trades "wait for upstream's official
-RADE C library" for "finish someone else's incomplete `opus_dnn` build integration,"
-which is bounded and known (their own doc scopes it to three concrete options) but
-still real engineering, not a dependency bump. Reusable regardless of that decision:
-their native `FreeDVReporter*.cs` (vs. our external `thetisctl` CLI), RADE meters UI,
-and TX mic-conditioning chain are relevant references for Stage B/D UI work independent
-of whether RADE V1 itself gets adopted. Branch kept locally, not pushed, not merged;
-revisit if upstream's own RADE V2 C library (the thing Stage C is actually watching for)
-stalls significantly longer.
+**Net assessment (superseded below)**: adopting sv1eia's RADE V1 work is mechanically
+clean (file-level) but not a shortcut past Stage C's real work — it trades "wait for
+upstream's official RADE C library" for "finish someone else's incomplete `opus_dnn`
+build integration," which is bounded and known (their own doc scopes it to three
+concrete options) but still real engineering, not a dependency bump. Reusable
+regardless of that decision: their native `FreeDVReporter*.cs` (vs. our external
+`thetisctl` CLI), RADE meters UI, and TX mic-conditioning chain are relevant
+references for Stage B/D UI work independent of whether RADE V1 itself gets adopted.
+
+### 🟢 `opus_dnn` build gap resolved, same session
+
+Picked up option (a)/(c) from `commit_pin.txt` (CMake + real MSVC, not a hand-authored
+vcxproj): root-caused the gap first rather than just working around it.
+
+**Root cause**: not a deliberate deferral despite `commit_pin.txt`'s wording — the
+**repo-root `.gitignore`'s standard Visual Studio "build results" patterns**
+(`x64/`, `x86/`, `[Aa][Rr][Mm]/`, `[Aa][Rr][Mm]64/`) blanket-match *any* directory
+with those names anywhere in the tree, silently swallowing `git add` of opus's own
+upstream SIMD source-directory convention (`silk/x86/`, `celt/arm/`, `dnn/x86/`, nine
+directories in total, including nested ones like `silk/fixed/arm/`). `commit_pin.txt`
+lists them as intended `vendored_subset` entries that simply never landed. This
+project's own throwaway-branch vendoring pass hit the exact same footgun on the first
+`git add` — caught because `git status` showed nothing at all for genuinely-present
+files on disk, the tell that a `.gitignore` pattern (not a real absence) was involved.
+
+**Fix**: restored all nine directories verbatim from real upstream `xiph/opus` at the
+exact commit `commit_pin.txt` already pins (`940d4e5af64351ca8ba8390df3f555484c567fbb`
+— confirmed byte-identical elsewhere in the tree), and added scoped `!` negation rules
+in `opus_dnn/.gitignore` so this can't silently regress. One git subtlety worth noting
+for future vendoring: a bare `!/build/x64/` negation does **not** override a preceding
+bare `build/` (trailing-slash directory match) — confirmed empirically with an isolated
+test repo. The working idiom is `build/*` (glob one level down, doesn't prune the
+directory from traversal) followed by the negations; that's what `opus_dnn/.gitignore`
+now uses to un-ignore the vendored `build/x64/Release/opus.lib` itself.
+
+**Verified end to end**:
+- CMake now configures and builds a complete `libopus.a` on Linux with
+  `-DOPUS_DEEP_PLC=ON -DOPUS_DRED=ON -DOPUS_OSCE=ON` — DNN/LPCNet/FARGAN/DRED/OSCE and
+  x86 intrinsics all present and building cleanly.
+- `radae_c` links against it with **zero undefined references** (previously:
+  `compute_generic_dense`, `linear_init`, etc. all unresolved).
+  `rade_open("", 0)` succeeds with real weights loaded: `protocol=1 nin_max=1120`.
+- Added `.github/workflows/build-opus-dnn.yml` (dispatch-only, mirrors
+  `build-codec2.yml`'s shape) to produce the actual MSVC x64 static lib
+  `radae_c.vcxproj` expects. Unlike codec2, opus's `CMakeLists.txt` is MSVC-native —
+  no MinGW/gendef import-library step needed, just `ilammy/msvc-dev-cmd` + Ninja
+  (the plain `-G "Visual Studio 17 2022"` CMake generator no longer auto-detects on
+  the current `windows-latest` image — same fix `build-codec2.yml` already uses for
+  its own reasons). Workflow file had to be pushed to **master** to be dispatchable at
+  all (a hard GitHub platform requirement — `workflow_dispatch` only recognizes files
+  present on the default branch — not a scope decision; it dispatches against
+  `--ref experiment/sv1eia-radae-eval` for the actual source/build). Run succeeded in
+  6m14s: [run 31415733600](https://github.com/W5TSU/OpenHPSDR-Thetis-Hermes-Lite2/actions/runs/31415733600).
+- Vendored the resulting `opus.lib` (7.4 MB, real COFF/MSVC archive, contains
+  `compute_generic_dense`/`linear_init`/etc.) at
+  `Project Files/lib/opus_dnn/build/x64/Release/opus.lib` — the exact path
+  `radae_c.vcxproj`'s `AdditionalLibraryDirectories` already expects, so it should
+  link unmodified. Not yet compiled *into* a full Thetis build (that needs
+  `ChannelMaster.vcxproj`/console wiring beyond this branch's current scope) or
+  tested on real Windows hardware — the Linux build is the correctness proof, the
+  Windows artifact is the deployment target, and those are two different claims.
+
+**Off-air sanity check re-run with the real (non-stub) DNN decoder**: same result as
+the acquisition-only harness — no sync on `offair_14236000_RADEV1_20260808.wav`
+across the full 133 s, at any of 6 tested input scales (0.01×–1000×, ruling out a
+level/gain mismatch specifically). This is a stronger negative than before (the real
+public API, not a hand-ported state machine, so harness fidelity is no longer a live
+caveat) but the other caveats from the acquisition-only run stand unchanged: no
+independent reference decoder to cross-check against, and unconfirmed whether this
+particular 2-minute slice actually overlapped a real transmission window. **Read as**:
+the `opus_dnn` build blocker is genuinely gone, but whether this specific recording
+ever contained a lockable RADE V1 signal is still an open, separate question — a
+fresh, verified-in-the-moment capture (or a real freedv-gui differential test) is the
+next step if that question matters going forward, and is now easy to test against
+since a working decoder exists.
+
+**Revised net assessment**: the `opus_dnn` build gap that made this a "bounded but
+real" adoption cost is now closed — cherry-picking sv1eia's RADE V1 work is both
+mechanically clean *and* buildable end-to-end (source → Linux proof → Windows
+artifact). What remains before RADE V1 could actually run in this fork is console/
+ChannelMaster integration work (Stage B territory: TX/RX wiring, UI, meters) — a
+separate, larger decision from the build question this session closed out. Branch
+(`experiment/sv1eia-radae-eval`) and the two new CI workflow files are pushed to
+`origin`; `build-opus-dnn.yml` is also on `master` (required for dispatchability, no
+effect on the normal build). Revisit adoption-vs-wait-for-upstream now that the cost
+side of that tradeoff is much better known.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
