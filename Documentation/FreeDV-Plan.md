@@ -860,6 +860,30 @@ branch once the full solution built green. `experiment/sv1eia-radae-eval` has
 since been deleted (both local and `origin`, fully merged first — `git branch -d`
 succeeded without needing `-D`); its full history lives on in `FreeDV`'s own log.
 
+### 🟢 CAT toggle for `RXRadaeEnabled`, same session (2026-08-10)
+
+The "not yet something an operator can turn on without a debugger" gap above is
+closed via CAT, not a Setup-tab checkbox — lowest footprint, and `thetisctl`
+already speaks CAT, so it doubles as the test harness for the off-air sanity check.
+Two new commands, mirroring FreeDV-classic's `ZZDV`/`ZZDS` exactly:
+
+- **`ZZDW`** — get/set `RXRadaeEnabled` (RX1/subrx0 only, same single-channel scope
+  as `ZZDV`). `console.radio.GetDSPRX(0, 0).RXRadaeEnabled = ...`.
+- **`ZZDZ`** — get-only sync/SNR status, `<sync 0|1><sign><snr dB, 3 digits>`. Calls
+  `WDSP.GetRadaeSync`/`GetRadaeSnrDb` directly (ChannelMaster, plain `rx` index 0,
+  not `WDSP.id()`) — unlike `ZZDS`, `GetRadaeSnrDb` already returns integer dB, no
+  `*10` scaling needed.
+
+Registered in `CATStructs.xml` (`nsetparms`/`ngetparms`/`nansparms` matching `ZZDV`/
+`ZZDS`) and `CATParser.cs`'s switch. Hit the project's mixed-CRLF/LF hazard again
+editing `CATCommands.cs` (a plain-text `Edit` flattened the whole file into a
+2496-line spurious diff); reverted and redid the insertion via byte-level splicing,
+landing a clean 36-line diff.
+
+**Next real test**: run the off-air sanity check (Stage C, above) through the actual
+Thetis pipeline via `thetisctl`'s CAT client (`ZZDW1` to enable, poll `ZZDZ` for
+sync/SNR) instead of a standalone harness.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

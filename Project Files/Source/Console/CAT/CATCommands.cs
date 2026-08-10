@@ -7391,6 +7391,42 @@ namespace Thetis
 
             return (sync ? "1" : "0") + sign + AddLeadingZeros(snrTenths, 3);
         }
+        // Reads or sets the RADE V1 RX decode (ChannelMaster/radae.c) enable state.
+        // RX1 only, matching the current RX-only prototype scope
+        // (console.radio.GetDSPRX(0, 0).RXRadaeEnabled) -- see ZZDV's FreeDV
+        // equivalent. Inert until the underlying model/pipeline is actually built
+        // and linked in; ZZDZ reports whether it ever syncs. // W5TSU
+        public string ZZDW(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                console.radio.GetDSPRX(0, 0).RXRadaeEnabled = (s == "1") ? 1 : 0;
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (console.radio.GetDSPRX(0, 0).RXRadaeEnabled != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads RADE RX sync/SNR status (get-only): "<sync 0|1><sign><snr dB, 3 digits>".
+        // Unlike ZZDS's FreeDV SNR (wdsp, reported *10), GetRadaeSnrDb already
+        // returns a plain integer dB estimate -- reported as 0 while unsynced,
+        // same convention as ZZDS. // W5TSU
+        public string ZZDZ()
+        {
+            const int rx = 0;
+            bool sync = WDSP.GetRadaeSync(rx) != 0;
+            int snr = sync ? WDSP.GetRadaeSnrDb(rx) : 0;
+
+            string sign = snr < 0 ? "-" : "+";
+            snr = Math.Min(Math.Abs(snr), 999);
+
+            return (sync ? "1" : "0") + sign + AddLeadingZeros(snr, 3);
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>
