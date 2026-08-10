@@ -624,6 +624,79 @@ SNR readings; findings fixed or recorded as Phase 4 work.
 - Re-coding RADE ourselves was evaluated and rejected: months of duplicated effort and
   a validation problem only upstream's test campaign can solve
 
+### 🟡 sv1eia/Thetis-RADE evaluated as a shortcut — throwaway branch, 2026-08-10
+
+A community fork, [sv1eia/Thetis-RADE](https://github.com/sv1eia/Thetis-RADE) (Christos
+Nikolaou, SV1EIA), already ships a full RADE V1 *and* V2 TX/RX pipeline (`radae_c`, a
+from-scratch C port referencing `peterbmarks/radae_nopy`, not upstream's own C library —
+that's still the thing Stage C above is watching for), a native FreeDV Reporter client,
+RADE meters, TX mic conditioning, and its own HL2 support, active through June 2026.
+Explored on a throwaway branch (`experiment/sv1eia-radae-eval`, not merged) to see
+whether it could shortcut Stage C. A second candidate,
+[ancosgrove/Thetis_FreeDV](https://github.com/ancosgrove/Thetis_FreeDV), was also
+checked and ruled out immediately — despite the name, its tree has zero FreeDV-related
+files; it's a stale `ramdor/Thetis` fork with no actual integration work.
+
+**Mechanically compatible, confirmed.** Both this fork and sv1eia's share real git
+history via `ramdor/Thetis` (common ancestor `ed4c27c9`, Oct 2020) — `git merge-base`
+finds it, so this is cherry-pick territory, not a vendor-drop-from-scratch situation.
+Pulling `Project Files/lib/{radae_c,opus_dnn,r8brain,freedv_text}` and
+`ChannelMaster/radae*.{c,h}` verbatim (752 files) landed with **zero collisions** —
+entirely additive against our tree.
+
+**`radae_c` (the OFDM modem/DSP layer) is genuinely portable.** Builds standalone with
+plain `gcc -O2` on Linux, no CMake, no Windows headers, no `opus_dnn` needed at all for
+the acquisition/demod layer (`radc_modem.c`/`radc_acq.c`/`radc_demod.c` are self-
+contained pure C — only the neural encoder/decoder, `radc_enc*.c`/`radc_dec*.c`, needs
+the DNN).
+
+**The neural codec layer (`opus_dnn`: LPCNet/FARGAN/DRED/OSCE) is *not* reproducibly
+buildable from what sv1eia actually committed.** Their own `opus_dnn/commit_pin.txt`
+documents this as a known, unresolved gap: it lists three possible build paths (CMake on
+a Windows host, hand-authoring an MSVC project file, or WSL cross-compile) and ends with
+"**decision deferred to a follow-up step**." Confirmed independently: their vendored
+tree is missing `silk/x86/`, `celt/x86/`, `dnn/x86/` and the `arm/` equivalents entirely,
+so upstream's own `CMakeLists.txt` fails at configure time (`Cannot find source file:
+silk/x86/main_sse.h`) even with `OPUS_DISABLE_INTRINSICS=ON`. `radae_c.vcxproj` links
+against `$(OpusDir)\build\$(Platform)\$(Configuration)\` — a prebuilt library directory
+excluded by `.gitignore` — meaning SV1EIA builds `opus_dnn` locally and never commits
+the result; a fresh clone of that repo cannot build RADE today without first solving
+this. This is the real cost of adopting their work, not a one-line dependency bump.
+
+**Sanity-check against `offair_14236000_RADEV1_20260808.wav` — inconclusive, not
+negative.** Wrote a standalone harness driving only `radc_modem_init`/`radc_acq_init`/
+`radc_acq_detect`/`radc_demod_frame` directly (bypassing the DNN entirely, stopping
+right before where the real code would call `rade_core_decoder`) — a faithful port of
+`radc_rx.c`'s SEARCH→CANDIDATE→SYNC state machine. Ran it against the full 133 s
+capture: no sustained sync (candidate hits ~10% of frames, consistent with noise-floor
+false positives, never promoted to SYNC). **Two important corrections/caveats, not a
+verdict that RADE V1 modem is broken:**
+- **Doc correction**: this capture is *not* raw I/Q despite matching the stereo
+  float32/48 kHz container convention used elsewhere in this project — its left and
+  right channels are bit-for-bit identical (`corr(I,Q)=1.0`, vs. `~0` for our genuine
+  bench IQ files). It's real, demodulated mono RX audio duplicated into both channels.
+  Quick-Rec apparently taps a different pipeline point than Quick-Play's IQ-injection
+  point documented in Phase 3 above — worth confirming precisely if Quick-Rec is relied
+  on again for bench audio.
+- **No independent reference decoder exists to validate the test harness itself**
+  against — unlike the 700E work (Phase 3), which had `freedv-gui`'s own `freedv_rx` as
+  ground truth, there's no lightweight way to build a known-good RADE V1 decoder given
+  the `opus_dnn` gap above, so this harness's own correctness is unverified. Also
+  unconfirmed: whether this specific 2-minute slice actually overlapped a real
+  transmission window (the reporter confirmed the *QSO* was live over 10 minutes, not
+  that this particular recording segment did).
+
+**Net assessment**: adopting sv1eia's RADE V1 work is mechanically clean (file-level)
+but not a shortcut past Stage C's real work — it trades "wait for upstream's official
+RADE C library" for "finish someone else's incomplete `opus_dnn` build integration,"
+which is bounded and known (their own doc scopes it to three concrete options) but
+still real engineering, not a dependency bump. Reusable regardless of that decision:
+their native `FreeDVReporter*.cs` (vs. our external `thetisctl` CLI), RADE meters UI,
+and TX mic-conditioning chain are relevant references for Stage B/D UI work independent
+of whether RADE V1 itself gets adopted. Branch kept locally, not pushed, not merged;
+revisit if upstream's own RADE V2 C library (the thing Stage C is actually watching for)
+stalls significantly longer.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
