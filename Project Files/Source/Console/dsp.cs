@@ -267,6 +267,22 @@ namespace Thetis
         [DllImport("wdsp.dll", EntryPoint = "GetRXAFDVSnr", CallingConvention = CallingConvention.Cdecl)]
         public static extern double GetRXAFDVSnr(int channel);
 
+        // RADE V1 RX decode (ChannelMaster/radae.c) -- experimental, RX-only so far.
+        // Minimal hook: run flag + sync/SNR status, matching the FreeDV FDV pattern
+        // above. rx: 0 = RX1, 1 = RX2. W5TSU
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeRxEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeRxEnabled(int rx, int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeRxEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeRxEnabled(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeSync", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeSync(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeSnrDb", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeSnrDb(int rx);
+        //
+
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
         [DllImport("wdsp.dll", EntryPoint = "ResetRXAFDVDebug", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ResetRXAFDVDebug();
