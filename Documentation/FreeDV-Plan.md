@@ -855,6 +855,11 @@ or a follow-up UI/CAT patch. Next real test once there's a way to flip it on: re
 the off-air sanity check (Stage C, above) through the actual Thetis pipeline instead
 of a standalone harness.
 
+**Merged to `FreeDV` 2026-08-10** (`190cac74`) — promoted out of the throwaway
+branch once the full solution built green. `experiment/sv1eia-radae-eval` still
+exists on `origin` for history but `FreeDV` is now the live copy of everything
+above.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
