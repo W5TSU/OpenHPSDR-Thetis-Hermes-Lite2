@@ -1,18 +1,14 @@
 I'm maintaining this fork for my own use. The purpose is to merge the "BEST" parts of many of the others working on Thetis.
 
-MW0LGE  here  https://github.com/ramdor/Thetis
+MW0LGE  -  https://github.com/ramdor/Thetis : Richie has "a few tweaks and changes to a ... Thetis..." I'm interested in the work he is doing on remote access.
 
-Richie has "a few tweaks and changes to a ... Thetis..." I'm interested in the work he is doing on remote access.
+MI0BOT  -  https://github.com/mi0bot/OpenHPSDR-Thetis : Reid has created "Radio Model" code for HERMES Lite. 
 
-MI0BOT  here  https://github.com/mi0bot/OpenHPSDR-Thetis
+ON7OFF  -  https://github.com/ON7OFF/Thetis : Kurt has "... been working extremely hard on the Android remote software to control your Hermes Lite 2".
 
-Reid has created "Radio Model" code for HERMES Lite. 
+SV1EIA  -  https://github.com/sv1eia/Thetis-RADE : Christos has integrated FreeDV (RADE) into Thetis. 
 
-ON7OFF  here  https://github.com/ON7OFF/Thetis
-
-Kurt has "... been working extremely hard on the Android remote software to control your Hermes Lite 2".
-
-Each of these developers is working on different parts of the code for their own purpose. And I think them.
+Each of these developers is working on different parts of the code for their own purpose.  I thank them.
 
 I have a (Hermes-Lite 2+)"http://hermeslite.com" with some personal modifications connected to a XiEGU PA125B amp. I've created this project to combine these to fit my wants and needs.  
 
