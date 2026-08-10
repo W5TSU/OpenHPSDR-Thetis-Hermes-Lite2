@@ -1,0 +1,87 @@
+# One-off tooling: builds the remaining vendored RADE V1 native dependencies
+# that are already MSVC static-library projects (no CMake/MinGW step needed,
+# unlike codec2/opus_dnn): radae_c itself, plus radae_micdsp.c's TX
+# mic-conditioning deps (rnnoise, libebur128, WebRTC_AGC). Each is built
+# standalone (not through Thetis_VS2026.sln) with an explicit output path,
+# matching the Project Files/lib/<name>/build/$(Platform)/$(Configuration)/
+# convention ChannelMaster.vcxproj's AdditionalLibraryDirectories now expects
+# for all of them (kept consistent rather than relying on each project's own
+# $(SolutionDir)-relative default, which assumes a full-solution build we're
+# not doing here).
+#
+# Companion to build-codec2.yml / build-opus-dnn.yml for the FreeDV/RADE work.
+# Must live on the default branch for workflow_dispatch to be dispatchable at
+# all (GitHub platform requirement); dispatch with --ref pointing at whichever
+# branch has the source to build - the checkout step follows that ref.
+#
+# Dispatch-only; not part of the normal build. See Documentation/FreeDV-Plan.md
+# Stage C for background.
+name: Build RADE V1 native deps (Windows x64, MSVC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: MSBuild configuration
+        default: "Release"
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build each project
+        shell: pwsh
+        run: |
+          $projects = @(
+            "Project Files/lib/radae_c/msvc/radae_c.vcxproj",
+            "Project Files/lib/rnnoise/build/rnnoise.vcxproj",
+            "Project Files/lib/libebur128/build/libebur128.vcxproj",
+            "Project Files/lib/WebRTC_AGC/build/WebRTC_AGC.vcxproj"
+          )
+          foreach ($p in $projects) {
+            Write-Host "=== Building $p ==="
+            msbuild "$p" `
+              /p:Configuration=${{ inputs.build_type }} `
+              /p:Platform=x64 `
+              /p:PlatformToolset=v143 `
+              /p:VisualStudioVersion=17.0 `
+              /v:minimal
+            if ($LASTEXITCODE -ne 0) { throw "Build failed: $p" }
+          }
+
+      - name: Locate + package outputs
+        shell: bash
+        run: |
+          set -e
+          declare -A names=(
+            ["radae_c"]="rade"
+            ["rnnoise"]="rnnoise"
+            ["libebur128"]="ebur128"
+            ["WebRTC_AGC"]="WebRTC_AGC"
+          )
+          for dir in "${!names[@]}"; do
+            name="${names[$dir]}"
+            LIB=$(find "Project Files/lib/$dir" -iname "${name}.lib" | head -1)
+            if [ -z "$LIB" ]; then
+              echo "$name.lib not found under Project Files/lib/$dir"; find "Project Files/lib/$dir" -iname "*.lib"; exit 1
+            fi
+            mkdir -p "out/$dir/build/x64/${{ inputs.build_type }}"
+            cp "$LIB" "out/$dir/build/x64/${{ inputs.build_type }}/${name}.lib"
+            echo "$name (radae_c native dep) built $(date -u +%F), MSVC v143 x64 ${{ inputs.build_type }}" \
+              > "out/$dir/build/x64/${{ inputs.build_type }}/VERSION.txt"
+          done
+          ls -laR out/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radae-deps-win-x64-${{ inputs.build_type }}
+          path: out/
+          if-no-files-found: error
