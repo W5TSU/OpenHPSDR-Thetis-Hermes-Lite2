@@ -114,6 +114,7 @@ void create_pipe()
 	}
 	create_tci();
 	create_spc0();
+	create_radae();								// W5TSU: RADE V1 (experimental)
 }
 
 void destroy_pipe()
@@ -121,6 +122,7 @@ void destroy_pipe()
 	int i;
 	destroy_spc0();
 	destroy_tci();
+	destroy_radae();								// W5TSU: RADE V1 (experimental)
 	for (i = 0; i < pcm->cmRCVR; i++)
 	{
 		_aligned_free (ppip->rbuff[i]);
@@ -187,6 +189,7 @@ void xpipe (int stream, int pos, double** buffs)
 					ppip->rbuff[rx][j] += buffs[i][j];
 			xscope(rx, 0, ppip->rbuff[rx]);														// scope
 			xvacOUT(rx, 1, ppip->rbuff[rx]);													// data to VAC
+			xradae_rx(rx, ppip->rbuff[rx]);											// W5TSU: RADE V1 (experimental)
 			xtciOUT(rx, 1, ppip->rbuff[rx]);													// data to TCI rx audio
 			xrecordwave(rx, 0, 1, ppip->rbuff[rx]);												// wav recorder
 			break;
@@ -209,6 +212,7 @@ void xpipe (int stream, int pos, double** buffs)
 				for (j = 0; j < 2 * pcm->rcvr[rx].ch_outsize; j++)
 					ppip->rbuff[rx][j] += buffs[i][j];
 			xvacOUT(rx, 1, ppip->rbuff[rx]);													// data to VAC
+			xradae_rx(rx, ppip->rbuff[rx]);											// W5TSU: RADE V1 (experimental)
 			xtciOUT(rx, 1, ppip->rbuff[rx]);													// data to TCI rx audio
 			xrecordwave(rx, 0, 1, ppip->rbuff[rx]);												// wav recorder
 			break;
