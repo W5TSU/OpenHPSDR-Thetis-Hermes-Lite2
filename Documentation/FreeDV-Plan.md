@@ -856,9 +856,9 @@ the off-air sanity check (Stage C, above) through the actual Thetis pipeline ins
 of a standalone harness.
 
 **Merged to `FreeDV` 2026-08-10** (`190cac74`) — promoted out of the throwaway
-branch once the full solution built green. `experiment/sv1eia-radae-eval` still
-exists on `origin` for history but `FreeDV` is now the live copy of everything
-above.
+branch once the full solution built green. `experiment/sv1eia-radae-eval` has
+since been deleted (both local and `origin`, fully merged first — `git branch -d`
+succeeded without needing `-D`); its full history lives on in `FreeDV`'s own log.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
