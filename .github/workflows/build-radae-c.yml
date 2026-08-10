@@ -36,6 +36,20 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
+      - name: Fetch RNNoise model weights (media.xiph.org, per rnnoise/.gitignore)
+        shell: bash
+        run: |
+          set -e
+          cd "Project Files/lib/rnnoise"
+          HASH=$(cat model_version)
+          URL="https://media.xiph.org/rnnoise/models/rnnoise_data-${HASH}.tar.gz"
+          echo "Downloading $URL"
+          curl -sL -o rnnoise_data.tar.gz "$URL"
+          echo "${HASH}  rnnoise_data.tar.gz" | sha256sum -c -
+          tar xzf rnnoise_data.tar.gz src/rnnoise_data.c src/rnnoise_data.h
+          rm rnnoise_data.tar.gz
+          ls -la src/rnnoise_data.*
+
       - name: Build each project
         shell: pwsh
         run: |

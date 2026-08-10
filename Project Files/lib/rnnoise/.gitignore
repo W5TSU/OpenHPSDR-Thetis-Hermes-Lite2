@@ -11,6 +11,15 @@ src/rnnoise_data_little.h
 build/x64/
 *.tar.gz
 
+# The repo-root .gitignore's standard VS "build results" x86/ pattern
+# blanket-matches this real vendored SIMD source directory too (same
+# footgun as opus_dnn/.gitignore -- see its comment for the full story).
+# Un-ignore it explicitly; verified empirically that a bare local
+# negation (no build/*-style intermediate step needed here, since the
+# ignoring pattern lives in a different/parent .gitignore than this one).
+!src/x86/
+!src/x86/**
+
 # PyTorch model checkpoints (upstream retraining inputs only; not used
 # at runtime -- the runtime data lives in src/rnnoise_data*.c/h above).
 models/*.pth
