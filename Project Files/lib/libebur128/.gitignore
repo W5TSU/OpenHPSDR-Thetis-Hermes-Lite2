@@ -1,0 +1,8 @@
+# The repo-root .gitignore's standard VS "build results" x64/ pattern
+# blanket-matches this vendored MSVC static-lib output too (same footgun
+# documented at length in opus_dnn/.gitignore). Un-ignore the final
+# ebur128.lib explicitly.
+!build/x64/
+!build/x64/Release/
+!build/x64/Release/ebur128.lib
+!build/x64/Release/VERSION.txt

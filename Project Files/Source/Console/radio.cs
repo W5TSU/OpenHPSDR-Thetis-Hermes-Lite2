@@ -2293,6 +2293,31 @@ namespace Thetis
                 }
             }
         }
+        // W5TSU: RADE V1 RX decode (ChannelMaster/radae.c), experimental. Unlike
+        // RXAFDVRun this isn't a wdsp channel setting -- ChannelMaster.dll's
+        // SetRadaeRxEnabled takes a plain rx index (0 = RX1, 1 = RX2, matching
+        // pipe.c's xpipe() rx/thread numbering, not the sub-receiver/diversity
+        // subrx index RXAFDVRun's WDSP.id() folds in) -- but kept as a cached
+        // property on this class for the same reason (survive rebuilds, apply
+        // on the same delayed-update path) and API consistency.
+        private int rx_radae_enabled = 0;
+        private int rx_radae_enabled_dsp = 0;
+        public int RXRadaeEnabled
+        {
+            get { return rx_radae_enabled; }
+            set
+            {
+                rx_radae_enabled = value;
+                if (update)
+                {
+                    if (value != rx_radae_enabled_dsp || force)
+                    {
+                        WDSP.SetRadaeRxEnabled((int)thread, value);
+                        rx_radae_enabled_dsp = value;
+                    }
+                }
+            }
+        }
 
         private int rx_nr3_position = 1;
         private int rx_nr3_position_dsp = 1;

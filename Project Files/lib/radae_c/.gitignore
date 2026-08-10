@@ -1,0 +1,9 @@
+# The repo-root .gitignore's standard VS "build results" x64/ pattern
+# blanket-matches this vendored MSVC static-lib output too (same footgun
+# documented at length in opus_dnn/.gitignore). Un-ignore the final
+# rade.lib explicitly; everything else CMake/MSBuild would generate here
+# stays ignored.
+!build/x64/
+!build/x64/Release/
+!build/x64/Release/rade.lib
+!build/x64/Release/VERSION.txt

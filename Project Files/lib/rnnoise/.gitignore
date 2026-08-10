@@ -1,0 +1,34 @@
+# RNNoise neural-network weights -- fetched at build time from
+# media.xiph.org (matches xiph upstream `download_model.sh` flow).
+# Files are large (~75 MB each); kept out of the repo to keep clone
+# size manageable.
+src/rnnoise_data.c
+src/rnnoise_data.h
+src/rnnoise_data_little.c
+src/rnnoise_data_little.h
+
+# MSBuild outputs -- except the final vendored lib itself (build/* + negate
+# idiom, not a bare !build/x64/ override: this pattern is a local
+# directory-prune match, same subtlety as opus_dnn/.gitignore's build/*
+# fix -- a bare negation of a path under an already-pruned directory
+# doesn't work, verified empirically).
+build/*
+!build/x64/
+build/x64/*
+!build/x64/Release/
+!build/x64/Release/rnnoise.lib
+!build/x64/Release/VERSION.txt
+*.tar.gz
+
+# The repo-root .gitignore's standard VS "build results" x86/ pattern
+# blanket-matches this real vendored SIMD source directory too (same
+# footgun as opus_dnn/.gitignore -- see its comment for the full story).
+# Un-ignore it explicitly; verified empirically that a bare local
+# negation (no build/*-style intermediate step needed here, since the
+# ignoring pattern lives in a different/parent .gitignore than this one).
+!src/x86/
+!src/x86/**
+
+# PyTorch model checkpoints (upstream retraining inputs only; not used
+# at runtime -- the runtime data lives in src/rnnoise_data*.c/h above).
+models/*.pth

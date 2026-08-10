@@ -624,6 +624,237 @@ SNR readings; findings fixed or recorded as Phase 4 work.
 - Re-coding RADE ourselves was evaluated and rejected: months of duplicated effort and
   a validation problem only upstream's test campaign can solve
 
+### 🟡 sv1eia/Thetis-RADE evaluated as a shortcut — throwaway branch, 2026-08-10
+
+A community fork, [sv1eia/Thetis-RADE](https://github.com/sv1eia/Thetis-RADE) (Christos
+Nikolaou, SV1EIA), already ships a full RADE V1 *and* V2 TX/RX pipeline (`radae_c`, a
+from-scratch C port referencing `peterbmarks/radae_nopy`, not upstream's own C library —
+that's still the thing Stage C above is watching for), a native FreeDV Reporter client,
+RADE meters, TX mic conditioning, and its own HL2 support, active through June 2026.
+Explored on a throwaway branch (`experiment/sv1eia-radae-eval`, not merged) to see
+whether it could shortcut Stage C. A second candidate,
+[ancosgrove/Thetis_FreeDV](https://github.com/ancosgrove/Thetis_FreeDV), was also
+checked and ruled out immediately — despite the name, its tree has zero FreeDV-related
+files; it's a stale `ramdor/Thetis` fork with no actual integration work.
+
+**Mechanically compatible, confirmed.** Both this fork and sv1eia's share real git
+history via `ramdor/Thetis` (common ancestor `ed4c27c9`, Oct 2020) — `git merge-base`
+finds it, so this is cherry-pick territory, not a vendor-drop-from-scratch situation.
+Pulling `Project Files/lib/{radae_c,opus_dnn,r8brain,freedv_text}` and
+`ChannelMaster/radae*.{c,h}` verbatim (752 files) landed with **zero collisions** —
+entirely additive against our tree.
+
+**`radae_c` (the OFDM modem/DSP layer) is genuinely portable.** Builds standalone with
+plain `gcc -O2` on Linux, no CMake, no Windows headers, no `opus_dnn` needed at all for
+the acquisition/demod layer (`radc_modem.c`/`radc_acq.c`/`radc_demod.c` are self-
+contained pure C — only the neural encoder/decoder, `radc_enc*.c`/`radc_dec*.c`, needs
+the DNN).
+
+**The neural codec layer (`opus_dnn`: LPCNet/FARGAN/DRED/OSCE) is *not* reproducibly
+buildable from what sv1eia actually committed.** Their own `opus_dnn/commit_pin.txt`
+documents this as a known, unresolved gap: it lists three possible build paths (CMake on
+a Windows host, hand-authoring an MSVC project file, or WSL cross-compile) and ends with
+"**decision deferred to a follow-up step**." Confirmed independently: their vendored
+tree is missing `silk/x86/`, `celt/x86/`, `dnn/x86/` and the `arm/` equivalents entirely,
+so upstream's own `CMakeLists.txt` fails at configure time (`Cannot find source file:
+silk/x86/main_sse.h`) even with `OPUS_DISABLE_INTRINSICS=ON`. `radae_c.vcxproj` links
+against `$(OpusDir)\build\$(Platform)\$(Configuration)\` — a prebuilt library directory
+excluded by `.gitignore` — meaning SV1EIA builds `opus_dnn` locally and never commits
+the result; a fresh clone of that repo cannot build RADE today without first solving
+this. This is the real cost of adopting their work, not a one-line dependency bump.
+
+**Sanity-check against `offair_14236000_RADEV1_20260808.wav` — inconclusive, not
+negative.** Wrote a standalone harness driving only `radc_modem_init`/`radc_acq_init`/
+`radc_acq_detect`/`radc_demod_frame` directly (bypassing the DNN entirely, stopping
+right before where the real code would call `rade_core_decoder`) — a faithful port of
+`radc_rx.c`'s SEARCH→CANDIDATE→SYNC state machine. Ran it against the full 133 s
+capture: no sustained sync (candidate hits ~10% of frames, consistent with noise-floor
+false positives, never promoted to SYNC). **Two important corrections/caveats, not a
+verdict that RADE V1 modem is broken:**
+- **Doc correction**: this capture is *not* raw I/Q despite matching the stereo
+  float32/48 kHz container convention used elsewhere in this project — its left and
+  right channels are bit-for-bit identical (`corr(I,Q)=1.0`, vs. `~0` for our genuine
+  bench IQ files). It's real, demodulated mono RX audio duplicated into both channels.
+  Quick-Rec apparently taps a different pipeline point than Quick-Play's IQ-injection
+  point documented in Phase 3 above — worth confirming precisely if Quick-Rec is relied
+  on again for bench audio.
+- **No independent reference decoder exists to validate the test harness itself**
+  against — unlike the 700E work (Phase 3), which had `freedv-gui`'s own `freedv_rx` as
+  ground truth, there's no lightweight way to build a known-good RADE V1 decoder given
+  the `opus_dnn` gap above, so this harness's own correctness is unverified. Also
+  unconfirmed: whether this specific 2-minute slice actually overlapped a real
+  transmission window (the reporter confirmed the *QSO* was live over 10 minutes, not
+  that this particular recording segment did).
+
+**Net assessment (superseded below)**: adopting sv1eia's RADE V1 work is mechanically
+clean (file-level) but not a shortcut past Stage C's real work — it trades "wait for
+upstream's official RADE C library" for "finish someone else's incomplete `opus_dnn`
+build integration," which is bounded and known (their own doc scopes it to three
+concrete options) but still real engineering, not a dependency bump. Reusable
+regardless of that decision: their native `FreeDVReporter*.cs` (vs. our external
+`thetisctl` CLI), RADE meters UI, and TX mic-conditioning chain are relevant
+references for Stage B/D UI work independent of whether RADE V1 itself gets adopted.
+
+### 🟢 `opus_dnn` build gap resolved, same session
+
+Picked up option (a)/(c) from `commit_pin.txt` (CMake + real MSVC, not a hand-authored
+vcxproj): root-caused the gap first rather than just working around it.
+
+**Root cause**: not a deliberate deferral despite `commit_pin.txt`'s wording — the
+**repo-root `.gitignore`'s standard Visual Studio "build results" patterns**
+(`x64/`, `x86/`, `[Aa][Rr][Mm]/`, `[Aa][Rr][Mm]64/`) blanket-match *any* directory
+with those names anywhere in the tree, silently swallowing `git add` of opus's own
+upstream SIMD source-directory convention (`silk/x86/`, `celt/arm/`, `dnn/x86/`, nine
+directories in total, including nested ones like `silk/fixed/arm/`). `commit_pin.txt`
+lists them as intended `vendored_subset` entries that simply never landed. This
+project's own throwaway-branch vendoring pass hit the exact same footgun on the first
+`git add` — caught because `git status` showed nothing at all for genuinely-present
+files on disk, the tell that a `.gitignore` pattern (not a real absence) was involved.
+
+**Fix**: restored all nine directories verbatim from real upstream `xiph/opus` at the
+exact commit `commit_pin.txt` already pins (`940d4e5af64351ca8ba8390df3f555484c567fbb`
+— confirmed byte-identical elsewhere in the tree), and added scoped `!` negation rules
+in `opus_dnn/.gitignore` so this can't silently regress. One git subtlety worth noting
+for future vendoring: a bare `!/build/x64/` negation does **not** override a preceding
+bare `build/` (trailing-slash directory match) — confirmed empirically with an isolated
+test repo. The working idiom is `build/*` (glob one level down, doesn't prune the
+directory from traversal) followed by the negations; that's what `opus_dnn/.gitignore`
+now uses to un-ignore the vendored `build/x64/Release/opus.lib` itself.
+
+**Verified end to end**:
+- CMake now configures and builds a complete `libopus.a` on Linux with
+  `-DOPUS_DEEP_PLC=ON -DOPUS_DRED=ON -DOPUS_OSCE=ON` — DNN/LPCNet/FARGAN/DRED/OSCE and
+  x86 intrinsics all present and building cleanly.
+- `radae_c` links against it with **zero undefined references** (previously:
+  `compute_generic_dense`, `linear_init`, etc. all unresolved).
+  `rade_open("", 0)` succeeds with real weights loaded: `protocol=1 nin_max=1120`.
+- Added `.github/workflows/build-opus-dnn.yml` (dispatch-only, mirrors
+  `build-codec2.yml`'s shape) to produce the actual MSVC x64 static lib
+  `radae_c.vcxproj` expects. Unlike codec2, opus's `CMakeLists.txt` is MSVC-native —
+  no MinGW/gendef import-library step needed, just `ilammy/msvc-dev-cmd` + Ninja
+  (the plain `-G "Visual Studio 17 2022"` CMake generator no longer auto-detects on
+  the current `windows-latest` image — same fix `build-codec2.yml` already uses for
+  its own reasons). Workflow file had to be pushed to **master** to be dispatchable at
+  all (a hard GitHub platform requirement — `workflow_dispatch` only recognizes files
+  present on the default branch — not a scope decision; it dispatches against
+  `--ref experiment/sv1eia-radae-eval` for the actual source/build). Run succeeded in
+  6m14s: [run 31415733600](https://github.com/W5TSU/OpenHPSDR-Thetis-Hermes-Lite2/actions/runs/31415733600).
+- Vendored the resulting `opus.lib` (7.4 MB, real COFF/MSVC archive, contains
+  `compute_generic_dense`/`linear_init`/etc.) at
+  `Project Files/lib/opus_dnn/build/x64/Release/opus.lib` — the exact path
+  `radae_c.vcxproj`'s `AdditionalLibraryDirectories` already expects, so it should
+  link unmodified. Not yet compiled *into* a full Thetis build (that needs
+  `ChannelMaster.vcxproj`/console wiring beyond this branch's current scope) or
+  tested on real Windows hardware — the Linux build is the correctness proof, the
+  Windows artifact is the deployment target, and those are two different claims.
+
+**Off-air sanity check re-run with the real (non-stub) DNN decoder**: same result as
+the acquisition-only harness — no sync on `offair_14236000_RADEV1_20260808.wav`
+across the full 133 s, at any of 6 tested input scales (0.01×–1000×, ruling out a
+level/gain mismatch specifically). This is a stronger negative than before (the real
+public API, not a hand-ported state machine, so harness fidelity is no longer a live
+caveat) but the other caveats from the acquisition-only run stand unchanged: no
+independent reference decoder to cross-check against, and unconfirmed whether this
+particular 2-minute slice actually overlapped a real transmission window. **Read as**:
+the `opus_dnn` build blocker is genuinely gone, but whether this specific recording
+ever contained a lockable RADE V1 signal is still an open, separate question — a
+fresh, verified-in-the-moment capture (or a real freedv-gui differential test) is the
+next step if that question matters going forward, and is now easy to test against
+since a working decoder exists.
+
+**Revised net assessment**: the `opus_dnn` build gap that made this a "bounded but
+real" adoption cost is now closed — cherry-picking sv1eia's RADE V1 work is both
+mechanically clean *and* buildable end-to-end (source → Linux proof → Windows
+artifact). What remains before RADE V1 could actually run in this fork is console/
+ChannelMaster integration work (Stage B territory: TX/RX wiring, UI, meters) — a
+separate, larger decision from the build question this session closed out. Branch
+(`experiment/sv1eia-radae-eval`) and the two new CI workflow files are pushed to
+`origin`; `build-opus-dnn.yml` is also on `master` (required for dispatchability, no
+effect on the normal build). Revisit adoption-vs-wait-for-upstream now that the cost
+side of that tradeoff is much better known.
+
+### 🟢 ChannelMaster/console wiring — RX-only, same session
+
+Went ahead and did the Stage B-territory wiring described above, scoped to RX-only
+(matching this whole project's established precedent for the 700E prototype) rather
+than sv1eia's full TX+RX+UI feature set. **Full solution builds green** end to end:
+[run 31425440469](https://github.com/W5TSU/OpenHPSDR-Thetis-Hermes-Lite2/actions/runs/31425440469).
+
+**Native dependency chain, fully vendored and CI-built.** Beyond `opus.lib` (above),
+needed `rade.lib` (radae_c itself — already an MSVC project, no CMake needed) plus
+three small TX-mic-conditioning libs `radae.c` links against regardless of whether TX
+is ever used (C link requirements don't care that `xradae_tx` isn't wired yet):
+`rnnoise.lib`, `ebur128.lib` (libebur128), `WebRTC_AGC.lib`. All four already had
+vendored `.vcxproj` files from the original sv1eia pull. New workflow
+`build-radae-c.yml` (mirrors `build-opus-dnn.yml`'s shape, on `master` for the same
+GitHub dispatchability requirement) builds all four via plain `msbuild`, no CMake.
+Hit and fixed three more vendoring gaps on the way, each a variant of a theme:
+- **Same `.gitignore` footgun again**: `rnnoise/src/x86/` (the SIMD kernel headers
+  `vec.h` needs, including `x86_arch_macros.h`) was caught by the identical repo-root
+  `x86/`/`arm/` pattern as `opus_dnn`'s gap. Restored from real upstream — but
+  `xiph/rnnoise`'s `master` branch is the old, simple GRU codebase; sv1eia's vendored
+  copy (`nnet.c`/`vec.h`/`opus_types.h`, architecturally identical to `opus_dnn/dnn/`)
+  is from rnnoise's **`main`** branch, a newer DNN-kernel rewrite. Confirmed via a
+  byte-identical diff on the shared `vec.h` before trusting the source.
+- **A genuinely build-time-fetched dependency, not a vendoring gap**: `rnnoise_data.h`
+  (75 MB of trained weights) is deliberately excluded per `rnnoise/.gitignore`'s own
+  comment — "fetched at build time from media.xiph.org." Found the real download URL
+  pattern from `opus_dnn/dnn/download_model.sh`'s convention
+  (`media.xiph.org/<project>/models/<name>-<sha256>.tar.gz`), verified it against
+  `rnnoise/model_version`'s pinned hash (checksum matched), and added a fetch+verify
+  step to `build-radae-c.yml` rather than vendoring the blob — respects the existing
+  "kept out of the repo" decision instead of overriding it.
+- **A missing single file, no pattern behind it**: `WebRTC_AGC/agc.h` resolves
+  `../../util/sanitizers.h` (a `freedv-gui` 3rdparty-vendoring convention) to
+  `Project Files/util/sanitizers.h` — a path outside `WebRTC_AGC/` entirely that
+  simply wasn't pulled in the original vendoring pass. One small file from sv1eia.
+
+**`ChannelMaster.vcxproj` wiring** (Debug|x64 and Release|x64 only, matching sv1eia's
+own scope — Win32 configs never had RADE deps either): added `radae.c/.h`,
+`radae_micdsp.c/.h`, `r8brain_wrap.cpp/.h` (with a `CompileAsCpp` override — the rest
+of the project forces `CompileAsC`), r8brain's own `pffft*.c` (no separate r8brain
+project, compiled directly in, matching sv1eia), and `freedv_text`'s `rade_text.c` +
+its codec2 LDPC dependencies (found via a link error: `radae.c` uses `freedv_text`
+for the EOO callsign codec, easy to miss since it only shows up at link time, not
+compile time). `AdditionalIncludeDirectories`/`AdditionalDependencies` point at each
+native lib's own `..\..\lib\<name>\build\$(Platform)\$(Configuration)\` explicitly
+(not sv1eia's shared `$(SolutionDir)`-relative convention, since `rade.lib` etc.
+aren't part of our `.sln`). Two more fixes found only by actually building:
+`PFFFT_STATIC_DEFINE` (missing from `PreprocessorDefinitions` — without it `pffft.h`
+declares its own functions `dllimport`, which collides with defining them in the same
+translation unit, C2491) and the LDPC files above.
+
+**`pipe.c`/`cmcomm.h` hook** (the actual hot-path wiring, five single-line `// W5TSU`
+insertions, diff verified minimal per this project's mixed-line-endings convention):
+`#include "radae.h"` via `cmcomm.h`; `create_radae()`/`destroy_radae()` from
+`create_pipe()`/`destroy_pipe()`; `xradae_rx(rx, ppip->rbuff[rx])` right after
+`xvacOUT`'s post-DSP audio-data hook, for both the RX1 and other-RX blocks in
+`xpipe()` — matches `radae.h`'s own documented "called from xpipe() in pipe.c"
+comment and dual-RX (`rx` 0/1) convention exactly. **`xradae_tx` deliberately not
+wired** — RX-first, same as the 700E prototype.
+
+**Console hook, deliberately minimal**: `dsp.cs` P/Invoke declarations
+(`SetRadaeRxEnabled`/`GetRadaeRxEnabled`/`GetRadaeSync`/`GetRadaeSnrDb`, from
+`ChannelMaster.dll` not `wdsp.dll`) and a `RXRadaeEnabled` cached property on
+`RadioDSPRX` in `radio.cs`, mirroring `RXAFDVRun`'s survive-rebuild/delayed-update
+pattern but calling `SetRadaeRxEnabled(thread, value)` directly (no `WDSP.id()`
+channel handle — RADE's RX index is ChannelMaster's plain `thread`/`rx` numbering,
+not a per-subrx wdsp channel). **No Setup-tab checkbox, no meters** — matches this
+project's own Stage B "Real UI" being explicitly separate/future work even for the
+original FreeDV prototype; this is the same infrastructure-layer scope, control-flow-
+ready for a future checkbox/CAT/TCI hook but not a finished feature. (Hit the
+project's own documented mixed-CRLF/LF hazard editing `radio.cs` — first attempt
+flattened line endings into a 786-line spurious diff; reverted and redid the
+insertion via direct byte-level splicing on the original content instead.)
+
+**What's still open**: `xradae_tx` (TX path — mic conditioning is fully linked in but
+unused), any actual UI, and CAT/TCI exposure. Functionally, `RXRadaeEnabled` defaults
+to 0 (off) and nothing drives it yet, so this is inert by default — safe to have
+merged into a build, but not yet something an operator can turn on without a debugger
+or a follow-up UI/CAT patch. Next real test once there's a way to flip it on: repeat
+the off-air sanity check (Stage C, above) through the actual Thetis pipeline instead
+of a standalone harness.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
