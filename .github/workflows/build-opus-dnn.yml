@@ -1,0 +1,70 @@
+# One-off tooling: builds the vendored Project Files/lib/opus_dnn (xiph/opus
+# pinned at opus_dnn/commit_pin.txt's commit_sha, DEEP_PLC+DRED+OSCE enabled
+# for the LPCNet/FARGAN layer radae_c needs) as a native MSVC x64 static lib,
+# and uploads it as an artifact to be vendored into
+# Project Files/lib/opus_dnn/build/x64/Release/opus.lib -- the exact path
+# radae_c.vcxproj's AdditionalLibraryDirectories ($(OpusDir)\build\$(Platform)\
+# $(Configuration)\) already expects, so once vendored radae_c.vcxproj links
+# unmodified.
+#
+# Unlike build-codec2.yml, opus's own CMakeLists.txt is MSVC-native (no
+# GCC-only flags), so this builds directly with the VS2022 CMake generator --
+# no MinGW/gendef import-library dance needed.
+#
+# Dispatch-only; not part of the normal build. See Documentation/FreeDV-Plan.md
+# Stage C for the opus_dnn build-gap background.
+name: Build opus_dnn (Windows x64, MSVC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: CMake build type
+        default: "Release"
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (CMake, VS2022 generator)
+        run: >
+          cmake -S "Project Files/lib/opus_dnn" -B opus_build
+          -G "Visual Studio 17 2022" -A x64
+          -DOPUS_DEEP_PLC=ON -DOPUS_DRED=ON -DOPUS_OSCE=ON
+          -DOPUS_BUILD_SHARED_LIBRARY=OFF -DOPUS_BUILD_TESTING=OFF -DOPUS_BUILD_PROGRAMS=OFF
+
+      - name: Build (opus target only)
+        run: cmake --build opus_build --config ${{ inputs.build_type }} --target opus -j
+
+      - name: Locate output
+        id: find
+        shell: bash
+        run: |
+          LIB=$(find opus_build -iname "opus.lib" | head -1)
+          if [ -z "$LIB" ]; then echo "opus.lib not found"; find opus_build -iname "*.lib"; exit 1; fi
+          echo "lib_path=$LIB" >> "$GITHUB_OUTPUT"
+          ls -la "$LIB"
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p "out/opus_dnn/build/x64/${{ inputs.build_type }}"
+          cp "${{ steps.find.outputs.lib_path }}" "out/opus_dnn/build/x64/${{ inputs.build_type }}/opus.lib"
+          SHA=$(grep '^commit_sha:' "Project Files/lib/opus_dnn/commit_pin.txt" | awk '{print $2}')
+          {
+            echo "opus_dnn (xiph/opus @ $SHA, DEEP_PLC+DRED+OSCE) built $(date -u +%F)"
+            echo "MSVC / Visual Studio 17 2022 generator, x64 ${{ inputs.build_type }}"
+            echo "Built by: .github/workflows/build-opus-dnn.yml"
+          } > "out/opus_dnn/build/x64/${{ inputs.build_type }}/VERSION.txt"
+          ls -laR out/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opus-dnn-win-x64-${{ inputs.build_type }}
+          path: out/
+          if-no-files-found: error

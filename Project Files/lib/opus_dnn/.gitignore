@@ -2,3 +2,30 @@
 # exact configure command). Source under . (CMakeLists.txt, *.mk, dnn/, celt/,
 # silk/, src/, include/, cmake/) is committed; build/ is not.
 build/
+
+# The repo-root .gitignore's standard VS "build results" patterns (x64/, x86/,
+# [Aa][Rr][Mm]/, [Aa][Rr][Mm]64/) blanket-match any directory with those names
+# anywhere in the tree -- including opus's own upstream SIMD source directory
+# convention (silk/x86/, celt/arm/, dnn/x86/, etc.), which are real vendored
+# source, not build output. This is almost certainly why sv1eia/Thetis-RADE's
+# own vendored copy is missing them (opus_dnn/commit_pin.txt's "vendored_subset"
+# lists them as intended, but they silently never landed) -- not a considered
+# decision, a gitignore footgun. Un-ignore them explicitly here.
+!/silk/x86/
+!/silk/x86/**
+!/silk/arm/
+!/silk/arm/**
+!/silk/fixed/x86/
+!/silk/fixed/x86/**
+!/silk/fixed/arm/
+!/silk/fixed/arm/**
+!/silk/float/x86/
+!/silk/float/x86/**
+!/celt/x86/
+!/celt/x86/**
+!/celt/arm/
+!/celt/arm/**
+!/dnn/x86/
+!/dnn/x86/**
+!/dnn/arm/
+!/dnn/arm/**
