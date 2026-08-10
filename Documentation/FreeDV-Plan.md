@@ -773,6 +773,88 @@ separate, larger decision from the build question this session closed out. Branc
 effect on the normal build). Revisit adoption-vs-wait-for-upstream now that the cost
 side of that tradeoff is much better known.
 
+### 🟢 ChannelMaster/console wiring — RX-only, same session
+
+Went ahead and did the Stage B-territory wiring described above, scoped to RX-only
+(matching this whole project's established precedent for the 700E prototype) rather
+than sv1eia's full TX+RX+UI feature set. **Full solution builds green** end to end:
+[run 31425440469](https://github.com/W5TSU/OpenHPSDR-Thetis-Hermes-Lite2/actions/runs/31425440469).
+
+**Native dependency chain, fully vendored and CI-built.** Beyond `opus.lib` (above),
+needed `rade.lib` (radae_c itself — already an MSVC project, no CMake needed) plus
+three small TX-mic-conditioning libs `radae.c` links against regardless of whether TX
+is ever used (C link requirements don't care that `xradae_tx` isn't wired yet):
+`rnnoise.lib`, `ebur128.lib` (libebur128), `WebRTC_AGC.lib`. All four already had
+vendored `.vcxproj` files from the original sv1eia pull. New workflow
+`build-radae-c.yml` (mirrors `build-opus-dnn.yml`'s shape, on `master` for the same
+GitHub dispatchability requirement) builds all four via plain `msbuild`, no CMake.
+Hit and fixed three more vendoring gaps on the way, each a variant of a theme:
+- **Same `.gitignore` footgun again**: `rnnoise/src/x86/` (the SIMD kernel headers
+  `vec.h` needs, including `x86_arch_macros.h`) was caught by the identical repo-root
+  `x86/`/`arm/` pattern as `opus_dnn`'s gap. Restored from real upstream — but
+  `xiph/rnnoise`'s `master` branch is the old, simple GRU codebase; sv1eia's vendored
+  copy (`nnet.c`/`vec.h`/`opus_types.h`, architecturally identical to `opus_dnn/dnn/`)
+  is from rnnoise's **`main`** branch, a newer DNN-kernel rewrite. Confirmed via a
+  byte-identical diff on the shared `vec.h` before trusting the source.
+- **A genuinely build-time-fetched dependency, not a vendoring gap**: `rnnoise_data.h`
+  (75 MB of trained weights) is deliberately excluded per `rnnoise/.gitignore`'s own
+  comment — "fetched at build time from media.xiph.org." Found the real download URL
+  pattern from `opus_dnn/dnn/download_model.sh`'s convention
+  (`media.xiph.org/<project>/models/<name>-<sha256>.tar.gz`), verified it against
+  `rnnoise/model_version`'s pinned hash (checksum matched), and added a fetch+verify
+  step to `build-radae-c.yml` rather than vendoring the blob — respects the existing
+  "kept out of the repo" decision instead of overriding it.
+- **A missing single file, no pattern behind it**: `WebRTC_AGC/agc.h` resolves
+  `../../util/sanitizers.h` (a `freedv-gui` 3rdparty-vendoring convention) to
+  `Project Files/util/sanitizers.h` — a path outside `WebRTC_AGC/` entirely that
+  simply wasn't pulled in the original vendoring pass. One small file from sv1eia.
+
+**`ChannelMaster.vcxproj` wiring** (Debug|x64 and Release|x64 only, matching sv1eia's
+own scope — Win32 configs never had RADE deps either): added `radae.c/.h`,
+`radae_micdsp.c/.h`, `r8brain_wrap.cpp/.h` (with a `CompileAsCpp` override — the rest
+of the project forces `CompileAsC`), r8brain's own `pffft*.c` (no separate r8brain
+project, compiled directly in, matching sv1eia), and `freedv_text`'s `rade_text.c` +
+its codec2 LDPC dependencies (found via a link error: `radae.c` uses `freedv_text`
+for the EOO callsign codec, easy to miss since it only shows up at link time, not
+compile time). `AdditionalIncludeDirectories`/`AdditionalDependencies` point at each
+native lib's own `..\..\lib\<name>\build\$(Platform)\$(Configuration)\` explicitly
+(not sv1eia's shared `$(SolutionDir)`-relative convention, since `rade.lib` etc.
+aren't part of our `.sln`). Two more fixes found only by actually building:
+`PFFFT_STATIC_DEFINE` (missing from `PreprocessorDefinitions` — without it `pffft.h`
+declares its own functions `dllimport`, which collides with defining them in the same
+translation unit, C2491) and the LDPC files above.
+
+**`pipe.c`/`cmcomm.h` hook** (the actual hot-path wiring, five single-line `// W5TSU`
+insertions, diff verified minimal per this project's mixed-line-endings convention):
+`#include "radae.h"` via `cmcomm.h`; `create_radae()`/`destroy_radae()` from
+`create_pipe()`/`destroy_pipe()`; `xradae_rx(rx, ppip->rbuff[rx])` right after
+`xvacOUT`'s post-DSP audio-data hook, for both the RX1 and other-RX blocks in
+`xpipe()` — matches `radae.h`'s own documented "called from xpipe() in pipe.c"
+comment and dual-RX (`rx` 0/1) convention exactly. **`xradae_tx` deliberately not
+wired** — RX-first, same as the 700E prototype.
+
+**Console hook, deliberately minimal**: `dsp.cs` P/Invoke declarations
+(`SetRadaeRxEnabled`/`GetRadaeRxEnabled`/`GetRadaeSync`/`GetRadaeSnrDb`, from
+`ChannelMaster.dll` not `wdsp.dll`) and a `RXRadaeEnabled` cached property on
+`RadioDSPRX` in `radio.cs`, mirroring `RXAFDVRun`'s survive-rebuild/delayed-update
+pattern but calling `SetRadaeRxEnabled(thread, value)` directly (no `WDSP.id()`
+channel handle — RADE's RX index is ChannelMaster's plain `thread`/`rx` numbering,
+not a per-subrx wdsp channel). **No Setup-tab checkbox, no meters** — matches this
+project's own Stage B "Real UI" being explicitly separate/future work even for the
+original FreeDV prototype; this is the same infrastructure-layer scope, control-flow-
+ready for a future checkbox/CAT/TCI hook but not a finished feature. (Hit the
+project's own documented mixed-CRLF/LF hazard editing `radio.cs` — first attempt
+flattened line endings into a 786-line spurious diff; reverted and redid the
+insertion via direct byte-level splicing on the original content instead.)
+
+**What's still open**: `xradae_tx` (TX path — mic conditioning is fully linked in but
+unused), any actual UI, and CAT/TCI exposure. Functionally, `RXRadaeEnabled` defaults
+to 0 (off) and nothing drives it yet, so this is inert by default — safe to have
+merged into a build, but not yet something an operator can turn on without a debugger
+or a follow-up UI/CAT patch. Next real test once there's a way to flip it on: repeat
+the off-air sanity check (Stage C, above) through the actual Thetis pipeline instead
+of a standalone harness.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
