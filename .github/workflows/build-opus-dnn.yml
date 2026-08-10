@@ -30,15 +30,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure (CMake, VS2022 generator)
+      - name: Set up MSVC dev environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure (CMake, Ninja + cl.exe)
+        shell: cmd
         run: >
-          cmake -S "Project Files/lib/opus_dnn" -B opus_build
-          -G "Visual Studio 17 2022" -A x64
+          cmake -S "Project Files/lib/opus_dnn" -B opus_build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ inputs.build_type }}
+          -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
           -DOPUS_DEEP_PLC=ON -DOPUS_DRED=ON -DOPUS_OSCE=ON
           -DOPUS_BUILD_SHARED_LIBRARY=OFF -DOPUS_BUILD_TESTING=OFF -DOPUS_BUILD_PROGRAMS=OFF
 
       - name: Build (opus target only)
-        run: cmake --build opus_build --config ${{ inputs.build_type }} --target opus -j
+        shell: cmd
+        run: cmake --build opus_build --target opus
 
       - name: Locate output
         id: find
