@@ -273,6 +273,12 @@
     <ClCompile Include="..\..\lib\r8brain\fft\pffft.c" />
     <ClCompile Include="..\..\lib\r8brain\fft\pffft_double.c" />
     <ClCompile Include="..\..\lib\r8brain\fft\pffft_common.c" />
+    <ClCompile Include="..\..\lib\freedv_text\src\rade_text.c" />
+    <ClCompile Include="..\..\lib\freedv_text\codec2\mpdecode_core.c" />
+    <ClCompile Include="..\..\lib\freedv_text\codec2\gp_interleaver.c" />
+    <ClCompile Include="..\..\lib\freedv_text\codec2\HRA_56_56.c" />
+    <ClCompile Include="..\..\lib\freedv_text\codec2\ldpc_codes.c" />
+    <ClCompile Include="..\..\lib\freedv_text\codec2\phi0.c" />
     <ClCompile Include="ring.c" />
     <ClCompile Include="router.c" />
     <ClCompile Include="sidetone.c" />
