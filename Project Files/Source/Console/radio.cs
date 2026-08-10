@@ -2312,7 +2312,7 @@ namespace Thetis
                 {
                     if (value != rx_radae_enabled_dsp || force)
                     {
-                        WDSP.SetRadaeRxEnabled(thread, value);
+                        WDSP.SetRadaeRxEnabled((int)thread, value);
                         rx_radae_enabled_dsp = value;
                     }
                 }
