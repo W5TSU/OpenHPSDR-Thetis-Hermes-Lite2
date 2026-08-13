@@ -916,16 +916,44 @@ usable (see below):
   reported in the `opus_dnn` session above, byte-identical container format to
   the existing 700E bench `.wav`s.
 
-**Not yet run against a live Thetis instance** — this session built and verified
-the tooling (Go build/vet/test green, Python conversion verified against the real
-capture) but didn't have a Windows box with this build available to actually stage
-`SDRQuickAudio.wav` and invoke `radae-sanity` for real. That remains the literal
-next step: copy the `--input-wav`-converted file to `Music\Thetis\quickrecord\` on
-the Windows test box, then `thetisctl cat --host <ip> radae-sanity --confirm-tx=...`.
-Given the acquisition-only harness's negative result against this same audio
-(`opus_dnn` session above), don't expect sync on the first run — the value here is
-having a repeatable, scriptable way to test it the moment RADE's ChannelMaster
-wiring (or a fresher capture) is worth re-checking, not a predicted pass.
+### 🟢 Run against the live `hl2winbox` instance, same session (2026-08-12)
+
+**Deployment gap found and fixed first.** The box was running an old build
+(`git:15fe65c7`, ~30 commits behind, predating this whole RADE thread) — CI had
+never been asked to ship anything there. Deploying just `Thetis.exe` from the CI
+binary artifact (the only file it packages) **crashed the app on the first RADE CAT
+query**: `System.EntryPointNotFoundException` in `ThreadSafeCatParse` → the box's
+stale `ChannelMaster.dll` didn't yet export `GetRadaeSync`/`GetRadaeSnrDb`, and the
+resulting P/Invoke failure was unhandled, taking down the whole process from a
+network-triggered command. **Separate finding worth a follow-up issue**: a bad
+CAT command should never be able to crash the app this way — `ThreadSafeCatParse`
+needs its own exception boundary, independent of anything RADE-specific. Fixed the
+immediate problem by extracting the matching MSI (`msiexec /a ... TARGETDIR=...`,
+admin-extract only — never registers/installs, doesn't touch the existing install's
+identity) and `robocopy`-ing the full 51-file matching set (`ChannelMaster.dll`,
+`wdsp.dll`, `libcodec2.dll`, etc.) into `Thetis-Test`, not just the one file.
+Confirmed stable afterward: `radae on/off/get/status` round-tripped correctly
+against the live instance with no crash, same PID throughout.
+
+**The actual sanity check**: staged the `--input-wav`-converted
+`offair_14236000_RADEV1_20260808.wav` as `SDRQuickAudio.wav` (backing up the
+existing 700E bench file first, restored after), then ran `radae-sanity --freq
+14236000 --mode DIGU --hold 140s --confirm-tx=...` after explicit per-instance
+operator confirmation of the exact frequency/mode/duration (the safety protocol's
+"ask again each time" rule, not satisfied by an earlier general go-ahead). **Result:
+no sync across all 127 polls, 0.0–138.9 s, SNR 0 dB throughout** — full log/CSV
+kept locally. Confirmed unkeyed (`TX: false`) and process-stable afterward.
+
+**Read as**: consistent with the acquisition-only harness's earlier negative result
+against this same audio (`opus_dnn` session above) — a second independent
+confirmation, this time through the real Thetis pipeline (ChannelMaster's actual
+`xradae_rx`/`radae.c` hook, not a standalone harness), that this specific 133 s
+capture doesn't lock. Same caveats as before still stand: no independent reference
+decoder to cross-check against, and unconfirmed whether this slice actually
+overlapped a real transmission window. Not a verdict on the RADE V1 modem or this
+branch's ChannelMaster wiring — a fresh, verified-in-the-moment capture is the next
+thing that would actually move this question forward, and `radae-sanity` is now the
+one-command way to test it whenever that's available.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
