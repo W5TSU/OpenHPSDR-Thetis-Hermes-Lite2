@@ -1013,7 +1013,7 @@ GitHub issues are disabled on this fork, so there's no tracker to file these
 into — this doc is it. Findings here are cross-cutting Thetis console bugs
 discovered as a side effect of FreeDV/RADE work, not part of either feature.
 
-### ⬜ Any CAT command that throws crashes the entire process, not just the CAT session
+### ✅ Any CAT command that throws crashes the entire process, not just the CAT session
 
 **Found**: 2026-08-12, working the RADE off-air sanity check (Stage C above) —
 `radae status`/`radae get` (`ZZDZ`/`ZZDW`) against `hl2winbox` running a build
@@ -1062,10 +1062,26 @@ top of that, but the targeted fix at the CAT/TCI dispatch boundary is the
 actual bug — a network protocol handler should never be able to take the
 whole app down on a bad request.
 
-**Status**: not yet fixed. Found and worked around at the deployment level
-(matching build redeployed, not this bug) during the RADE live test — see
-Stage C's "Run against the live `hl2winbox` instance" entry above for that
-session's narrative. This entry is the standalone tracking for the bug itself.
+**Status**: ✅ fixed 2026-08-15. Applied the targeted fix at the single shared
+boundary (`console.cs`'s `safeCat()`, called by `ThreadSafeCatParse` from both
+`TCPIPcatServer.cs` and `TCIServer.cs`) rather than duplicating a try/catch at
+each listener's call site — one guard covers both entry points. Catches
+`Exception` around `m_objTCPIPCatParser.Get(msg)`, logs via `Debug.Print`
+(matching `MeterManager.cs`'s existing listener-exception logging convention),
+and returns `CATParser.Error1` (`"?;"`, the same wire-level error reply
+`processClientData` already uses for its own validation failures) instead of
+letting the exception propagate. Not yet re-verified against a live instance
+with a command engineered to throw (the original repro — a stale-DLL P/Invoke
+gap — no longer reproduces now that `hl2winbox` runs a matching build); the fix
+itself is a small, direct, single-file change with an obvious correctness
+argument, so this was accepted on that basis rather than manufacturing a new
+crash to test against. The `AppDomain.CurrentDomain.UnhandledException`/
+`Application.ThreadException` defense-in-depth suggested above was not added —
+the targeted fix is the actual bug fix; that would be a separate, broader
+hardening decision if wanted later. Was found and worked around at the
+deployment level (matching build redeployed, not this bug) during the RADE
+live test — see Stage C's "Run against the live `hl2winbox` instance" entry
+above for that session's narrative.
 
 ## Standing constraints
 

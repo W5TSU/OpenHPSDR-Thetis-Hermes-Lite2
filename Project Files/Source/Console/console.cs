@@ -15715,7 +15715,22 @@ namespace Thetis
 
             lock (m_objCatParseLocker)
             {
-                sRet = m_objTCPIPCatParser.Get(msg);
+                // W5TSU: a command handler throwing here (bad P/Invoke, malformed
+                // suffix, etc.) must not escape unhandled -- CAT/TCI have no auth,
+                // so letting it propagate crashes the whole process on an
+                // unauthenticated network request, not just this session. Both
+                // TCPIPcatServer.cs and TCIServer.cs funnel through here, so this
+                // one guard covers both listeners. See Documentation/FreeDV-Plan.md,
+                // "Known bugs found along the way".
+                try
+                {
+                    sRet = m_objTCPIPCatParser.Get(msg);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print($">>>>>>   Exception parsing CAT command \"{msg}\": {ex.Message}");
+                    sRet = m_objTCPIPCatParser.Error1;
+                }
                 return sRet;
             }
         }
