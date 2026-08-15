@@ -2644,6 +2644,9 @@
             this.grpFreeDV = new System.Windows.Forms.GroupBoxTS();
             this.chkFreeDVDecode = new System.Windows.Forms.CheckBoxTS();
             this.lblFreeDVStatus = new System.Windows.Forms.LabelTS();
+            this.grpRADE = new System.Windows.Forms.GroupBoxTS(); // W5TSU: RADE V1 RX decode prototype
+            this.chkRADEDecode = new System.Windows.Forms.CheckBoxTS();
+            this.lblRADEStatus = new System.Windows.Forms.LabelTS();
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
             this.btnNR3_model_load = new System.Windows.Forms.ButtonTS();
@@ -5133,6 +5136,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).BeginInit();
             this.grpRNnoise.SuspendLayout();
             this.grpFreeDV.SuspendLayout();
+            this.grpRADE.SuspendLayout();
             this.grpDSPNR2RX2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_factor_rx2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_level_rx2)).BeginInit();
@@ -41192,6 +41196,7 @@
             //
             this.tpDSPFreeDV.BackColor = System.Drawing.SystemColors.Control;
             this.tpDSPFreeDV.Controls.Add(this.grpFreeDV);
+            this.tpDSPFreeDV.Controls.Add(this.grpRADE); // W5TSU: RADE V1 RX decode prototype
             this.tpDSPFreeDV.Location = new System.Drawing.Point(4, 22);
             this.tpDSPFreeDV.Name = "tpDSPFreeDV";
             this.tpDSPFreeDV.Padding = new System.Windows.Forms.Padding(3);
@@ -43201,6 +43206,40 @@
             this.lblFreeDVStatus.Size = new System.Drawing.Size(21, 13);
             this.lblFreeDVStatus.TabIndex = 1;
             this.lblFreeDVStatus.Text = "off";
+            //
+            // grpRADE -- W5TSU: RADE V1 RX decode prototype, same shape as grpFreeDV above
+            //
+            this.grpRADE.Controls.Add(this.chkRADEDecode);
+            this.grpRADE.Controls.Add(this.lblRADEStatus);
+            this.grpRADE.Location = new System.Drawing.Point(264, 16);
+            this.grpRADE.Name = "grpRADE";
+            this.grpRADE.Size = new System.Drawing.Size(235, 76);
+            this.grpRADE.TabIndex = 45;
+            this.grpRADE.TabStop = false;
+            this.grpRADE.Text = "RADE V1 (prototype)";
+            //
+            // chkRADEDecode
+            //
+            this.chkRADEDecode.AutoSize = true;
+            this.chkRADEDecode.Image = null;
+            this.chkRADEDecode.Location = new System.Drawing.Point(16, 22);
+            this.chkRADEDecode.Name = "chkRADEDecode";
+            this.chkRADEDecode.Size = new System.Drawing.Size(160, 17);
+            this.chkRADEDecode.TabIndex = 0;
+            this.chkRADEDecode.Text = "Decode RADE V1 (RX1)";
+            this.toolTip1.SetToolTip(this.chkRADEDecode, "Decode FreeDV RADE V1 neural digital voice on RX1. Use USB/DIGU with a wide enough filter. Experimental -- no confirmed-working decode yet, see Documentation/FreeDV-Plan.md Stage C.");
+            this.chkRADEDecode.UseVisualStyleBackColor = true;
+            this.chkRADEDecode.CheckedChanged += new System.EventHandler(this.chkRADEDecode_CheckedChanged);
+            //
+            // lblRADEStatus
+            //
+            this.lblRADEStatus.AutoSize = true;
+            this.lblRADEStatus.Image = null;
+            this.lblRADEStatus.Location = new System.Drawing.Point(16, 48);
+            this.lblRADEStatus.Name = "lblRADEStatus";
+            this.lblRADEStatus.Size = new System.Drawing.Size(21, 13);
+            this.lblRADEStatus.TabIndex = 1;
+            this.lblRADEStatus.Text = "off";
             //
             // chkNR3_RNNoiseFixedGain
             //
@@ -72779,6 +72818,8 @@
             this.grpRNnoise.ResumeLayout(false);
             this.grpFreeDV.ResumeLayout(false);
             this.grpFreeDV.PerformLayout();
+            this.grpRADE.ResumeLayout(false);
+            this.grpRADE.PerformLayout();
             this.grpRNnoise.PerformLayout();
             this.grpDSPNR2RX2.ResumeLayout(false);
             this.grpDSPNR2RX2.PerformLayout();
@@ -77694,6 +77735,9 @@
         private GroupBoxTS grpFreeDV;
         private CheckBoxTS chkFreeDVDecode;
         private LabelTS lblFreeDVStatus;
+        private GroupBoxTS grpRADE; // W5TSU: RADE V1 RX decode prototype
+        private CheckBoxTS chkRADEDecode;
+        private LabelTS lblRADEStatus;
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;
         private LabelTS labelTS446;

@@ -2465,6 +2465,7 @@ namespace Thetis
             radANF2PreAGC_CheckedChanged(this, e);
             chkNR3_RNNoiseFixedGain_CheckedChanged(this, e);
             chkFreeDVDecode_CheckedChanged(this, e); // W5TSU: FreeDV RX decode
+            chkRADEDecode_CheckedChanged(this, e); // W5TSU: RADE V1 RX decode
             chkMNFAutoIncrease_CheckedChanged(this, e);
             udCWEdgeLength_ValueChanged(this, e);
             chkShowAGC_CheckedChanged(this, e);
@@ -36735,6 +36736,55 @@ namespace Thetis
             {
                 lblFreeDVStatus.Text = "no sync";
                 lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+        }
+
+        // W5TSU: RADE V1 RX decode prototype (ChannelMaster/radae.c). Same shape as
+        // chkFreeDVDecode/freedvStatusTimer_Tick above, but RXRadaeEnabled isn't a
+        // wdsp channel setting -- WDSP.GetRadaeSync/GetRadaeSnrDb take ChannelMaster's
+        // plain rx index (0 = RX1), not WDSP.id(). No known-working decode confirmed
+        // yet (Documentation/FreeDV-Plan.md, Stage C) -- this is a control surface for
+        // testing it, not a claim it works.
+        private System.Windows.Forms.Timer _rade_status_timer = null;
+        private void chkRADEDecode_CheckedChanged(object sender, EventArgs e)
+        {
+            console.radio.GetDSPRX(0, 0).RXRadaeEnabled = chkRADEDecode.Checked ? 1 : 0;
+
+            if (_rade_status_timer == null)
+            {
+                _rade_status_timer = new System.Windows.Forms.Timer();
+                _rade_status_timer.Interval = 500;
+                _rade_status_timer.Tick += radeStatusTimer_Tick;
+            }
+            _rade_status_timer.Enabled = chkRADEDecode.Checked;
+
+            if (!chkRADEDecode.Checked)
+            {
+                lblRADEStatus.Text = "off";
+                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+        }
+
+        private void radeStatusTimer_Tick(object sender, EventArgs e)
+        {
+            if (!console.PowerOn)
+            {
+                lblRADEStatus.Text = "radio off";
+                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+                return;
+            }
+
+            bool sync = WDSP.GetRadaeSync(0) != 0;
+            if (sync)
+            {
+                int snr = WDSP.GetRadaeSnrDb(0);
+                lblRADEStatus.Text = string.Format("SYNC   SNR {0} dB", snr);
+                lblRADEStatus.ForeColor = System.Drawing.Color.Green;
+            }
+            else
+            {
+                lblRADEStatus.Text = "no sync";
+                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
             }
         }
 

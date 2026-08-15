@@ -985,6 +985,27 @@ verified-in-the-moment, real pipeline, still no lock. `quickrec`'s shared
 `SDRQuickAudio.wav`/`.json` slot was backed up before this and restored after,
 same as every other session that's used Quick Rec/Quick Play here.
 
+### 🟢 Console UI controls added, "FreeDV" tab (2026-08-15)
+
+CAT (`ZZDW`/`ZZDZ`) was the only way to enable `RXRadaeEnabled` up to this point —
+no visible control anywhere in the console. Added a second group box, "RADE V1
+(prototype)", right next to the existing "FreeDV (prototype)" one on the
+`tpDSPFreeDV` tab (`Setup → DSP → FreeDV`) — same shape, same code pattern
+(`chkFreeDVDecode`/`freedvStatusTimer_Tick` in `setup.cs`, mirrored exactly as
+`chkRADEDecode`/`radeStatusTimer_Tick`): a checkbox wired straight to
+`RXRadaeEnabled`, and a status label polled every 500 ms showing `SYNC SNR
+<n> dB` (green) or `no sync`, matching the FreeDV label's own look. One real
+difference from the FreeDV version: `WDSP.GetRadaeSync`/`GetRadaeSnrDb` take
+ChannelMaster's plain `rx` index (`0` for RX1) directly, not `WDSP.id(0, 0)` —
+same distinction `RXRadaeEnabled`'s own setter already had to account for.
+Tooltip is explicit that this is experimental with no confirmed-working decode
+yet, pointing back at this doc's Stage C — this is a control surface for
+testing, not a claim that RADE V1 reception works. CAT (`ZZDW`/`ZZDZ`) and the
+checkbox now both drive the exact same `RXRadaeEnabled` property, so either one
+reflects the other's state live. Not yet persisted across restarts (matches
+`RXRadaeEnabled`'s existing non-persisted behavior) and RX1-only, same scope as
+everything else RADE in this branch so far.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
