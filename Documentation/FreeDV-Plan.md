@@ -576,6 +576,17 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
    combo whenever the reporter shows 700E activity specifically (its
    `mode` field distinguishes this, e.g. `KG7FMN` was seen on 700E during
    this session's live tests, per `internal/freedvreporter`'s output).
+
+   **Re-attempted 2026-08-15, still open.** Ran a bounded version of the same
+   watch/quick-rec combo (`watch_700e_bounded.sh`, a throwaway wrapper around
+   `thetisctl freedv-reporter watch`, not committed — checks every 60s, gives
+   up after 50 checks with no hit, auto-restores the Quick Play slot's backup
+   either way) for ~80 minutes. Result: **27 transmissions tracked, 9 distinct
+   callsigns, 100% RADE V1, zero 700E** — this calling frequency/window is
+   currently saturated with RADE V1 traffic specifically, not evidence 700E
+   itself is inactive or broken, just bad timing again. Still open; worth
+   re-running at a different time of day or explicitly widening beyond
+   14.236 MHz if RADE V1 keeps dominating that exact frequency.
 6. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
    checkbox, confirm the external FreeDV GUI app (VAC path, §7) syncs on the same
    signal. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
@@ -953,6 +964,26 @@ overlapped a real transmission window. Not a verdict on the RADE V1 modem or thi
 branch's ChannelMaster wiring — a fresh, verified-in-the-moment capture is the next
 thing that would actually move this question forward, and `radae-sanity` is now the
 one-command way to test it whenever that's available.
+
+### 🟢 Two fresh, verified-in-the-moment RADE V1 captures — live polling, still no sync (2026-08-15)
+
+Answered the "fresh capture" ask directly: reused `freedv-reporter watch --tci`'s
+auto-tune (Stage D) but reacted to it programmatically instead of watching by eye —
+a throwaway wrapper script (not committed) triggered `quickrec on` the instant a
+qualifying station started transmitting, polled `radae status` live twice mid-
+recording, then `quickrec off` and pulled the file down over SSH. Two RADE V1
+transmissions captured this way (`W4GOK`, 14.236 MHz, ~2 minutes each,
+`offair_14236000_RADEV1_<timestamp>.wav` ×2, kept locally, not pushed — same
+`.wav`/`.gitignore` convention as the earlier capture). **All 4 live `radae status`
+polls across both captures: no sync.** This is different in kind from the earlier
+negative results — this is sync checked *while the real transmission was actually
+happening*, through the real ChannelMaster pipeline, removing the "was this slice
+even really live" caveat that qualified every earlier attempt. Still not a verdict
+on the modem itself (RADE V1's own reference implementation wasn't checked against
+the same traffic), but it's the strongest negative data point so far: live,
+verified-in-the-moment, real pipeline, still no lock. `quickrec`'s shared
+`SDRQuickAudio.wav`/`.json` slot was backed up before this and restored after,
+same as every other session that's used Quick Rec/Quick Play here.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
