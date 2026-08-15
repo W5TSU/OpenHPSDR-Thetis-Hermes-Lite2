@@ -922,13 +922,12 @@ usable (see below):
 (`git:15fe65c7`, ~30 commits behind, predating this whole RADE thread) — CI had
 never been asked to ship anything there. Deploying just `Thetis.exe` from the CI
 binary artifact (the only file it packages) **crashed the app on the first RADE CAT
-query**: `System.EntryPointNotFoundException` in `ThreadSafeCatParse` → the box's
-stale `ChannelMaster.dll` didn't yet export `GetRadaeSync`/`GetRadaeSnrDb`, and the
-resulting P/Invoke failure was unhandled, taking down the whole process from a
-network-triggered command. **Separate finding worth a follow-up issue**: a bad
-CAT command should never be able to crash the app this way — `ThreadSafeCatParse`
-needs its own exception boundary, independent of anything RADE-specific. Fixed the
-immediate problem by extracting the matching MSI (`msiexec /a ... TARGETDIR=...`,
+query**: `System.EntryPointNotFoundException` → the box's stale `ChannelMaster.dll`
+didn't yet export `GetRadaeSync`/`GetRadaeSnrDb`, and the resulting P/Invoke failure
+was unhandled, taking down the whole process from a network-triggered command — a
+general Thetis robustness gap, not RADE-specific; filed standalone under "Known bugs
+found along the way" below. Fixed the immediate deployment problem by extracting the
+matching MSI (`msiexec /a ... TARGETDIR=...`,
 admin-extract only — never registers/installs, doesn't touch the existing install's
 identity) and `robocopy`-ing the full 51-file matching set (`ChannelMaster.dll`,
 `wdsp.dll`, `libcodec2.dll`, etc.) into `Thetis-Test`, not just the one file.
@@ -1007,6 +1006,66 @@ tracked 37 real stations with correct callsigns/frequencies, including genuine
 panadapter (the original framing, still fully supported by
 `SpotManager2.AddSpot`/`handleSpot`) remains available as a separate, easy follow-on
 if wanted later — same event data, different action taken on it.
+
+## Known bugs found along the way (not FreeDV/RADE-specific)
+
+GitHub issues are disabled on this fork, so there's no tracker to file these
+into — this doc is it. Findings here are cross-cutting Thetis console bugs
+discovered as a side effect of FreeDV/RADE work, not part of either feature.
+
+### ⬜ Any CAT command that throws crashes the entire process, not just the CAT session
+
+**Found**: 2026-08-12, working the RADE off-air sanity check (Stage C above) —
+`radae status`/`radae get` (`ZZDZ`/`ZZDW`) against `hl2winbox` running a build
+whose `ChannelMaster.dll` didn't yet export `GetRadaeSync`/`GetRadaeSnrDb` threw
+`System.EntryPointNotFoundException`, and Thetis vanished entirely (process gone,
+not just the socket) instead of returning a CAT error reply.
+
+**Root cause — no exception boundary around CAT command dispatch, at any layer**:
+
+```
+TCPIPSocketListener.SocketListenerThreadStart()          CAT/TCPIPcatServer.cs:79
+  try { ... } catch (SocketException se) { ... }          — only SocketException is caught
+  → ParseReceiveBuffer(byteBuffer, size)                  CAT/TCPIPcatServer.cs:275
+    → processClientData(msg)                              CAT/TCPIPcatServer.cs:298
+      → console.ThreadSafeCatParse(sInboundCatCommand)     CAT/TCPIPcatServer.cs:350, unguarded
+        → this.Invoke(() => safeCat(msg))                  console.cs:15702-15709
+          → m_objTCPIPCatParser.Get(msg)                   console.cs:15711-15721, unguarded
+            → CATParser.Get → ParseExtended → cmdlist.ZZxx(...)
+              → whatever that handler does (P/Invoke, array index, cast, ...)
+```
+
+Nothing in this chain catches anything but `SocketException`. Any other
+exception a command handler can throw — a P/Invoke `EntryPointNotFoundException`
+(this case), but just as easily a malformed-argument `FormatException`/
+`IndexOutOfRangeException` in a handler that doesn't validate its `suffix`
+as carefully as `CATParser.FindSuffix()`'s regex does — propagates back
+through `Control.Invoke` to the socket listener thread and becomes an
+unhandled exception there. .NET's default policy for an unhandled exception
+on *any* thread (not just the UI thread) is to terminate the whole process.
+**Impact**: since CAT-over-TCP has no authentication (`.claude/skills/thetis-control/SKILL.md`'s
+first line), literally anything that can open a TCP connection to port 13013
+can crash a running Thetis instance — accidentally (a buggy client, a typo'd
+command) or, worse, deliberately, with zero credentials. `TCIServer.cs:5137`
+calls the same `ThreadSafeCatParse` from its own `ParseReceiveBuffer`/
+`SocketListenerThreadStart` (the TCI listener) — same gap, second entry point,
+not yet checked in detail for its own additional exposure.
+
+**Suggested fix**: wrap the dispatch call, not just the socket read loop — either
+`safeCat()` (console.cs:15711) or `TCPIPcatServer.cs`'s call site (line 350),
+catching `Exception` (not just `SocketException`), logging it, and returning
+a CAT error reply (`"?;"`, matching `processClientData`'s existing `ERROR`
+convention) instead of letting it escape. Apply the same fix to `TCIServer.cs`'s
+call site. A broader `AppDomain.CurrentDomain.UnhandledException`/
+`Application.ThreadException` handler would be reasonable defense in depth on
+top of that, but the targeted fix at the CAT/TCI dispatch boundary is the
+actual bug — a network protocol handler should never be able to take the
+whole app down on a bad request.
+
+**Status**: not yet fixed. Found and worked around at the deployment level
+(matching build redeployed, not this bug) during the RADE live test — see
+Stage C's "Run against the live `hl2winbox` instance" entry above for that
+session's narrative. This entry is the standalone tracking for the bug itself.
 
 ## Standing constraints
 
