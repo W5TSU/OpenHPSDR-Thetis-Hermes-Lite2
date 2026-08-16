@@ -1397,6 +1397,174 @@ next step whenever this branch's RADE V1 work is picked back up. If sync
 still won't reliably reproduce next time, that's the first thing to
 re-diagnose, separately from the audio-routing fix itself.
 
+### 🟡 Reliable sync achieved for the first time; decoded audio still never reaches the speaker — a distinct, deeper bug (2026-08-16)
+
+Picked back up exactly where the entry above left off: "a HackRF positive-
+control run that both syncs *and* is audibly checked for decoded voice."
+Got a real answer on both halves, but they didn't match — sync now works
+reliably; audio still doesn't, and it's a different bug than the one fixed
+above.
+
+**Live off-air, twice, before any deliberate testing started.** The operator
+watched real off-air RADE V1 traffic and reported "seeing sync... but no
+audio, just static and signal noise" — twice, independently, on different
+real transmissions, hours apart. Both times a live CAT/TCI check confirmed
+real signal reaching the receiver (`ZZDT`, new this session — see below —
+read real, varying levels, e.g. -22 to -36 dBFS) but `radae status` had
+already dropped back to "no sync" by the time it was checked, and a
+concurrent TCI capture during the second event was **exact digital
+silence throughout** despite the confirmed-live signal — consistent with
+radae.c's documented "pad with silence while unsynced" behavior, i.e. sync
+itself wasn't holding at the moment of either capture. Real, but not yet
+the deliberately-controlled test the entry above called for.
+
+**Built that deliberate test, from the operator's own audio.** Given a new
+file, `Tools/Test-Audio-W5TSU.m4a` (28.18 s voice), rather than reusing the
+existing `radev1_test_iq_long.wav`. Pipeline: `gst-launch-1.0`
+`decodebin`/`audioconvert`/`wavenc` to decode the m4a (`sox` can't read
+m4a directly) → `freedv -ut tx -utmode RADEV1` (freedv-gui's own encoder,
+real not synthetic) → `make_fdv_test_iq.py --input-wav --peak-dbfs -6` →
+`tx_radev1_hackrf_*.grc`/HackRF, same 14.236 MHz DIGU / 20 dB VGA gain as
+every prior RADE V1 RF test.
+
+- **Chunking questioned, tested, and dropped.** First pass split the 28 s
+  clip into three ~9.4 s chunks before encoding, following the *documented*
+  ~15 s freedv-gui UT-mode truncation quirk from the 2026-08-15 entries
+  above. Operator directly asked why chunking was needed instead of one
+  encode — the right question: **a single-shot encode of the full 28 s
+  clip did *not* truncate** (28.18 s in → 29.61 s out, fully proportional).
+  That prior truncation was specific to the earlier, longer (112 s) source,
+  not a universal freedv-gui limit — chunking this file was unnecessary and
+  added a real confound (each chunk gets its own PTT/EOO cycle from
+  freedv-gui's TX pipeline, discontinuities a real transmission wouldn't
+  have). Redid it single-shot for every test after this point.
+- **Encode independently proven valid, offline, before touching RF.**
+  Fed the single-shot modem file straight back into freedv-gui's own `-ut
+  rx` reference decoder (no RF, no Thetis) — it synced immediately and held
+  for the full clip (`Sync changed from 0 to 1` at start, `1 to 0` right as
+  the file ended), and produced real, non-trivial decoded output (28.92 s,
+  low but genuine amplitude, not silence). Ruled out "bad encode" entirely
+  before spending any more RF time.
+- **I/Q conversion also ruled out** — the new file's I/Q wav matched
+  `radev1_test_iq_long.wav`'s peak/RMS/spectral stats closely (both
+  generated the same way, both -6 dBFS peak).
+- **First two attempts (chunked, then single-shot): no sync, `UUUU` HackRF
+  USB-underrun markers in the TX log both times.** Operator explicitly
+  asked to set the underrun explanation aside and keep digging rather than
+  accept it as the answer.
+- **Built real diagnostic visibility that didn't exist before.** `radae.c`
+  already tracked RX decoder-input level and clip state internally
+  (`GetRadaeRxLevelDb`/`GetRadaeClip`) but neither was reachable from
+  anywhere — added CAT `ZZDT` (level/clip, works whether or not sync ever
+  engages, unlike `ZZDZ`) to check "is signal reaching the decoder at all"
+  independent of "did it sync." Found `ZZDT` pinned at exactly -120 dBFS
+  (the code's true-silence floor, not just "quiet") through an entire
+  transmission that a **concurrent TCI capture proved carried a real,
+  strong, -28.5 dBFS signal for the right ~28 s window** — proof the
+  decoder's own level tracking wasn't running at all, not that it saw real
+  silence.
+  - Added `ZZDI` (`GetRadaeDiag`): `g_initialized`, `g_rade[rx]!=NULL`,
+    rx-in-range, `ch_outsize` — ruled out a silently-failed `rade_open()`
+    and every other early-return guard in `xradae_rx()` (all read
+    correctly: initialized=1, handle_valid=1, rx_in_range=1, outsize=64).
+  - Added `ZZDJ`/`ArmRadaeRxDebug`: an unconditional, reset-on-demand
+    file log at `xradae_rx()`'s very first line (fixed caps don't work
+    here — outsize=64 @ 48 kHz implies ~750 calls/sec, exhausting a
+    4000-entry cap, fdv.c's own convention, in ~5 s). This is where it got
+    interesting: **the armed log showed a clean, sustained ~2.3x level
+    jump exactly correlating with the transmission window** (meanabs
+    ~0.013 quiet → ~0.030 during TX, real RX1 audio genuinely reaching the
+    function), **every guard passing throughout**, yet `ZZDT` queried
+    live during that same run *still* read frozen -120.
+  - Chased two more code-level hypotheses and ruled both out with
+    evidence, not guesswork: `SetRadaeMoxState`/`g_radae_mox_state` (MOX
+    gate) and `SetRadaeRxScale`/`SetRadaeRxDialScale` (a per-sample gain
+    that, at zero, would silently zero the decoder input while leaving the
+    real signal visible everywhere else) both have **zero C# callers
+    anywhere in the codebase** — dead code, permanently at their inert
+    defaults (mox=0, scale=1.0), confirmed by grep, not assumption.
+  - Also asked the operator to check a UI "Loopback" checkbox
+    (`chkRADAELoopback`) as a live hypothesis, since a stray TX-loopback
+    bridge would explain everything — **wrong call, corrected quickly**:
+    that control doesn't actually exist in the UI (`SetRadaeLoopbackEnabled`
+    is likewise uncalled dead code, comment-only), so nothing the operator
+    found to check was real; re-enabled "Decode RADE V1" (a real checkbox
+    they'd unchecked while looking for the nonexistent one) and moved on.
+  - Added a second log at the actual write site
+    (`radae_xrx_debug2.txt`, no separate CAT trigger — shares `ZZDJ`'s arm
+    flag): the computed `blk_peak`/`db` plus an **immediate synchronous
+    readback of the same variable in the same function call** — eliminates
+    any cross-thread timing question entirely. This is where it resolved
+    itself, not through finding a bug in this code: the write and readback
+    agreed perfectly on every single line (`db=-21 readback=-21`,
+    `db=-25 readback=-25`, ...), with real computed levels throughout the
+    transmission (-20 to -25 dBFS, `loopback=0`, `rx_scale=1.0000`
+    confirmed inert) — **the level-tracking code was correct all along.**
+- **Immediately re-checked `ZZDT` live on the same process right after** —
+  it now read a real, current value (-32.0 dBFS ambient), not frozen
+  -120. The earlier frozen readings had occurred on a *different* process
+  instance, mid-session, where a frequency drift (1.4 kHz off 14236000 Hz,
+  most likely bumped at the console during the operator's own
+  investigation) was also found and fixed around the same time — plausible
+  that some combination of the drift and/or genuine HackRF/USB timing
+  sensitivity explained the earlier frozen readings, rather than a
+  standing code bug. Not fully isolated which factor mattered how much,
+  and not worth further remote time chasing that specific attribution now
+  that the practical result below settled the bigger question.
+- **✅ Then it just worked, repeatedly.** With frequency corrected and a
+  clean process state, re-ran the exact same single-shot 28 s transmission
+  twice more: **first-ever reliable sync on a deliberately-built, real
+  HackRF RADE V1 transmission** — 19 s continuous the first time (SNR
+  8–10 dB), 23 s the second, both climbing quickly and holding steady, not
+  a marginal one-off. This is a genuinely new, positive result: RADE V1
+  sync had never reproduced this reliably on a controlled test before
+  today.
+- **🔴 But decoded audio still never reached the speaker — confirmed
+  negative twice, at two very different sync durations.** During the first
+  confirmed-sync run, operator reported hearing noise, not voice (MUT
+  independently confirmed off via `ZZMA`/CAT beforehand). TCI capture
+  during a second, longer run's full ~110 s of near-continuous sync
+  (re-run with the original 126.3 s `radev1_test_iq_long.wav`, matching
+  the file that produced this project's only prior confirmed real decoded
+  RADE V1 content, back in the 2026-08-15 local-speaker-fix diagnosis)
+  showed a *third*, different pattern from both "raw modem passthrough"
+  (flat ~-27 dBFS, established signature) and "true silence" (exact
+  -240 dBFS floor): **wide, dynamic swings between near-silence and
+  -14 to -20 dBFS peaks** — read as possibly genuine speech dynamics at
+  the time, floated to the operator as "maybe sync just needs more time
+  before the vocoder engages." **Operator directly listened and
+  corrected this: still just noise, not voice**, ruling the priming-time
+  theory out too, and correctly overriding a statistical inference (varying
+  ≠ necessarily speech) with direct ground truth.
+
+**Where this actually leaves things**: the 2026-08-15 local-speaker fix
+(`1c185f14`, copies `ppip->rbuff[rx]` into `buffs[0]` so decoded audio
+reaches local speakers, not just TCI/VAC) is very likely fine on its own
+terms — it faithfully copies *whatever's in the buffer*, and every piece of
+evidence gathered today about that buffer's actual content (TCI, which
+reads the identical buffer at the identical pipeline point) says it never
+contains real decoded speech during these tests, sync duration
+notwithstanding. **The bug is upstream of the routing fix, somewhere in the
+actual decode/synthesis chain** (`rade_rx()` → FARGAN vocoder → the 16 kHz
+speech resampler/FIFO) — not yet localized further; would need direct
+tracing of decoded feature vectors or FARGAN's own output, not just buffer
+levels, which is a real step beyond what today's diagnostics reached.
+Deliberately paused here rather than continuing further tonight — this
+was already a very long session with substantial, real progress (first
+reliable sync ever + the audio bug newly and precisely isolated to a
+specific pipeline stage) — pick the vocoder/synthesis trace back up fresh
+next time.
+
+**Debug instrumentation left in place, all explicitly temporary and
+self-documenting** (`ZZDT`/`ZZDI`/`ZZDJ`, the two `radae_xrx_debug*.txt`
+file logs, `ArmRadaeRxDebug`) — every addition is `// W5TSU: DEBUG`-tagged
+with its own removal note, matching this project's established convention
+(`fdv.c`'s own long-lived debug blocks). Remove once the decode/synthesis
+bug is found; until then they're genuinely useful for the next session
+picking this up. Commits: `8c1f07b0`..`b494d3f2` on `FreeDV` (see `git log`
+for the full sequence — CAT diagnostics, single-shot-encode correction, and
+this write-up).
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
