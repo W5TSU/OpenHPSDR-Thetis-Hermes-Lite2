@@ -7458,6 +7458,22 @@ namespace Thetis
 
             return AddLeadingZeros(outsize, 4) + initialized + handleValid + rxInRange;
         }
+        // W5TSU: DEBUG - arms the radae_xrx_debug.txt call-entry log (see
+        // radae.c's xradae_rx doc comment) for the next RADAE_RX_DBG_CAP
+        // calls. Set-only trigger, any value arms it. Remove once the
+        // "GetRadaeRxLevelDb always -120" bug is found.
+        public string ZZDJ(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                WDSP.ArmRadaeRxDebug();
+                return "";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

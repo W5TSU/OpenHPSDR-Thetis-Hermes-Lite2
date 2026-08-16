@@ -1071,8 +1071,63 @@ PORT void SetRadaeEooCallsign(const char* callsign)
  * Hot-path: RX (post-WDSP demod -> speakers).  Per-rx dispatch.
  * ============================================================ */
 
+/* W5TSU: DEBUG - unconditional call-entry log to find why GetRadaeRxLevelDb
+ * stays pinned at -120 despite TCI proving real RX1 audio flows concurrently.
+ * Reset-on-demand (ArmRadaeRxDebug/ZZDJ) rather than a fixed cap, since this
+ * runs at DSP block rate (outsize=64 @ 48kHz implies ~750 calls/sec -- a
+ * fixed cap would exhaust in seconds, long before a test can be armed and
+ * run). Logs every guard's value at entry, before any early return, plus
+ * rbuff_io[0] to directly check for real audio at the source. Remove once
+ * the bug is found. */
+static volatile long g_radae_rx_dbg_armed = 0;
+static volatile long g_radae_rx_dbg_count = 0;
+#define RADAE_RX_DBG_CAP 60000
+
+PORT void ArmRadaeRxDebug(void)
+{
+    _InterlockedExchange(&g_radae_rx_dbg_count, 0);
+    const char* dir = getenv("TEMP");
+    char path[512];
+    if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug.txt", dir);
+    else snprintf(path, sizeof(path), "C:\\radae_xrx_debug.txt");
+    FILE* f = fopen(path, "w");
+    if (f) fclose(f);
+    _InterlockedExchange(&g_radae_rx_dbg_armed, 1);
+}
+
+static void radae_rx_dbg_log(int rx, double* rbuff_io)
+{
+    if (!_InterlockedAnd(&g_radae_rx_dbg_armed, 1)) return;
+    long n = _InterlockedIncrement(&g_radae_rx_dbg_count);
+    if (n > RADAE_RX_DBG_CAP)
+    {
+        _InterlockedExchange(&g_radae_rx_dbg_armed, 0);
+        return;
+    }
+    long en_dbg     = (rx >= 0 && rx < RADAE_NRX) ? _InterlockedAnd(&g_radae_rx_enabled[rx], 1) : -1;
+    int init_dbg    = g_initialized;
+    int handle_dbg  = (rx >= 0 && rx < RADAE_NRX) ? (g_rade[rx] != NULL) : -1;
+    int rx_ok_dbg   = (pcm != NULL) ? (rx < pcm->cmRCVR) : -1;
+    int outrate_dbg = (pcm != NULL && rx >= 0 && rx < RADAE_NRX) ? pcm->rcvr[rx].ch_outrate : -1;
+    int outsize_dbg = (pcm != NULL && rx >= 0 && rx < RADAE_NRX) ? pcm->rcvr[rx].ch_outsize : -1;
+    double s0 = (rbuff_io != NULL) ? rbuff_io[0] : -9999.0;
+    double s1 = (rbuff_io != NULL) ? rbuff_io[1] : -9999.0;
+    const char* dir = getenv("TEMP");
+    char path[512];
+    if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug.txt", dir);
+    else snprintf(path, sizeof(path), "C:\\radae_xrx_debug.txt");
+    FILE* f = fopen(path, "a");
+    if (f)
+    {
+        fprintf(f, "n=%ld rx=%d en=%ld init=%d handle=%d rxok=%d or=%d os=%d s0=%.6f s1=%.6f\n",
+            n, rx, en_dbg, init_dbg, handle_dbg, rx_ok_dbg, outrate_dbg, outsize_dbg, s0, s1);
+        fclose(f);
+    }
+}
+
 void xradae_rx(int rx, double* rbuff_io)
 {
+    radae_rx_dbg_log(rx, rbuff_io);
     if (rx < 0 || rx >= RADAE_NRX) return;
     long en = _InterlockedAnd(&g_radae_rx_enabled[rx], 1);
     if (!en) return;

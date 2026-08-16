@@ -296,6 +296,9 @@ namespace Thetis
         // the "GetRadaeRxLevelDb always -120" bug is found.
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeDiag", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetRadaeDiag(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "ArmRadaeRxDebug", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void ArmRadaeRxDebug();
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
