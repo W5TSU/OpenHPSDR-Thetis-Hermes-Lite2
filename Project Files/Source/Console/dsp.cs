@@ -281,6 +281,16 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeSnrDb", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetRadaeSnrDb(int rx);
+
+        // W5TSU: radae.c already tracks these internally (decoder-input level
+        // and clip detection) but neither was exposed anywhere -- added for
+        // live diagnosis of "sync never engages" without knowing whether the
+        // signal even reaches the decoder at a sane level. See ZZDT.
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeRxLevelDb", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeRxLevelDb(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeClip", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeClip(int rx);
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

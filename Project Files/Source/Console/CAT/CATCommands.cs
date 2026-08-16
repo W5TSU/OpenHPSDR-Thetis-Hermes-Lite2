@@ -7427,6 +7427,22 @@ namespace Thetis
 
             return (sync ? "1" : "0") + sign + AddLeadingZeros(snr, 3);
         }
+        // Reads RADE RX decoder-input level/clip status (get-only), independent
+        // of sync -- unlike ZZDZ, this works whether or not RADE ever locks, so
+        // it can tell "signal too weak/absent" apart from "signal present but
+        // not decoding" while chasing a sync failure. Format:
+        // "<sign><level dBFS, 3 digits><clip 0|1>". // W5TSU
+        public string ZZDT()
+        {
+            const int rx = 0;
+            int level = WDSP.GetRadaeRxLevelDb(rx);
+            bool clip = WDSP.GetRadaeClip(rx) != 0;
+
+            string sign = level < 0 ? "-" : "+";
+            level = Math.Min(Math.Abs(level), 999);
+
+            return sign + AddLeadingZeros(level, 3) + (clip ? "1" : "0");
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>
