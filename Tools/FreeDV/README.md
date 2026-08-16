@@ -36,7 +36,9 @@ writes `SDRQuickAudio.wav`, a ready-named copy for Thetis's quick-Play button.)
    Folder" opens the exact folder; Thetis maintains the `.json` sidecar there
    itself).
 2. Thetis: RX1 mode **DIGU**, ~3 kHz filter, NR/NB/ANF/squelch off; enable
-   Setup → DSP → NR → "Decode FreeDV 700E (RX1)".
+   Setup → DSP → **FreeDV** tab → "Decode FreeDV 700E (RX1)" (the "FreeDV
+   (prototype)" group box — added 2026-08-15, RADE V1's equivalent control
+   sits right next to it in the same tab).
 3. Press the console's quick **Play** button. Expect the modem waveform on the
    panadapter, warble → decoded voice, and a green "SYNC SNR x.x dB" label.
 
@@ -66,3 +68,38 @@ Then drive the result with `thetisctl cat radae-sanity` (see
 `.claude/skills/thetis-control/SKILL.md`) instead of the manual Quick Play +
 `freedv status` loop above — same idea, scripted, for RADE's `ZZDW`/`ZZDZ`
 instead of 700E's `ZZDV`/`ZZDS`.
+
+## Testing over real RF (HackRF) instead of Quick Play
+
+Everything above injects the I/Q signal directly into Thetis's RX DSP chain
+(Quick Play), bypassing the antenna entirely — useful, but it never actually
+exercises the HL2's real RF front end. `tx_700e_hackrf.grc` transmits the same
+known-good `fdv700e_test_iq.wav` for real, over the air, via a HackRF — a
+genuine positive-control test of Thetis's real receive chain (FreeDV-Plan.md
+Phase 3 step 6, "live decode"), not a replay.
+
+```bash
+gnuradio-companion tx_700e_hackrf.grc
+```
+
+- **Center Frequency** parameter defaults to 14.236 MHz (20m, matches the
+  frequency used for the RADE V1 off-air monitoring elsewhere in this repo) —
+  change it if you want a different dial frequency, but stay inside the
+  amateur allocation for your license class.
+- **TX VGA Gain** slider defaults to **0 dB** — Part 97 minimum-necessary-power
+  practice. Raise it gradually while watching the TX spectrum plot and Thetis's
+  RX; the HackRF's RF amp stage is left off entirely (too coarse a step, +14 dB,
+  for this kind of test).
+- The wav plays **once and stops** (no repeat) — a bounded, single transmission,
+  not something that could be left running unattended.
+- On the Thetis side: RX1 tuned to the same frequency, mode DIGU, ~3 kHz filter,
+  Setup → DSP → FreeDV tab → "Decode FreeDV 700E (RX1)" checked, same as the
+  Quick Play procedure above.
+
+**This is a real amateur-radio transmission if run into an antenna** — a
+licensed control operator must be present, and station identification (by
+voice, CW, or another Part 97-approved method) is required at the start and
+end of the transmission; this signal is FreeDV-encoded test speech, not an ID
+by itself. For a purely RF-free bench test instead, run the HackRF's TX port
+into a dummy load or an attenuator-terminated cable straight into the HL2's
+antenna port rather than a real antenna — same flowgraph, nothing radiated.
