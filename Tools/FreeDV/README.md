@@ -69,37 +69,124 @@ Then drive the result with `thetisctl cat radae-sanity` (see
 `freedv status` loop above — same idea, scripted, for RADE's `ZZDW`/`ZZDZ`
 instead of 700E's `ZZDV`/`ZZDS`.
 
-## Testing over real RF (HackRF) instead of Quick Play
+## Testing over real RF (GNU Radio Companion + HackRF) instead of Quick Play
 
 Everything above injects the I/Q signal directly into Thetis's RX DSP chain
 (Quick Play), bypassing the antenna entirely — useful, but it never actually
-exercises the HL2's real RF front end. `tx_700e_hackrf.grc` transmits the same
-known-good `fdv700e_test_iq.wav` for real, over the air, via a HackRF — a
-genuine positive-control test of Thetis's real receive chain (FreeDV-Plan.md
-Phase 3 step 6, "live decode"), not a replay.
+exercises the HL2's real RF front end. Two GNU Radio Companion (GRC)
+flowgraphs transmit known-good FreeDV I/Q over the air via a HackRF instead,
+as a genuine positive-control test of Thetis's real receive chain
+(FreeDV-Plan.md Phase 3 step 6 and the RADE V1 "first confirmed decode over
+real RF" section):
+
+| Flowgraph | Signal | Default input wav |
+|---|---|---|
+| `tx_700e_hackrf.grc` | FreeDV 700E (from `freedv_tx`, via `make_fdv_test_iq.py`) | `fdv700e_test_iq.wav` |
+| `tx_radev1_hackrf.grc` | RADE V1 (from freedv-gui's own encoder, via `make_fdv_test_iq.py --input-wav`) | `radev1_test_iq_long.wav` |
+
+Both are gitignored companions of the wavs they transmit — regenerate per the
+sections above if missing. Neither ships a canned RADE V1 encoder in this
+repo; that wav came from a local `freedv-gui` checkout's `freedv -ut tx
+-utmode RADEV1` (see `FreeDV-Plan.md`'s "First confirmed RADE V1 decode over
+real RF" section for the exact build/generation steps — freedv-gui truncates
+`-txfile` output to ~15 s regardless of input length, worked around there by
+chunking a longer speech clip and concatenating the RADE-encoded pieces).
+
+### Prerequisites
+
+- **GNU Radio** (3.10+) with **gr-osmosdr** built/installed with HackRF
+  support — both flowgraphs use an `osmosdr_sink` block, not a dedicated
+  `hackrf_sink`, so gr-osmosdr (which wraps libhackrf) is the actual
+  dependency, not just `hackrf-tools`. On Debian/Ubuntu:
+  `sudo apt install gnuradio gr-osmosdr`.
+- **A HackRF**, connected, with a working udev rule so it's accessible without
+  root. Verify with `hackrf_info` before opening GRC — if that doesn't cleanly
+  report the device, nothing downstream will work either. (This project's own
+  bench HackRF shares a USB bus with other devices and has warned about
+  problems at high sample rates as a result — if a run that previously synced
+  suddenly doesn't, check `hackrf_info` and try a different USB port/hub
+  before assuming a flowgraph or software regression.)
+- An antenna, dummy load, or attenuator-terminated cable into the HL2's
+  antenna port (see the licensing note below), and the HL2/Thetis on the
+  receive side.
+
+### Running one
 
 ```bash
-gnuradio-companion tx_700e_hackrf.grc
+gnuradio-companion tx_700e_hackrf.grc      # or tx_radev1_hackrf.grc
 ```
 
+Press GRC's run (▶) button to start the flowgraph. Common structure for both:
+
 - **Center Frequency** parameter defaults to 14.236 MHz (20m, matches the
-  frequency used for the RADE V1 off-air monitoring elsewhere in this repo) —
-  change it if you want a different dial frequency, but stay inside the
-  amateur allocation for your license class.
-- **TX VGA Gain** slider defaults to **0 dB** — Part 97 minimum-necessary-power
-  practice. Raise it gradually while watching the TX spectrum plot and Thetis's
-  RX; the HackRF's RF amp stage is left off entirely (too coarse a step, +14 dB,
-  for this kind of test).
-- The wav plays **once and stops** (no repeat) — a bounded, single transmission,
-  not something that could be left running unattended.
-- On the Thetis side: RX1 tuned to the same frequency, mode DIGU, ~3 kHz filter,
-  Setup → DSP → FreeDV tab → "Decode FreeDV 700E (RX1)" checked, same as the
-  Quick Play procedure above.
+  calling frequency used for this repo's off-air FreeDV/RADE V1 monitoring —
+  see `thetisctl freedv-scan`/`freedv-reporter watch`'s built-in calling-
+  frequency table, `Tools/thetis-ai-control`) — change it if you want a
+  different dial frequency, but stay inside the amateur allocation for your
+  license class.
+- **TX VGA Gain** slider (`osmosdr_sink`'s IF gain) defaults to **20 dB** —
+  found empirically (see "Hard-won lessons" below) as the level that reliably
+  syncs both modes on this project's hardware. Raise or lower it while
+  watching the TX spectrum plot and Thetis's RX; the HackRF's RF amp stage is
+  left off entirely (too coarse a step, +14 dB, for this kind of test). Start
+  lower (e.g. 0 dB, Part 97 minimum-necessary-power practice) on a new
+  setup/antenna and work up rather than assuming 20 dB is safe for your
+  situation.
+- Sample rate is derived, not a separate control: `samp_rate = wav_samp_rate *
+  50` (2.4 Msps for a 48 kHz wav) — HackRF TX quality/reliability drops below
+  roughly 2 Msps, so both flowgraphs resample up from the wav's native rate
+  rather than transmitting at 48 kHz directly.
+- The wav plays **once and stops** (`repeat: False`) — a bounded, single
+  transmission, not something that could be left running unattended.
+- On the Thetis side: RX1 tuned to the same frequency, mode **DIGU**, ~3 kHz
+  filter, Setup → DSP → FreeDV tab → the matching "Decode FreeDV 700E (RX1)"
+  or "Decode RADE V1 (RX1)" checkbox, same as the Quick Play procedure above.
+
+### Hard-won lessons (read before building a new flowgraph from these)
+
+Both bugs below were found the hard way, over real air-test cycles, and are
+now fixed *in the flowgraphs themselves* — but they're easy to reintroduce if
+you build a new HackRF TX chain from scratch, so they're worth understanding
+rather than just trusting the fix:
+
+1. **DAC quantization floor.** `make_fdv_test_iq.py`'s default signal level
+   (`-50 dBFS` peak) is calibrated for Quick-Play's direct float-sample
+   injection, which has no real DAC in the loop. HackRF's TX DAC is 8-bit —
+   one quantization step is `1/128` ≈ `-42 dBFS` — so a `-50 dBFS` signal sits
+   *below* the DAC's own quantization noise floor and arrives at the receiver
+   as an unmodulated-looking carrier, not the OFDM/RADE waveform, no matter
+   how much `tx_gain` (analog IF gain, applied *after* the DAC) is raised.
+   `tx_700e_hackrf.grc` fixes this with a `blocks_multiply_const_vxx` digital
+   gain stage (≈+44.4 dB) between the I/Q assembly and the resampler, so the
+   *wav file* stays correct for Quick-Play's unrelated use. `radev1_test_iq_long.wav`
+   sidesteps the issue at generation time instead (`make_fdv_test_iq.py
+   --peak-dbfs -6`), so `tx_radev1_hackrf.grc` doesn't carry the same gain
+   block — if you point either flowgraph at a new wav, check its actual peak
+   level (not just its intended one) rather than assuming either approach.
+2. **An extra sideband inversion from the real hardware chain.**
+   `make_fdv_test_iq.py`'s own conjugate correction (writing `-Q` so the
+   signal lands on USB) was calibrated and verified only against Quick-Play's
+   direct software injection point. Routing the same wav through a real
+   HackRF TX up-converter and back in through the HL2's own RX front end adds
+   two more independent mixer stages, and empirically one of them flips the
+   sideband again on top of Quick-Play's already-applied correction — a
+   signal built correctly per the README above showed up on LSB/DIGL instead
+   of the expected USB/DIGU the first time this was tried live. Both
+   flowgraphs fix it with a `blocks_conjugate_cc` right after the I/Q
+   assembly, canceling the extra inversion back out — chosen over just
+   switching Thetis to LSB/DIGL, to keep every flowgraph/doc/tool in this repo
+   consistently assuming DIGU rather than carrying a HackRF-TX-specific
+   exception. Confirm this is still correct if you retarget either flowgraph
+   at different hardware — the inversion is a property of *this* TX/RX
+   hardware pairing, not a universal constant.
+
+### Licensing / safety
 
 **This is a real amateur-radio transmission if run into an antenna** — a
 licensed control operator must be present, and station identification (by
 voice, CW, or another Part 97-approved method) is required at the start and
-end of the transmission; this signal is FreeDV-encoded test speech, not an ID
-by itself. For a purely RF-free bench test instead, run the HackRF's TX port
-into a dummy load or an attenuator-terminated cable straight into the HL2's
-antenna port rather than a real antenna — same flowgraph, nothing radiated.
+end of the transmission; this signal is FreeDV/RADE-encoded test speech, not
+an ID by itself. For a purely RF-free bench test instead, run the HackRF's TX
+port into a dummy load or an attenuator-terminated cable straight into the
+HL2's antenna port rather than a real antenna — same flowgraphs, nothing
+radiated.
