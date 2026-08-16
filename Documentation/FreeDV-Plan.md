@@ -1209,11 +1209,43 @@ including for diversity-RX configurations with `cmSubRCVR > 1`. Two
 four-line, `// W5TSU`-tagged insertions, matching this project's usual hook
 footprint for shared files.
 
-**Not yet re-verified live** — this was written and reasoned through with high
-confidence (the evidence above pins the exact gap precisely, and the fix is a
-direct, minimal correction of it) but a fresh HackRF positive-control run to
-confirm decoded speech is now actually audible over real speakers is the
-natural next step whenever that's convenient.
+**Deployed to `hl2winbox` same session** (`git:1c185f14`) via the established
+safe path (MSI admin-extract, never registers/installs — plus a full
+`robocopy` sync of every changed file, not just `Thetis.exe`, after the
+earlier session's stale-`ChannelMaster.dll` crash taught that lesson). CAT
+sanity-checked clean post-deploy: `radae on/off/get/status` round-tripped
+correctly, no crash, same PID throughout.
+
+**Re-test attempted, inconclusive — not a confirmed pass or fail.** Two runs
+of the 126 s HackRF positive control immediately after deploying: **neither
+synced at all**, a different failure mode than what this fix targets (the
+fix is about audio *after* sync; these runs never reached sync in the first
+place). Checked for an actual code-level regression first — traced through
+the fix's logic again and it cannot affect sync acquisition: it only runs
+*after* `xradae_rx` has already completed its decode and set the sync state
+for that frame, and every buffer it touches (`buffs[0]`/`pcm->rcvr[rx].audio`)
+gets freshly overwritten by `fexchange0` (the DSP call) on the *next* frame
+regardless of what this fix wrote — no feedback path into `xradae_rx`'s own
+input exists. Checked the mundane explanations too: `.grc` gain settings
+unchanged (`tx_gain` still 20 dB, matching the successful pre-fix runs), no
+stray processes holding the HackRF, `hackrf_info` responds cleanly. Operator
+confirmed the transmitted signal itself "looked different or weaker" on the
+panadapter during these two failed attempts, compared to the successful
+pre-fix runs — consistent with real bench-setup RF/USB flakiness (this
+HackRF has warned `"3 other devices on the same USB bus... problems at high
+sample rates"` since the very first check this session) rather than anything
+the fix changed. Paused here for the night rather than keep consuming
+real-RF test cycles chasing what looks like hardware variability.
+
+**Net status**: the fix is committed, CI-verified, and deployed — reasoned
+through with high confidence and grounded in the same kind of precise,
+evidence-based diagnosis (paired before/after audio captures) that found the
+bug in the first place, but **not yet confirmed by actually hearing decoded
+speech**. That confirmation — a HackRF positive-control run that both syncs
+*and* is audibly checked for decoded voice, not just SNR — is the concrete
+next step whenever this branch's RADE V1 work is picked back up. If sync
+still won't reliably reproduce next time, that's the first thing to
+re-diagnose, separately from the audio-routing fix itself.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
