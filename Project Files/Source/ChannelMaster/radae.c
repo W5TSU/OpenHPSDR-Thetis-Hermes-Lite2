@@ -1092,6 +1092,13 @@ PORT void ArmRadaeRxDebug(void)
     else snprintf(path, sizeof(path), "C:\\radae_xrx_debug.txt");
     FILE* f = fopen(path, "w");
     if (f) fclose(f);
+    {
+        char path2[512];
+        if (dir) snprintf(path2, sizeof(path2), "%s\\radae_xrx_debug2.txt", dir);
+        else snprintf(path2, sizeof(path2), "C:\\radae_xrx_debug2.txt");
+        FILE* f2 = fopen(path2, "w");
+        if (f2) fclose(f2);
+    }
     _InterlockedExchange(&g_radae_rx_dbg_armed, 1);
 }
 
@@ -1208,6 +1215,25 @@ void xradae_rx(int rx, double* rbuff_io)
             if (db < -120) db = -120;
             if (db > 0)    db = 0;
             _InterlockedExchange(&g_rx_in_level_dbfs_q[rx], db);
+            // W5TSU: DEBUG - log the computed value right at the write site,
+            // plus an immediate re-read of the same variable, to settle
+            // whether the write itself is wrong or something downstream
+            // (the CAT getter path) disagrees with it. See radae_rx_dbg_log.
+            if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
+            {
+                int readback = (int)_InterlockedAnd(&g_rx_in_level_dbfs_q[rx], 0xffffffff);
+                const char* dir = getenv("TEMP");
+                char path[512];
+                if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug2.txt", dir);
+                else snprintf(path, sizeof(path), "C:\\radae_xrx_debug2.txt");
+                FILE* f = fopen(path, "a");
+                if (f)
+                {
+                    fprintf(f, "rx=%d loopback=%d rx_scale=%.4f blk_peak=%.6f db=%d readback=%d\n",
+                        rx, loopback_on, rx_scale, blk_peak, db, readback);
+                    fclose(f);
+                }
+            }
         }
         if (blk_peak >= RADAE_RX_CLIP_THRESHOLD)
             _InterlockedExchange(&g_rx_in_clip_last_tick[rx], (long)GetTickCount());
