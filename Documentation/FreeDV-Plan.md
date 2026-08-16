@@ -1153,6 +1153,68 @@ working decoder that simply hasn't yet been tested against off-air RADE V1
 traffic that happens to be strong/clean enough to lock, rather than a broken
 one.
 
+### ✅ Fixed: decoded audio never reached the local speaker/monitor output (2026-08-15)
+
+Live-testing the longer signal (above) surfaced a real, distinct bug: the
+operator could see sync and a healthy SNR, but heard the raw undecoded RADE
+V1 modem sound over the speakers, not decoded voice — different from "no
+sync" (which is silence, by design) and different from a working decode.
+
+**Diagnosed with evidence, not guesswork.** Two `thetisctl tci rx-audio
+capture` recordings, taken from the exact same audio path, told the story
+precisely:
+- During a confirmed **no-sync** window: exactly 0.0 RMS, dead silence —
+  matches `radae.c`'s own "pad with silence on underrun" logic exactly.
+- During a confirmed **sync** window (SNR 0–6 dB, sustained): real, varying,
+  speech-shaped content — dynamic range from near-silence to loud peaks, nothing
+  like RADE's own raw modem signal (measured separately as remarkably flat,
+  ~0.32 std throughout, since it's broadband encoded data, not speech).
+
+This proved the decoder itself works — TCI clients already heard real decoded
+speech. So the gap had to be downstream of the decode, specific to local
+playback. Traced it in `pipe.c`/`cmaster.c`:
+
+```
+pipe.c xpipe(), case 1 "Audio data":
+  xvacOUT(rx, 1, ppip->rbuff[rx]);   // VAC gets the ORIGINAL audio (before decode)
+  xradae_rx(rx, ppip->rbuff[rx]);    // decode happens HERE, modifying rbuff[rx]
+  xtciOUT(rx, 1, ppip->rbuff[rx]);   // TCI gets the DECODED audio (confirmed above)
+  xrecordwave(rx, 0, 1, ppip->rbuff[rx]); // Quick-Rec gets it too
+
+cmaster.c xcmaster(), case 0 "standard receiver" (runs AFTER xpipe returns):
+  xMixAudio(0, 0, chid(stream, j), pcm->rcvr[rx].audio[j]);  // <- feeds local
+                                                              //    speaker mix,
+                                                              //    reads the
+                                                              //    ORIGINAL,
+                                                              //    UN-decoded
+                                                              //    per-subrx
+                                                              //    buffers
+```
+
+`ppip->rbuff[rx]` (what `xradae_rx` modifies) is a *separate, summed copy* that
+`xpipe` builds from `buffs[0]` (= `pcm->rcvr[rx].audio[0]`) specifically for
+VAC/TCI/recording — not the buffer the local-speaker mixer actually reads.
+Writing the decode into the copy alone meant three of four consumers got it
+(VAC actually didn't either, since it's called *before* `xradae_rx`) and the
+one an operator actually listens to — the console's own speakers — never did.
+
+**Fix**: in `pipe.c`, right after `xradae_rx`, added a `GetRadaeRxEnabled(rx)`-gated
+block that copies the now-decoded `ppip->rbuff[rx]` back into `buffs[0]` (the
+buffer `xMixAudio` reads) and zeroes any other subreceiver buffers
+(`buffs[1..cmSubRCVR-1]`) so their raw, undecoded audio doesn't bleed back in
+under the final per-subreceiver mix — applied at both `xpipe` call sites (RX1
+and "other PowerSDR receivers"). Gated on `GetRadaeRxEnabled` specifically
+(not unconditional) so behavior is provably unchanged when RADE decode is off,
+including for diversity-RX configurations with `cmSubRCVR > 1`. Two
+four-line, `// W5TSU`-tagged insertions, matching this project's usual hook
+footprint for shared files.
+
+**Not yet re-verified live** — this was written and reasoned through with high
+confidence (the evidence above pins the exact gap precisely, and the fix is a
+direct, minimal correction of it) but a fresh HackRF positive-control run to
+confirm decoded speech is now actually audible over real speakers is the
+natural next step whenever that's convenient.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

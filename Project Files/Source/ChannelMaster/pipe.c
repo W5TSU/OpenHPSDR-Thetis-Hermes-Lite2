@@ -190,6 +190,12 @@ void xpipe (int stream, int pos, double** buffs)
 			xscope(rx, 0, ppip->rbuff[rx]);														// scope
 			xvacOUT(rx, 1, ppip->rbuff[rx]);													// data to VAC
 			xradae_rx(rx, ppip->rbuff[rx]);											// W5TSU: RADE V1 (experimental)
+			if (GetRadaeRxEnabled(rx))												// W5TSU: decode must also reach local monitor audio -- xMixAudio (cmaster.c) reads buffs[], not rbuff[rx], so VAC/TCI/wav got the decode but the speakers didn't
+			{
+				memcpy (buffs[0], ppip->rbuff[rx], pcm->rcvr[rx].ch_outsize * sizeof (complex));
+				for (i = 1; i < pcm->cmSubRCVR; i++)
+					memset (buffs[i], 0, pcm->rcvr[rx].ch_outsize * sizeof (complex));
+			}
 			xtciOUT(rx, 1, ppip->rbuff[rx]);													// data to TCI rx audio
 			xrecordwave(rx, 0, 1, ppip->rbuff[rx]);												// wav recorder
 			break;
@@ -213,6 +219,12 @@ void xpipe (int stream, int pos, double** buffs)
 					ppip->rbuff[rx][j] += buffs[i][j];
 			xvacOUT(rx, 1, ppip->rbuff[rx]);													// data to VAC
 			xradae_rx(rx, ppip->rbuff[rx]);											// W5TSU: RADE V1 (experimental)
+			if (GetRadaeRxEnabled(rx))												// W5TSU: decode must also reach local monitor audio -- xMixAudio (cmaster.c) reads buffs[], not rbuff[rx], so VAC/TCI/wav got the decode but the speakers didn't
+			{
+				memcpy (buffs[0], ppip->rbuff[rx], pcm->rcvr[rx].ch_outsize * sizeof (complex));
+				for (i = 1; i < pcm->cmSubRCVR; i++)
+					memset (buffs[i], 0, pcm->rcvr[rx].ch_outsize * sizeof (complex));
+			}
 			xtciOUT(rx, 1, ppip->rbuff[rx]);													// data to TCI rx audio
 			xrecordwave(rx, 0, 1, ppip->rbuff[rx]);												// wav recorder
 			break;
