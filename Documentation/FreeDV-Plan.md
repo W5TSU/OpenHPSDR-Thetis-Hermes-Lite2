@@ -56,7 +56,7 @@ Development happens on the **`FreeDV` branch**. Status markers: ✅ done, ⬜ pe
 - **Must be reverted (or identity restored) before merging to master** — the release
   installer keeps the production UpgradeCode, name, and `Thetis-HL2` folder
 
-### 🟢 Phase 3 — verification *(bench decode achieved 2026-08-08; live decode + iteration remain)*
+### 🟢 Phase 3 — verification *(bench + live decode both achieved; iteration on findings remains)*
 
 > Note: audio can't be injected into the RX chain via Voicemeeter/VAC — VAC input
 > feeds the TX mic path only. The bench route is Thetis's RX wave playback, which
@@ -587,9 +587,40 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
    itself is inactive or broken, just bad timing again. Still open; worth
    re-running at a different time of day or explicitly widening beyond
    14.236 MHz if RADE V1 keeps dominating that exact frequency.
-6. ⬜ **Live decode**: 14.236 MHz DIGU. Ground truth: before enabling the
-   checkbox, confirm the external FreeDV GUI app (VAC path, §7) syncs on the same
-   signal. Note SNR at sync acquire/drop (700E should hold to ~1 dB)
+6. ✅ **Live decode — done 2026-08-15, via a real HackRF positive control, not
+   opportunistic off-air traffic.** `Tools/FreeDV/tx_700e_hackrf.grc` (new)
+   transmits the same known-good `fdv700e_test_iq.wav` over real RF instead of
+   Quick Play's direct RX-chain injection — genuinely exercises the HL2's RF
+   front end for the first time in this branch's history. Three passes at
+   14.236 MHz DIGU, over the air (licensed operator present, ID'd each pass):
+   - **Pass 1, 0 dB VGA gain**: no sync — expected, deliberately minimal
+     starting power (Part 97 practice).
+   - **Pass 2, 20 dB VGA gain**: still no sync, but this time the operator
+     confirmed **the signal was visible on Thetis's panadapter with no visible
+     modulation** — a carrier, not the OFDM comb. Root-caused before a third
+     blind attempt: the wav's `-50 dBFS` peak level was set for Quick-Play's
+     direct float-sample injection (no real DAC involved there) — HackRF's TX
+     DAC is 8-bit, one quantization step is `1/128` = `-42 dBFS`, so `-50 dBFS`
+     sits *below* the DAC's own quantization noise floor. The OFDM structure
+     was being crushed to quantization noise before the signal ever left the
+     radio. Confirmed by directly inspecting the wav's actual sample
+     statistics (peak 0.00302, matching the predicted -50.4 dBFS exactly).
+   - **Fix**: added a `blocks_multiply_const_vxx` (166x ≈ +44.4 dB) to
+     `tx_700e_hackrf.grc` between the I/Q assembly and the resampler — a
+     flowgraph-side digital gain correction, not a wav-file change (the wav's
+     level stays correct for Quick-Play's own, unrelated use).
+   - **Pass 3, same 20 dB VGA gain, gain-fix applied**: **SYNC**, SNR
+     2.1 dB → (one transient drop, consistent with the known ~125 ms priming/
+     underrun-resets-priming behavior noted in step 7 below) → 12.7 dB →
+     14.1 dB, climbing and holding through to the end of the transmission.
+     First-ever confirmed 700E decode through Thetis's actual RX chain
+     (antenna → HL2 → ChannelMaster → `fdv.c`), not a synthetic injection.
+
+   Ground truth cross-check against the external FreeDV GUI app (VAC path,
+   §7) was not done this session — the HackRF positive-control result above
+   is arguably stronger ground truth already (a signal proven, byte-for-byte,
+   to sync via Quick-Play, now also proven to sync over real RF), but the VAC
+   cross-check remains open if wanted as an independent second confirmation.
 7. ⬜ **Iterate on findings** (once sync is achieved):
    - decoded speech level — `FDV_SPEECH_GAIN` (0.30f, fdv.c) vs passthrough/SSB
      loudness

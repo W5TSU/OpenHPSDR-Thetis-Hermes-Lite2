@@ -1,2 +1,9 @@
 *.wav
 *.raw
+# GRC auto-generates a same-named .py companion next to every .grc file when
+# you open/run it in the actual GNU Radio Companion GUI (not grcc's -o dir,
+# which is fine -- this is specifically the in-place one GRC itself drops
+# here). Same "only the generator is tracked" convention as the wav/raw
+# rules above. Doesn't affect make_fdv_test_iq.py -- .gitignore never
+# untracks a file that's already tracked, only hides untracked ones.
+*.py

@@ -1,34 +1,31 @@
 options:
   parameters:
+    alias: ''
     author: W5TSU
     catch_exceptions: 'True'
-    category: '[GRC Hier Blocks]'
-    cmake_opt: ''
     comment: 'Transmits Tools/FreeDV/fdv700e_test_iq.wav (a known-good synthetic FreeDV
       700E signal, already verified via Quick Play bench testing) over the air via
       HackRF, as a positive-control test of Thetis''s real RX chain -- FreeDV-Plan.md
       Phase 3 step 6. TX gain defaults low (VGA=0) -- raise it manually while watching
-      the spectrum plot. Follow Part 97 identification rules: ID at start and end of
-      transmission (this signal is FreeDV-encoded test speech, not an ID by itself).'
+      the spectrum plot. Follow Part 97 identification rules: ID at start and end
+      of transmission (this signal is FreeDV-encoded test speech, not an ID by itself).'
     copyright: ''
-    description: 700E over-the-air positive-control TX test for the HL2/Thetis FreeDV branch
-    gen_cmake: 'On'
+    description: 700E over-the-air positive-control TX test for the HL2/Thetis FreeDV
+      branch
     gen_linking: dynamic
     generate_options: qt_gui
+    generator_class_name: PythonQtGuiGenerator
+    generator_module: gnuradio.grc.workflows.python_qt_gui
     hier_block_src_path: '.:'
     id: tx_700e_hackrf
     max_nouts: '0'
     output_language: python
-    placement: (0,0)
     qt_qss_theme: ''
     realtime_scheduling: ''
     run: 'True'
     run_command: '{python} -u {filename}'
-    run_options: prompt
-    sizing_mode: fixed
     thread_safe_setters: ''
     title: FreeDV 700E -- HackRF TX (positive control)
-    window_size: 1280, 1024
   states:
     bus_sink: false
     bus_source: false
@@ -38,13 +35,100 @@ options:
     state: enabled
 
 blocks:
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: HackRF TX sample rate -- below ~2 Msps the driver/quality gets unreliable,
+      so this resamples up from the wav's native 48 kHz rather than transmitting at
+      48 kHz directly. 50x the wav rate, a clean integer interpolation ratio.
+    value: wav_samp_rate * 50
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [180, 10]
+    rotation: 0
+    state: enabled
+- name: tx_gain
+  id: variable_qtgui_range
+  parameters:
+    comment: HackRF VGA (IF) gain. Starts at 0 -- Part 97 minimum-necessary-power
+      practice. Raise gradually while watching the spectrum plot and Thetis's RX,
+      only as far as needed to get a usable signal.
+    gui_hint: 0,1,1,1
+    label: TX VGA Gain (dB)
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: int
+    start: '0'
+    step: '1'
+    stop: '47'
+    value: '20'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [500, 10]
+    rotation: 0
+    state: enabled
+- name: wav_samp_rate
+  id: variable
+  parameters:
+    comment: Native rate of the I/Q wav (make_fdv_test_iq.py's --rate-out, default
+      48000)
+    value: '48000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [24, 172.0]
+    rotation: 0
+    state: enabled
+- name: blocks_float_to_complex_0
+  id: blocks_float_to_complex
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: left (I) -> real, right (Q) -> imag -- matches make_fdv_test_iq.py's
+      own left=I/right=Q wav layout.
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [416, 216.0]
+    rotation: 0
+    state: enabled
+- name: blocks_wavfile_source_0
+  id: blocks_wavfile_source
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Plays once and stops -- no repeat, so this is a single, bounded transmission
+      rather than something that could be left running unattended.
+    file: in_file
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nchan: '2'
+    repeat: 'False'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 220.0]
+    rotation: 0
+    state: enabled
 - name: center_freq
   id: parameter
   parameters:
     alias: ''
     comment: 20m ham band, matches the calling frequency used for the earlier off-air
       RADE V1 monitoring (freedv-calling-frequencies) -- change if you want a different
-      dial frequency, just keep it inside the amateur allocation for your license class.
+      dial frequency, just keep it inside the amateur allocation for your license
+      class.
     hide: none
     label: Center Frequency (Hz)
     short_id: ''
@@ -74,113 +158,6 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [700, 10]
-    rotation: 0
-    state: enabled
-- name: wav_samp_rate
-  id: variable
-  parameters:
-    comment: Native rate of the I/Q wav (make_fdv_test_iq.py's --rate-out, default 48000)
-    value: '48000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [24, 172.0]
-    rotation: 0
-    state: enabled
-- name: samp_rate
-  id: variable
-  parameters:
-    comment: HackRF TX sample rate -- below ~2 Msps the driver/quality gets unreliable,
-      so this resamples up from the wav's native 48 kHz rather than transmitting at
-      48 kHz directly. 50x the wav rate, a clean integer interpolation ratio.
-    value: wav_samp_rate * 50
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [180, 10]
-    rotation: 0
-    state: enabled
-- name: tx_gain
-  id: variable_qtgui_range
-  parameters:
-    comment: HackRF VGA (IF) gain. Starts at 0 -- Part 97 minimum-necessary-power
-      practice. Raise gradually while watching the spectrum plot and Thetis's RX,
-      only as far as needed to get a usable signal.
-    gui_hint: 0,1,1,1
-    label: TX VGA Gain (dB)
-    min_len: '200'
-    orient: QtCore.Qt.Horizontal
-    rangeType: int
-    start: '0'
-    step: '1'
-    stop: '47'
-    value: '0'
-    widget: counter_slider
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [500, 10]
-    rotation: 0
-    state: enabled
-- name: blocks_wavfile_source_0
-  id: blocks_wavfile_source
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: 'Plays once and stops -- no repeat, so this is a single, bounded
-      transmission rather than something that could be left running unattended.'
-    file: in_file
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    nchan: '2'
-    repeat: 'False'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [200, 220.0]
-    rotation: 0
-    state: enabled
-- name: blocks_float_to_complex_0
-  id: blocks_float_to_complex
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: left (I) -> real, right (Q) -> imag -- matches make_fdv_test_iq.py's
-      own left=I/right=Q wav layout.
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [416, 216.0]
-    rotation: 0
-    state: enabled
-- name: rational_resampler_xxx_0
-  id: rational_resampler_xxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: 48 kHz -> samp_rate (2.4 Msps default), so the 700E signal (originally
-      placed at +500..+2500 Hz baseband) lands safely inside the HackRF's much wider
-      Nyquist band without aliasing.
-    decim: '1'
-    fbw: '0'
-    interp: '50'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    taps: '[]'
-    type: ccc
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [624, 220.0]
     rotation: 0
     state: enabled
 - name: osmosdr_sink_0
@@ -293,9 +270,9 @@ blocks:
     clock_source5: ''
     clock_source6: ''
     clock_source7: ''
-    comment: 'RF amp (gain0) left at 0 -- HackRF''s front-end amp is a coarse +14dB
+    comment: RF amp (gain0) left at 0 -- HackRF's front-end amp is a coarse +14dB
       step, too big a jump for a minimum-necessary-power bench test. Raise tx_gain
-      (VGA) instead, which is the fine-grained slider.'
+      (VGA) instead, which is the fine-grained slider.
     corr0: '0'
     corr1: '0'
     corr10: '0'
@@ -360,7 +337,7 @@ blocks:
     freq7: 100e6
     freq8: 100e6
     freq9: 100e6
-    gain0: '0'
+    gain0: '4'
     gain1: '10'
     gain10: '10'
     gain11: '10'
@@ -475,8 +452,8 @@ blocks:
     color7: '"yellow"'
     color8: '"dark red"'
     color9: '"dark green"'
-    comment: TX-side spectrum monitor, so you can see the signal before it hits
-      the HackRF -- watch this while raising tx_gain.
+    comment: TX-side spectrum monitor, so you can see the signal before it hits the
+      HackRF -- watch this while raising tx_gain.
     ctrlpanel: 'False'
     fc: center_freq
     fftsize: '1024'
@@ -521,7 +498,6 @@ blocks:
     wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-140'
-    yunit: '""'
   states:
     bus_sink: false
     bus_source: false
@@ -529,11 +505,60 @@ blocks:
     coordinate: [900, 60.0]
     rotation: 0
     state: enabled
+- name: rational_resampler_xxx_0
+  id: rational_resampler_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 48 kHz -> samp_rate (2.4 Msps default), so the 700E signal (originally
+      placed at +500..+2500 Hz baseband) lands safely inside the HackRF's much wider
+      Nyquist band without aliasing.
+    decim: '1'
+    fbw: '0'
+    interp: '50'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    taps: '[]'
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [624, 220.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_0
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Digital gain fix, not a power/Part-97 control (that''s tx_gain
+      downstream) -- the wav''s -50 dBFS peak was set for Quick-Play''s direct
+      float-sample injection into Thetis (no real DAC involved there). HackRF''s
+      TX DAC is 8-bit, one quantization step = 1/128 = -42 dBFS, so -50 dBFS is
+      *below* the DAC''s own quantization noise floor and the OFDM structure
+      gets crushed before it ever leaves the radio (confirmed by live test:
+      signal visible on the panadapter, but no modulation). 166x = +44.4 dB
+      brings the wav''s ~-50 dBFS peak up to about -6 dBFS, safely inside the
+      DAC''s dynamic range with headroom to avoid clipping.'
+    const: '166'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [624, 300.0]
+    rotation: 0
+    state: enabled
 
 connections:
+- [blocks_float_to_complex_0, '0', blocks_multiply_const_vxx_0, '0']
+- [blocks_multiply_const_vxx_0, '0', rational_resampler_xxx_0, '0']
 - [blocks_wavfile_source_0, '0', blocks_float_to_complex_0, '0']
 - [blocks_wavfile_source_0, '1', blocks_float_to_complex_0, '1']
-- [blocks_float_to_complex_0, '0', rational_resampler_xxx_0, '0']
 - [rational_resampler_xxx_0, '0', osmosdr_sink_0, '0']
 - [rational_resampler_xxx_0, '0', qtgui_freq_sink_x_0, '0']
 
