@@ -76,11 +76,31 @@ Only one should normally be enabled at a time, on RX1.
    `thetisctl freedv-reporter watch` to auto-tune to live activity reported on
    [FreeDV Reporter](https://qso.freedv.org)).
 5. Check the matching decode box. Audio passes through unmodified until sync is
-   achieved, then switches to decoded speech.
+   achieved, then switches to decoded speech. For 700E, decoded volume is tuned to
+   roughly match passthrough loudness (see "Known issues / recent changes" below) —
+   expect a similar level, not a sudden drop, when sync engages.
 
 **Remote/CAT status:** the 700E sync/SNR state is also exposed over CAT as `ZZFD`
 (run flag) / `ZZFS` (sync/SNR query), and RADE V1 status via `ZZDW`/`ZZDZ`, if you're
 scripting or monitoring remotely (e.g. via `thetisctl`).
+
+## Known issues / recent changes
+
+- **700E decoded volume (fixed 2026-08-16).** Earlier builds dropped noticeably
+  quieter than passthrough audio the moment sync engaged (~28 dB quieter, RMS) —
+  a jarring "why did it just go quiet" effect. Fixed by raising the decoder's
+  internal speech gain; live-verified numbers: decoded speech now runs
+  **-30.6 dBFS RMS / -6.0 dBFS peak** against passthrough's **-27.1 dBFS RMS /
+  -20.2 dBFS peak** — RMS loudness is now essentially matched (within ~3.5 dB),
+  and peaks are actually louder than passthrough's. No clipping observed. This
+  was verified against one test signal, not yet broadly on-air across varying
+  signal strengths — if 700E decode sounds unexpectedly loud or quiet on real
+  traffic, that's worth reporting rather than assuming it's expected.
+- **RX-only.** Neither mode transmits. There is no FreeDV/RADE keying path in
+  this build yet.
+
+See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
+issues still open.
 
 ## See also
 

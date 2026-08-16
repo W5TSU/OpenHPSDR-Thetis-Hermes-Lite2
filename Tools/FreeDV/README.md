@@ -42,6 +42,16 @@ writes `SDRQuickAudio.wav`, a ready-named copy for Thetis's quick-Play button.)
 3. Press the console's quick **Play** button. Expect the modem waveform on the
    panadapter, warble → decoded voice, and a green "SYNC SNR x.x dB" label.
 
+**If Quick Play does nothing** (button press has no effect, nothing plays):
+Thetis ships with Quick Play disabled by default at every startup
+(`console.resx`'s `ckQuickPlay.Enabled` defaults `False` — a still-open bug,
+not fixed as of this writing). Unstick it once per Thetis session by toggling
+Quick Record on then off — `thetisctl cat quickrec on` then
+`thetisctl cat quickrec off` if scripting, or the equivalent from the console
+itself. (A second, related bug — the same disabled state coming back
+*mid-session* after repeated on/off cycling — was fixed 2026-08-16, `8c1f07b0`;
+only the startup-default case above still needs the manual kick.)
+
 The generated `.wav`/`.raw` files are gitignored — only the generator is
 tracked.
 
