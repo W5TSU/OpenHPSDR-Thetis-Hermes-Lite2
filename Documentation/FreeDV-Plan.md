@@ -644,19 +644,87 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
    to sync via Quick-Play, now also proven to sync over real RF on the
    correct sideband), but the VAC cross-check remains open if wanted as an
    independent second confirmation.
-7. ⬜ **Iterate on findings** (once sync is achieved):
-   - decoded speech level — `FDV_SPEECH_GAIN` (0.30f, fdv.c) vs passthrough/SSB
-     loudness
-   - priming latency — ~125 ms buffer before decode engages; listen for swallowed
-     first syllables; underrun resets priming → watch for passthrough/voice
-     flapping on fades (fix would be sync-loss hysteresis, a Phase 4 item)
-   - robustness — change DSP buffer size/rate, switch bands/modes, toggle checkbox
-     rapidly, MOX cycles: no crash, sync recovers, run flag survives rebuilds
-   - CPU load — checkbox on vs off (expect <1%); persistence — restart with
-     checkbox on, still decoding
+7. 🟢 **Iterate on findings** (once sync is achieved) — run against `hl2winbox`
+   (`git:1c185f14`), 2026-08-16:
+   - ✅ **Robustness** — 8 rapid `freedv on`/`off` cycles, then mode switches
+     (DIGU→USB→LSB→DIGL→DIGU) and band switches (20→40→20) all while decode
+     was enabled, all via CAT. Same PID throughout, every `freedv status`
+     call answered normally, nothing hung. MOX cycling (3× real PTT on/off,
+     2 s hold, decode enabled, no mic audio) also clean — `TX: false`
+     confirmed after each, same PID after. DSP buffer size/sample rate
+     changes are Setup-tab-only (no CAT/TCI hook) — not exercised remotely,
+     still open if wanted.
+   - 🟡 **CPU load** — 10×1 s `typeperf` samples of Thetis.exe's
+     `% Processor Time`, freedv off vs on: 95.96% mean off, 97.20% mean on
+     (+1.2 points), inside the ~9-point sample-to-sample jitter this counter
+     already shows on its own (this box's baseline DSP/audio threads already
+     run near a full core). No statistically meaningful delta — consistent
+     with "<1%," but the noise floor is wide enough that a small real cost
+     could be hiding in it.
+   - ✅ **Priming latency / swallowed syllables** — captured decoded RX audio
+     via `tci rx-audio capture` alongside a live `freedv status` poll loop
+     during a real Quick-Play run of the golden 700E bench file. Sync
+     reported on the very first 1 s poll (SNR 12.6 dB); the capture shows
+     ~1.2 s of near-silence (background/pre-content), then a **smooth,
+     natural voice attack** (10 ms-resolution RMS ramps from -90 dBFS to a
+     syllable peak over ~30 ms, no hard truncation) — no evidence of a
+     swallowed first syllable. Consistent with sync + the ~125 ms priming
+     buffer completing well under a second; the visible lead-in is most
+     likely the bench speech clip's own leading pause, not decode latency.
+   - 🟡 **Decoded speech level vs passthrough** — same capture, freedv-on
+     decoded segment vs a freedv-off passthrough capture of the identical
+     file/signal chain: decoded speech **-55.6 dBFS RMS / -31.5 dBFS peak**
+     vs raw modem passthrough **-27.1 dBFS RMS / -20.2 dBFS peak** — decoded
+     audio is **~28.5 dB quieter on average (≈11 dB quieter at peaks)** than
+     what the operator hears while tuning. Envelope std/mean confirms the
+     character difference too (0.761 decoded/bursty vs 0.024
+     passthrough/flat — same discriminator used for the earlier RADE V1
+     local-speaker diagnosis). This is a real, likely-annoying UX gap:
+     `FDV_SPEECH_GAIN` (0.30f) leaves decoded audio much softer than the
+     signal an operator was just listening to — worth a Phase 4 revisit
+     (raise the gain, or add output-level normalization/AGC on the decoded
+     stage) rather than leaving operators to ride the volume knob every time
+     sync engages/drops.
+   - 🔴 **Persistence — negative, and re-discovered a standing bug along the
+     way.** First attempt: `quickplay on` reported `true` and held for the
+     full hold but **`freedv status` never synced** — traced via the box's
+     own `fdv_debug_events.txt` to the **same `ckQuickPlay.Enabled`-stuck-false
+     bug already documented above** (last tripped by this session's own
+     `quickrec on/off` cycles during MOX-adjacent testing); the CAT setter
+     flips `Checked` but the handler bails out (`if (!ckQuickPlay.Enabled)
+     return;`) so nothing actually plays. Confirmed no fix has landed for
+     this yet. Re-ran the `quickrec on/off` unstick workaround, re-`scp`'d
+     the golden file back over the now-clobbered `SDRQuickAudio.wav` (the
+     workaround overwrites it with a ~0.4 s scratch capture, exactly as
+     documented above), and the retest synced cleanly for the full 30 s
+     hold (SNR 11–14 dB) — so this was a test-environment gotcha, not a new
+     regression. Then, for the actual persistence check: set `freedv on`,
+     killed and relaunched Thetis.exe on `hl2winbox` (a plain `Stop-Process
+     -Force` had to be replaced with a scheduled-task-based relaunch —
+     `Start-Process` over SSH crashes immediately, .NET exit code
+     `0xE0434352`/unhandled CLR exception, because an SSH/service-context
+     process has no interactive desktop or audio session; injecting via a
+     temporary interactive-logon scheduled task worked). **Result: `freedv`
+     read back `false` after the restart** — the checkbox did not come back
+     checked, contrary to Phase 2's "(auto-persisted)" note. Caveat: the
+     first kill was a hard `Stop-Process -Force`, so a follow-up attempt to
+     retest via a graceful close (`CloseMainWindow()`) was tried instead —
+     it found no valid main-window handle (empty `MainWindowTitle`, never
+     exited within 15 s) and couldn't be made to trigger a clean shutdown
+     remotely, so a true graceful-exit persistence test remains unconfirmed
+     either way. Practical read: `chkFreeDVDecode_CheckedChanged`
+     (`setup.cs`) only sets `RXAFDVRun` in memory with no visible immediate
+     settings write, so whether this is "never actually persisted" or "only
+     flushed on a clean exit, and both restarts here were effectively
+     unclean" is still open — but either way, an operator hitting an
+     unplanned Thetis restart today will find FreeDV decode off afterward.
+     Box state fully restored afterward (freq/mode back to 14236000 DIGU,
+     freedv off, matching how it was found).
 
 **Exit criteria**: bench decode + at least one live off-air decode with believable
-SNR readings; findings fixed or recorded as Phase 4 work.
+SNR readings — **met** (2026-08-15 HackRF positive control). Iteration findings
+above are recorded; the two 🔴/🟡 items (persistence, speech level) are real
+open items for Phase 4, not blockers on Phase 3 itself.
 
 ### ⬜ Phase 4 — prototype wrap-up
 
