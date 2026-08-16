@@ -747,6 +747,25 @@ PORT int GetRadaeClip(int rx)
     return ((now - t) >= 0 && (now - t) < RADAE_CLIP_HOLD_MS) ? 1 : 0;
 }
 
+/* W5TSU: DEBUG - added while chasing a "GetRadaeRxLevelDb always -120" bug:
+ * xradae_rx() early-returns before the level computation if g_initialized is
+ * false, rade_open() silently failed for this rx (g_rade[rx] == NULL -- only
+ * ever logged via an ephemeral OutputDebugStringA, nothing persistent), or
+ * rx >= pcm->cmRCVR. All three would look identical from ZZDW/ZZDZ/ZZDT
+ * alone (enabled=true, sync=false, level=-120 forever) since none of those
+ * getters can tell "never actually ran" apart from "ran and saw silence."
+ * Remove or keep behind a debug flag once the underlying bug is found. */
+PORT int GetRadaeDiag(int rx)
+{
+    int initialized  = g_initialized ? 1 : 0;
+    int handle_valid = (radae_rx_valid(rx) && g_rade[rx] != NULL) ? 1 : 0;
+    int rx_in_range  = (pcm != NULL && rx < pcm->cmRCVR) ? 1 : 0;
+    int outsize      = (radae_rx_valid(rx) && rx_in_range) ? pcm->rcvr[rx].ch_outsize : 0;
+    if (outsize < 0) outsize = 0;
+    if (outsize > 9999) outsize = 9999;
+    return (outsize * 10) + (initialized * 4) + (handle_valid * 2) + rx_in_range;
+}
+
 PORT int GetRadaeRemoteCallsign(int rx, char* dst, int max)
 {
     int n = 0;
