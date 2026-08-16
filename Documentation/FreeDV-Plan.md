@@ -772,14 +772,36 @@ open items for Phase 4, not blockers on Phase 3 itself.
   captures until noticed and powered back on; worth remembering as a
   first-check next time a fresh relaunch looks broken.
 
-### ⬜ Phase 4 — prototype wrap-up
+### 🟢 Phase 4 — prototype wrap-up
 
-- Docs: FreeDV-native section in `Documentation/`, code_documentation regeneration
-  (`fdv.c` needs a `CODE_OUTLINE.md` table row first), release-notes entry
-- Revert the Thetis-Test installer identity (see above) so master's MSI remains the
-  production installer
-- Decision gate: merge to master as an experimental feature in the next release,
-  or keep maturing on the branch
+- ✅ **Decision gate resolved (2026-08-16): keep maturing on the branch, not
+  merging to master yet.** Rationale: the persistence bugs (`freedv`/`power`
+  checkboxes don't survive a restart — item 7 above) are still open, RADE V1
+  hasn't synced against real off-air traffic yet (only a known-good HackRF
+  signal), and `FDV_SPEECH_GAIN=0.75f` is verified against one test signal,
+  not re-checked against real on-air variety. None of these are blocking for
+  *further branch work*, but they're the kind of thing worth closing before
+  calling this release-quality. Revisit this gate once those settle.
+- ⬜ **Revert the Thetis-Test installer identity — deferred, not done.**
+  Only actually needed right before a real merge to master (it's what keeps
+  `Thetis-Test` side-by-side-installable on `hl2winbox` without touching the
+  production install in the meantime) — doing it now would break the exact
+  test setup this whole project has relied on. Do this as the last step
+  before merging, not before.
+- ⬜ **Release-notes entry — deferred, not done.** Only relevant at the
+  actual release/tag step; nothing to write until there's a release this
+  ships in.
+- ✅ Docs: FreeDV-native section in `Documentation/` — done via
+  `Documentation/FreeDV-User-Guide.md` (tech-writer agent, 2026-08-16,
+  `7d19cb6d`/`6eb18ede`) — 700E vs RADE V1 explainer + how to use it + known
+  issues.
+- ✅ **code_documentation regeneration — done (2026-08-16, `53d65ab2`).**
+  Graph rebuilt to pick up the 8 new source files added since the last
+  regen (`fdv.c`/`.h`, `radae.c`/`.h`, `radae_micdsp.c`/`.h`,
+  `r8brain_wrap.cpp`/`.h`); `CODE_OUTLINE.md` got a new "Digital voice
+  (FreeDV)" wdsp subsection plus three new ChannelMaster rows; all 285
+  per-file pages regenerated (up from 281). Verified: no broken links, no
+  stale `docs/` refs, every outlined filename exists on disk.
 
 ## Stage B — Full FDV mode *(future, after the prototype proves out)*
 
