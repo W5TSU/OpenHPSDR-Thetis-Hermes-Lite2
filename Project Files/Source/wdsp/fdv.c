@@ -37,7 +37,16 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 #define FDV_GAIN_MAX_DB     (140.0f)
 #define FDV_GAIN_SMOOTH     (0.3f)
 #define FDV_SHORT_CEIL      (32000.0f)
-#define FDV_SPEECH_GAIN     (0.30f)     // decoded speech level into midbuff
+// W5TSU: decoded speech level into midbuff. Was 0.30f -- measured live
+// against hl2winbox (2026-08-16, FreeDV-Plan.md Phase 3 item 7) at ~28.5 dB
+// RMS / ~11 dB peak quieter than the raw modem passthrough audio an operator
+// hears while tuning, a jarring drop right when sync engages. Raised to
+// 0.75f (~+8 dB): ceiling stays at FDV_SPEECH_GAIN itself (speech_out is
+// int16-range, so max amplitude here is FDV_SPEECH_GAIN * 32767/32768), i.e.
+// ~-2.5 dBFS worst case -- still well short of clipping, no limiter added.
+// Re-measure after this lands; 0.75f is a reasoned first pass, not a
+// re-verified final value.
+#define FDV_SPEECH_GAIN     (0.75f)
 
 // W5TSU: DEBUG - temporary diagnostic dump state, remove before merge.
 // Process-lifetime counters, not per-channel: reset via ResetRXAFDVDebug()
