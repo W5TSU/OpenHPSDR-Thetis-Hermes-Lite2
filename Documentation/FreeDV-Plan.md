@@ -726,6 +726,52 @@ SNR readings — **met** (2026-08-15 HackRF positive control). Iteration finding
 above are recorded; the two 🔴/🟡 items (persistence, speech level) are real
 open items for Phase 4, not blockers on Phase 3 itself.
 
+### ✅ Two of item 7's findings fixed and live-verified, same day (2026-08-16)
+
+- **`8c1f07b0` — the `ckQuickPlay.Enabled`-stuck-false race, fixed.** Root
+  cause: `arp_PlayingingChanged`/`arp_RecordingChanged`'s "quick" branches
+  trusted their async playing/recording callback unconditionally. A fast
+  on/off cycle (exactly what CAT scripting does) could have the "started"
+  callback for an already-stopped session arrive late and re-disable
+  `ckQuickPlay` with no matching "stopped" event ever following. Fixed by
+  guarding both branches on the checkbox's own current `Checked` state, so a
+  stale event can't override a stop that's already happened. **This is a
+  distinct bug from the standing `console.resx`-default-`Enabled=False`-at-
+  startup issue (`dce3fccf`/`359b44f5`) — that one is still open, still
+  needs the `quickrec on/off` kick once per Thetis session.** Verified via
+  the new debug logging added to the "quick" branches: 5 rapid `quickrec
+  on`/`off` cycles back-to-back all paired cleanly, ending `Enabled=true`,
+  followed by a real Quick-Play session running its full duration and
+  syncing with no workaround needed.
+- **`c8033819` — `FDV_SPEECH_GAIN` 0.30f → 0.75f, fixed and re-measured.**
+  Redid the same passthrough-vs-decoded capture methodology from item 7
+  against the new build: decoded speech now **-30.6 dBFS RMS / -6.0 dBFS
+  peak** (was -55.6 / -31.5 dBFS) vs passthrough's -27.1 / -20.2 dBFS —
+  RMS now within 3.5 dB of passthrough (the "why did it just go quiet" gap
+  is closed) and peaks now ~14 dB *louder* than passthrough peaks. No
+  clipping (checked directly: zero samples above 0.5 out of a 0.499 peak).
+  The improvement is larger than the raw 0.30→0.75 gain-ratio math alone
+  predicts (~8 dB expected, ~25 dB observed) — `fdv.c`'s own constant isn't
+  the whole story once the signal passes through the rest of the RXA output
+  chain, so the commit's own "~-2.5 dBFS ceiling" estimate was too narrow a
+  model; the measured numbers are ground truth over that math. Verified
+  against one test signal (the golden 700E bench file) only — not a final
+  tuned value, worth revisiting if real on-air signals land differently.
+- Both deployed via the established safe path (CI `workflow_dispatch` on
+  `FreeDV` → MSI admin-extract → `robocopy` sync, not a real install) and
+  verified against a fresh Thetis.exe relaunch on `hl2winbox`
+  (`git:d93e3bb0`). Relaunching remotely needed a workaround of its own:
+  Windows OpenSSH's session has no interactive desktop/audio, so a direct
+  `Start-Process` crashes immediately (.NET exit code `0xE0434352`); a
+  temporary interactive-logon scheduled task (`Register-ScheduledTask
+  -Principal (New-ScheduledTaskPrincipal -LogonType Interactive) ->
+  Start-ScheduledTask -> Unregister-ScheduledTask`) launches into the real
+  session cleanly. Also confirmed **`power on` doesn't survive a restart
+  either** (same pattern as `freedv`'s checkbox from item 7 above) — the
+  radio engine came up off, silently producing "no sync"/0-sample TCI
+  captures until noticed and powered back on; worth remembering as a
+  first-check next time a fresh relaunch looks broken.
+
 ### ⬜ Phase 4 — prototype wrap-up
 
 - Docs: FreeDV-native section in `Documentation/`, code_documentation regeneration
