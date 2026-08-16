@@ -1112,9 +1112,46 @@ at the time — every prior attempt really had failed). RX-only RADE V1 decode
 through Thetis's real ChannelMaster/`radae.c` pipeline is now positively
 confirmed against a real, known-good, independently-generated signal, over
 real RF. Remaining open: `xradae_tx` (still unwired), any persistent/real UI
-beyond the Setup-tab checkbox, CAT/TCI exposure beyond `ZZDW`/`ZZDZ`, and
-whether this generalizes beyond one short clip (worth a longer/repeated test
-if wanted, though the signal that exists is only 14.85 s).
+beyond the Setup-tab checkbox, and CAT/TCI exposure beyond `ZZDW`/`ZZDZ`.
+
+### ✅ Longer-signal retest, same session — sustained sync, not just a brief lock
+
+The 14.85 s clip above answered "does it sync at all," but not "does it hold
+up." Built a proper long-form test signal to check:
+
+- **`freedv -ut tx -utmode RADEV1 -txfile <112s speech> -txoutfile <modem>`
+  truncates to ~15 s of output regardless of input length** — confirmed this
+  isn't proportional (a 10 s input correctly produced 11.37 s of output, but
+  the full 112 s speech input still only produced ~15 s), so it's some kind of
+  fixed limit in freedv-gui's own `-txfile` UT-mode handling, not a simple
+  timing thing. Not root-caused (third-party code, diminishing returns to dig
+  further) — worked around instead: split the 112 s speech into ten ~12 s
+  chunks (safely under the apparent threshold, confirmed each one completes
+  proportionally), ran freedv-gui's TX pipeline on each separately, concatenated
+  the ten real RADE V1-encoded outputs into one 126.3 s file. Spot-checked
+  amplitude statistics across the full length to confirm it's genuine, varying
+  content throughout, not silence or a repeated loop.
+- Converted the same way (`make_fdv_test_iq.py --input-wav --peak-dbfs -6`),
+  same sideband-fixed `tx_radev1_hackrf.grc` (now pointing at
+  `radev1_test_iq_long.wav`), same 20 dB VGA gain.
+- **Result: SYNC held continuously for 14 consecutive polls (~112 s) of the
+  126.3 s transmission**, SNR ranging 5–14 dB and riding through the source
+  audio's natural level variation (dropping to 5–6 dB exactly where the
+  amplitude spot-check above found quieter passages, then recovering to
+  12–14 dB) without ever dropping sync — dropping to "no sync" only right as
+  the transmission itself ended. Over the air, licensed operator present,
+  ID'd (single ID sufficient, well under the 10-minute re-ID threshold for a
+  ~2-minute transmission).
+
+This is a materially stronger result than the first pass: sustained lock
+through real signal-level variation over close to two minutes, not just an
+8-second burst. Between this and the two RADE V1 real-traffic captures with
+live polling (Stage C, above), the branch's RX-only RADE V1 path has now been
+exercised against both a known-good signal (sync achieved, holds) and real
+off-air traffic (no sync, on the specific captures tried) — consistent with a
+working decoder that simply hasn't yet been tested against off-air RADE V1
+traffic that happens to be strong/clean enough to lock, rather than a broken
+one.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
