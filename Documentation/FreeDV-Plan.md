@@ -1060,6 +1060,62 @@ reflects the other's state live. Not yet persisted across restarts (matches
 `RXRadaeEnabled`'s existing non-persisted behavior) and RX1-only, same scope as
 everything else RADE in this branch so far.
 
+### ✅ First confirmed RADE V1 decode over real RF (2026-08-15) — "not confirmed working" resolved
+
+Immediately after the 700E HackRF positive control succeeded (above), applied
+the exact same approach to RADE V1 — but this time there was no ready-made
+known-good signal to transmit, since (per the caveat that's followed RADE V1
+through this whole project) nothing had ever confirmed the modem/decode chain
+worked *at all*, not even offline. Closed that gap directly:
+
+- **Built a real RADE V1 encoder**: the local `~/Development/freedv-gui`
+  checkout (a genuine, actively-developed reference implementation, not this
+  project's own port) already has one — confirmed earlier via its own
+  `fullduplex_RADEV1` self-test. Configured (`cmake`, system wxWidgets 3.2.9 —
+  much faster than building it from source, `UNITTEST=1`) and built
+  (`make -j16`) after installing the documented Ubuntu dependencies
+  (`libwxgtk3.2-dev` et al. — needed the operator's `sudo`, since that can't be
+  done non-interactively; written to a throwaway `~/install_freedv_gui_deps.sh`
+  for them to run). `rade_open` confirmed real built-in DNN weights loaded
+  (`V1 n_features_in=432 Nmf=960 Neoo=1152 n_eoo_bits=180`).
+- **Generated real, known-good RADE V1 modem audio**, not synthetic: `freedv
+  -ut tx -utmode RADEV1 -txfile <speech> -txoutfile <modem>` pipes an actual
+  wav through freedv-gui's own TX pipeline and records the RADE-encoded
+  result — no PulseAudio virtual-cable dance needed, unlike its `test_zeros.sh`
+  harness (that's for a different, full-loopback test). Speech source:
+  codec2's standard `ve9qrp.raw` test voice, vendored in the freedv-gui
+  checkout (`codec2-1.2.0/raw/`), wrapped in a WAV header via `sox`. Result:
+  14.85 s of real, varying, broadband RADE V1 audio at a healthy -4 dBFS peak
+  (confirmed by inspecting the actual sample statistics) — shorter than the
+  112 s speech input given to it (not yet root-caused why; freedv-gui's own
+  internal behavior, third-party code, out of scope to chase further when the
+  output is already real and sufficient for a sync test).
+- **Converted to I/Q** via `make_fdv_test_iq.py --input-wav ... --peak-dbfs -6`
+  — passing `--peak-dbfs -6` explicitly this time, applying the DAC-quantization
+  lesson from the 700E flowgraph (above) at generation time instead of needing
+  a separate gain-boost block afterward.
+- **New flowgraph, `tx_radev1_hackrf.grc`**: built directly from the *fixed*
+  700E template — sideband conjugate fix included from the start (the
+  inversion is a property of the HackRF TX + HL2 RX hardware chain, not the
+  FreeDV mode, so it was expected to apply identically), 20 dB VGA gain
+  (the level that worked for 700E) as the starting point.
+- **Result: SYNC on the first attempt** — SNR 7–8 dB held across 4 consecutive
+  polls (~8 s) of the ~14.85 s transmission, dropping to "no sync" exactly as
+  the signal ended. Over the air, licensed operator present, ID'd. No repeat
+  attempts needed, unlike 700E's three tries — both known failure modes
+  (quantization, sideband) were already fixed going in.
+
+**This resolves the standing "not confirmed working" caveat** that's applied
+to RADE V1 throughout this whole document, including as recently as this same
+session (see the "So the RADE V1 receive is working?" exchange, answered "no"
+at the time — every prior attempt really had failed). RX-only RADE V1 decode
+through Thetis's real ChannelMaster/`radae.c` pipeline is now positively
+confirmed against a real, known-good, independently-generated signal, over
+real RF. Remaining open: `xradae_tx` (still unwired), any persistent/real UI
+beyond the Setup-tab checkbox, CAT/TCI exposure beyond `ZZDW`/`ZZDZ`, and
+whether this generalizes beyond one short clip (worth a longer/repeated test
+if wanted, though the signal that exists is only 14.85 s).
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
