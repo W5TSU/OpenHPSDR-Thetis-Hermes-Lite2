@@ -614,13 +614,36 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      underrun-resets-priming behavior noted in step 7 below) → 12.7 dB →
      14.1 dB, climbing and holding through to the end of the transmission.
      First-ever confirmed 700E decode through Thetis's actual RX chain
-     (antenna → HL2 → ChannelMaster → `fdv.c`), not a synthetic injection.
+     (antenna → HL2 → ChannelMaster → `fdv.c`), not a synthetic injection —
+     **but only after the operator found it on LSB/DIGL, not the expected
+     USB/DIGU.**
+   - **Sideband bug, found from that observation**: `make_fdv_test_iq.py`'s
+     own conjugate correction (`-iq.imag`, its comment: "a straight analytic
+     signal displays in the lower sideband, so write the conjugate to land
+     USB") was calibrated and verified specifically for Quick-Play's direct
+     software injection point — it says nothing about a real hardware TX/RX
+     path. Routing the same wav through a real HackRF TX up-converter and
+     back in through the HL2's own RX front end adds two more independent
+     mixer stages, and evidently one of them flips the sideband again on top
+     of Quick-Play's already-applied correction. **Fix**: added a
+     `blocks_conjugate_cc` in `tx_700e_hackrf.grc`, right after the I/Q
+     assembly, to cancel that extra inversion back out — chosen over just
+     switching to LSB/DIGL to keep this flowgraph consistent with every other
+     place in the repo that assumes DIGU (README, SKILL.md,
+     `make_fdv_test_iq.py`'s own docstring), rather than carrying a
+     HackRF-TX-specific exception.
+   - **Pass 4, same 20 dB VGA gain, sideband fix applied, Thetis back on
+     DIGU**: **SYNC held for 5 consecutive polls (~75 s)**, SNR 2.4–4.4 dB,
+     dropping only as the transmission itself ended. Confirms the fix and
+     gives a second, independent, correctly-configured confirmation of live
+     700E decode through the real RX chain.
 
    Ground truth cross-check against the external FreeDV GUI app (VAC path,
    §7) was not done this session — the HackRF positive-control result above
    is arguably stronger ground truth already (a signal proven, byte-for-byte,
-   to sync via Quick-Play, now also proven to sync over real RF), but the VAC
-   cross-check remains open if wanted as an independent second confirmation.
+   to sync via Quick-Play, now also proven to sync over real RF on the
+   correct sideband), but the VAC cross-check remains open if wanted as an
+   independent second confirmation.
 7. ⬜ **Iterate on findings** (once sync is achieved):
    - decoded speech level — `FDV_SPEECH_GAIN` (0.30f, fdv.c) vs passthrough/SSB
      loudness

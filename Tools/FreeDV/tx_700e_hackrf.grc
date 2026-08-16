@@ -553,9 +553,35 @@ blocks:
     coordinate: [624, 300.0]
     rotation: 0
     state: enabled
+- name: blocks_conjugate_cc_0
+  id: blocks_conjugate_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Sideband fix, found live 2026-08-15: with this signal transmitted
+      over real RF (HackRF TX -> HL2 RX) instead of Quick-Play''s direct
+      injection, it synced on LSB/DIGL instead of the expected USB/DIGU --
+      make_fdv_test_iq.py''s own conjugate (-iq.imag) was calibrated for
+      Quick-Play''s injection point only, and the HackRF TX + HL2 RX mixer
+      stages apparently add one more spectral inversion on top of that. This
+      block re-conjugates to cancel it back out, landing correctly on
+      USB/DIGU again -- keeps this flowgraph consistent with every other
+      place in this repo that assumes DIGU (README, SKILL.md,
+      make_fdv_test_iq.py''s own docstring), rather than carrying a
+      HackRF-TX-specific LSB exception.'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [624, 380.0]
+    rotation: 0
+    state: enabled
 
 connections:
-- [blocks_float_to_complex_0, '0', blocks_multiply_const_vxx_0, '0']
+- [blocks_float_to_complex_0, '0', blocks_conjugate_cc_0, '0']
+- [blocks_conjugate_cc_0, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_multiply_const_vxx_0, '0', rational_resampler_xxx_0, '0']
 - [blocks_wavfile_source_0, '0', blocks_float_to_complex_0, '0']
 - [blocks_wavfile_source_0, '1', blocks_float_to_complex_0, '1']
