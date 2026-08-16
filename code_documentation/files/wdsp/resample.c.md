@@ -10,7 +10,9 @@
   - `wdsp/RXA.c` (calls ×15)
   - `wdsp/TXA.c` (calls ×15)
   - `ChannelMaster/aamix.c` (calls ×8)
+  - `ChannelMaster/radae.c` (calls ×7)
   - `wdsp/snb.c` (calls ×6)
+  - `wdsp/fdv.c` (calls ×4)
 - Uses (outgoing references to other files):
   - `wdsp/utilities.c` (calls ×3)
   - `wdsp/fir.c` (calls ×2)
@@ -64,25 +66,25 @@ _Each entry: symbol — line — signature, then a description (from source comm
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 - **`create_resampleF()`** — L243 — `RESAMPLEF create_resampleF ( int run, int size, float* in, float* out, int in_rate, int out_rate)`
   Constructor for the `resampleF` block: allocates its state/buffers and computes initial coefficients.
-  Called by: `create_resampleFV()` (same file)
+  Called by: `create_resampleFV()` (same file), `fdv_alloc_streams()` (`wdsp/fdv.c`)
 - **`destroy_resampleF()`** — L289 — `void destroy_resampleF (RESAMPLEF a)`
   Destroys the `resampleF` block, freeing its allocated buffers.
-  Called by: `destroy_resampleFV()` (same file)
+  Called by: `destroy_resampleFV()` (same file), `fdv_free_streams()` (`wdsp/fdv.c`)
 - **`flush_resampleF()`** — L296 — `void flush_resampleF (RESAMPLEF a)`
   Flushes (zeroes) the `resampleF` block’s internal buffers/state.
-  No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
+  Called by: `fdv_reset()` (`wdsp/fdv.c`)
 - **`xresampleF()`** — L303 — `int xresampleF (RESAMPLEF a)`
   Runs the `resampleF` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
-  Called by: `xresampleFV()` (same file)
+  Called by: `xresampleFV()` (same file), `xfdv()` (`wdsp/fdv.c`)
 - **`create_resampleFV()`** — L341 — `PORT void* create_resampleFV (int in_rate, int out_rate)`
   Constructor for the `resampleFV` block: allocates its state/buffers and computes initial coefficients.
-  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+  Called by: `rebuild_rx_resamplers()` (`ChannelMaster/radae.c`), `rebuild_tx_resamplers()` (`ChannelMaster/radae.c`)
 - **`xresampleFV()`** — L347 — `PORT void xresampleFV (float* input, float* output, int numsamps, int* outsamps, void* ptr)`
   Runs the `resampleFV` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
-  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+  Called by: `xradae_rx()` (`ChannelMaster/radae.c`), `xradae_tx()` (`ChannelMaster/radae.c`)
 - **`destroy_resampleFV()`** — L357 — `PORT void destroy_resampleFV (void* ptr)`
   Destroys the `resampleFV` block, freeing its allocated buffers.
-  Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
+  Called by: `rebuild_rx_resamplers()` (`ChannelMaster/radae.c`), `rebuild_tx_resamplers()` (`ChannelMaster/radae.c`), `destroy_radae()` (`ChannelMaster/radae.c`)
 
 ---
 _Generated from the graphify knowledge graph (`graphify-out/graph.json`); line numbers refer to `Project Files/Source/wdsp/resample.c`. Regenerate after code changes with `graphify update "Project Files/Source"` followed by `python code_documentation/tools/gen_file_docs.py`._

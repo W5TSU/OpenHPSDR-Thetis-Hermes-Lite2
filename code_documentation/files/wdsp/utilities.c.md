@@ -19,11 +19,11 @@
   - `wdsp/cfcomp.c` (calls ×4)
   - `wdsp/nbp.c` (calls ×4)
   - `wdsp/rnnr.c` (calls ×4)
-  - …and 62 more files
+  - …and 63 more files
 - Uses (outgoing references to other files):
   - `wdsp/fir.c` (calls ×3)
   - `wdsp/comm.h` (imports ×1)
-- Most-referenced symbols from other files: `malloc0()` (×180)
+- Most-referenced symbols from other files: `malloc0()` (×183)
 
 ## Outline
 
@@ -32,7 +32,7 @@ _Each entry: symbol — line — signature, then a description (from source comm
 ### Functions
 
 - **`malloc0()`** — L36 — `PORT void *malloc0 (int size)`
-  Called by: `analyze_bandpass_filter()` (same file), `WriteAudioWDSP()` (same file), `WriteScaledAudioFile()` (same file), `WriteScaledAudio()` (same file), `model_bandpass()` (same file), `create_bfcu()` (same file) — and 181 more
+  Called by: `analyze_bandpass_filter()` (same file), `WriteAudioWDSP()` (same file), `WriteScaledAudioFile()` (same file), `WriteScaledAudio()` (same file), `model_bandpass()` (same file), `create_bfcu()` (same file) — and 184 more
 - **`NewCriticalSection()`** — L47 — `PORT void *NewCriticalSection()`
   Called from C# via P/Invoke — declared/wrapped in `Console/win32.cs`.
 - **`DestroyCriticalSection()`** — L55 — `PORT void DestroyCriticalSection (LPCRITICAL_SECTION cs_ptr)`

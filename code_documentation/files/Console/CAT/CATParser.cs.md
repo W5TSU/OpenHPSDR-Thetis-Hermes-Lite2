@@ -13,7 +13,7 @@
   - `Console/CAT/CATCommands.cs` (references ×1)
   - `Console/Midi2CatCommands.cs` (references ×1)
 - Uses (outgoing references to other files):
-  - `Console/CAT/CATCommands.cs` (calls ×350)
+  - `Console/CAT/CATCommands.cs` (calls ×357)
   - `Console/Andromeda/Andromeda.cs` (references ×1)
 - Most-referenced symbols from other files: `.Get()` (×10)
 
@@ -43,7 +43,7 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`.ParseExtended()`** — L596 — `private string ParseExtended()`
   Parses extended.
   Called by: `.Get()` (same file)
-- **`.ProcessError()`** — L1595 — `private string ProcessError(string error)`
+- **`.ProcessError()`** — L1616 — `private string ProcessError(string error)`
   Processes error.
   Called by: `.Get()` (same file), `.ParseExtended()` (same file)
 

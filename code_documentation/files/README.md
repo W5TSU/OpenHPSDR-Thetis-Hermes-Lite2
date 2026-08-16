@@ -43,7 +43,7 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`Console/clsThetisSkinService.cs`](Console/clsThetisSkinService.cs.md) — 13 functions/methods
 - [`Console/database.cs`](Console/database.cs.md) — 110 functions/methods
 - [`Console/frmDBMan.cs`](Console/frmDBMan.cs.md) — 30 functions/methods
-- [`Console/setup.cs`](Console/setup.cs.md) — 2225 functions/methods
+- [`Console/setup.cs`](Console/setup.cs.md) — 2229 functions/methods
 - [`Console/ucTunestepOptionsGrid.cs`](Console/ucTunestepOptionsGrid.cs.md) — 5 functions/methods
 - [`Console/xvtr.cs`](Console/xvtr.cs.md) — 42 functions/methods
 
@@ -84,7 +84,7 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`Console/FilterForm.cs`](Console/FilterForm.cs.md) — 19 functions/methods
 - [`Console/PSForm.cs`](Console/PSForm.cs.md) — 70 functions/methods
 - [`Console/cmaster.cs`](Console/cmaster.cs.md) — 155 functions/methods
-- [`Console/dsp.cs`](Console/dsp.cs.md) — 259 functions/methods
+- [`Console/dsp.cs`](Console/dsp.cs.md) — 267 functions/methods
 - [`Console/eqform.cs`](Console/eqform.cs.md) — 49 functions/methods
 - [`Console/filter.cs`](Console/filter.cs.md) — 9 functions/methods
 - [`Console/frmBandwidth.cs`](Console/frmBandwidth.cs.md) — 5 functions/methods
@@ -126,6 +126,7 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`wdsp/emph.c`](wdsp/emph.c.md) — 20 functions/methods
 - [`wdsp/eq.c`](wdsp/eq.c.md) — 36 functions/methods
 - [`wdsp/fcurve.c`](wdsp/fcurve.c.md) — 2 functions/methods
+- [`wdsp/fdv.c`](wdsp/fdv.c.md) — 20 functions/methods
 - [`wdsp/fir.c`](wdsp/fir.c.md) — 9 functions/methods
 - [`wdsp/firmin.c`](wdsp/firmin.c.md) — 33 functions/methods
 - [`wdsp/fmd.c`](wdsp/fmd.c.md) — 19 functions/methods
@@ -187,6 +188,9 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 - [`ChannelMaster/obbuffs.c`](ChannelMaster/obbuffs.c.md) — 8 functions/methods
 - [`ChannelMaster/pipe.c`](ChannelMaster/pipe.c.md) — 19 functions/methods
 - [`ChannelMaster/pro.c`](ChannelMaster/pro.c.md) — 3 functions/methods
+- [`ChannelMaster/r8brain_wrap.cpp`](ChannelMaster/r8brain_wrap.cpp.md) — 5 functions/methods
+- [`ChannelMaster/radae.c`](ChannelMaster/radae.c.md) — 56 functions/methods
+- [`ChannelMaster/radae_micdsp.c`](ChannelMaster/radae_micdsp.c.md) — 29 functions/methods
 - [`ChannelMaster/ring.c`](ChannelMaster/ring.c.md) — 10 functions/methods
 - [`ChannelMaster/router.c`](ChannelMaster/router.c.md) — 6 functions/methods
 - [`ChannelMaster/sidetone.c`](ChannelMaster/sidetone.c.md) — 28 functions/methods
@@ -213,7 +217,7 @@ One page per source file listed in [CODE_OUTLINE.md](../CODE_OUTLINE.md): the fi
 
 ## 10. CAT control and external program interfaces
 
-- [`Console/CAT/CATCommands.cs`](Console/CAT/CATCommands.cs.md) — 390 functions/methods
+- [`Console/CAT/CATCommands.cs`](Console/CAT/CATCommands.cs.md) — 395 functions/methods
 - [`Console/CAT/CATParser.cs`](Console/CAT/CATParser.cs.md) — 7 functions/methods
 - [`Console/CAT/CATTester.cs`](Console/CAT/CATTester.cs.md) — 8 functions/methods
 - [`Console/CAT/JustinIO.cs`](Console/CAT/JustinIO.cs.md) — 29 functions/methods

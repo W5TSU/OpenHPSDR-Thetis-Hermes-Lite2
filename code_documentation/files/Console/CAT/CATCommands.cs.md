@@ -7,7 +7,7 @@
 ## How this file is used
 
 - Used by (incoming references from other files):
-  - `Console/CAT/CATParser.cs` (calls ×350)
+  - `Console/CAT/CATParser.cs` (calls ×357)
   - `Console/Midi2CatCommands.cs` (calls ×273, references ×1)
 - Uses (outgoing references to other files):
   - `Console/enums.cs` (references ×7)
@@ -855,301 +855,316 @@ _Each entry: symbol — line — signature, then a description (from source comm
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.VOXOnOff()` (`Console/Midi2CatCommands.cs`)
 - **`.ZZQA()`** — L7290 — `public string ZZQA(string s)`
   Reads or sets the Quick Play button status // DH1KLM
-  Called by: `.QuickPlayOnOff()` (`Console/Midi2CatCommands.cs`)
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.QuickPlayOnOff()` (`Console/Midi2CatCommands.cs`)
 - **`.ZZQB()`** — L7313 — `public string ZZQB(string s)`
   Reads or sets the Quick Rec button status // DH1KLM
-  Called by: `.QuickRecOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVF()`** — L7340 — `public string ZZVF(string s)`
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.QuickRecOnOff()` (`Console/Midi2CatCommands.cs`)
+- **`.ZZDV()`** — L7340 — `public string ZZDV(string s)`
+  Reads or sets the FreeDV RX decode (fdv.c) enable state. RX1/subrx0 only, matching the Setup DSP tab's current single-channel prototype scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). ZZFD/ZZFS were already taken (FM deviation, RX2 filter low) -- using ZZDV/ZZDS instead. // W5TSU
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
+- **`.ZZTC()`** — L7361 — `public string ZZTC(string s)`
+  Reads or sets whether Thetis's TCI server is listening (Setup.TCIServerListening -> chkTCIServerListening). Lets a CAT client remotely turn TCI on/off, e.g. after a restart left it unchecked - CAT doesn't depend on TCI being up already, so this works even when TCI itself is unreachable. // W5TSU
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
+- **`.ZZDS()`** — L7381 — `public string ZZDS()`
+  Reads FreeDV RX decode sync/SNR status (get-only): "<sync 0|1><sign><snr*10, 3 digits>". SNR is only meaningful once synced (mirrors freedvStatusTimer_Tick in setup.cs, which likewise only reads GetRXAFDVSnr when synced) and is reported as 0 while unsynced. // W5TSU
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
+- **`.ZZDW()`** — L7399 — `public string ZZDW(string s)`
+  Reads or sets the RADE V1 RX decode (ChannelMaster/radae.c) enable state. RX1 only, matching the current RX-only prototype scope (console.radio.GetDSPRX(0, 0).RXRadaeEnabled) -- see ZZDV's FreeDV equivalent. Inert until the underlying model/pipeline is actually built and linked in; ZZDZ reports…
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
+- **`.ZZDZ()`** — L7419 — `public string ZZDZ()`
+  Reads RADE RX sync/SNR status (get-only): "<sync 0|1><sign><snr dB, 3 digits>". Unlike ZZDS's FreeDV SNR (wdsp, reported *10), GetRadaeSnrDb already returns a plain integer dB estimate -- reported as 0 while unsynced, same convention as ZZDS. // W5TSU
+  Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
+- **`.ZZVF()`** — L7435 — `public string ZZVF(string s)`
   Sets or reads the VAC Stereo checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVG()`** — L7365 — `public string ZZVG(string s)`
+- **`.ZZVG()`** — L7460 — `public string ZZVG(string s)`
   Reads or set the VOX Gain control
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.VOXGain()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVH()`** — L7399 — `public string ZZVH(string s)`
+- **`.ZZVH()`** — L7494 — `public string ZZVH(string s)`
   Reads or sets the I/Q to VAC checkbox on the setup form
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.IQtoVAC()` (`Console/Midi2CatCommands.cs`), `.IQtoVACRX2()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVI()`** — L7424 — `public string ZZVI(string s)`
+- **`.ZZVI()`** — L7519 — `public string ZZVI(string s)`
   Reads or sets the VAC Input cable
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVJ()`** — L7441 — `public string ZZVJ(string s)`
+- **`.ZZVJ()`** — L7536 — `public string ZZVJ(string s)`
   Reads or sets the Direct I/Q Use RX2 checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.IQtoVACRX2()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVK()`** — L7465 — `public string ZZVK(string s)`
+- **`.ZZVK()`** — L7560 — `public string ZZVK(string s)`
   Reads or sets the VAC2 Enable checkbox (Setup Form)
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.VAC2OnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVL()`** — L7491 — `public string ZZVL(string s)`
+- **`.ZZVL()`** — L7586 — `public string ZZVL(string s)`
   Reads or sets the VFO Lock button status
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.LockVFOOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZUX()`** — L7532 — `public string ZZUX(string s)`
+- **`.ZZUX()`** — L7627 — `public string ZZUX(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.LockVFOAOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZUY()`** — L7563 — `public string ZZUY(string s)`
+- **`.ZZUY()`** — L7658 — `public string ZZUY(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.LockVFOBOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVM()`** — L7595 — `public string ZZVM(string s)`
+- **`.ZZVM()`** — L7690 — `public string ZZVM(string s)`
   Reads or sets the VAC Driver
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVN()`** — L7613 — `public string ZZVN()`
+- **`.ZZVN()`** — L7708 — `public string ZZVN()`
   Returns the version number of the PowerSDR program
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVO()`** — L7620 — `public string ZZVO(string s)`
+- **`.ZZVO()`** — L7715 — `public string ZZVO(string s)`
   Reads or sets the VAC Output cable
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVP()`** — L7637 — `public string ZZVP(string s)`
+- **`.ZZVP()`** — L7732 — `public string ZZVP(string s)`
   Reads or sets the VAC1 IQ Calibrate checkbox on the setup form
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVQ()`** — L7662 — `public string ZZVQ(string s)`
+- **`.ZZVQ()`** — L7757 — `public string ZZVQ(string s)`
   Reads or sets the VAC2 Driver
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVR()`** — L7679 — `public string ZZVR(string s)`
+- **`.ZZVR()`** — L7774 — `public string ZZVR(string s)`
   Reads or sets the VAC2 Input cable
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVS()`** — L7697 — `public string ZZVS(string s)`
+- **`.ZZVS()`** — L7792 — `public string ZZVS(string s)`
   Sets the VFO swap status write only
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVT()`** — L7712 — `public string ZZVT(string s)`
+- **`.ZZVT()`** — L7807 — `public string ZZVT(string s)`
   Reads or sets the VAC2 Output cable
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVU()`** — L7733 — `public string ZZVU(string s)`
+- **`.ZZVU()`** — L7828 — `public string ZZVU(string s)`
   Sets or reads the VAC2 Sample Rate
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVV()`** — L7828 — `public string ZZVV(string s)`
+- **`.ZZVV()`** — L7923 — `public string ZZVV(string s)`
   Sets or reads the VAC2 Stereo checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVW()`** — L7852 — `public string ZZVW(string s)`
+- **`.ZZVW()`** — L7947 — `public string ZZVW(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.VAC2GainRX()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVX()`** — L7891 — `public string ZZVX(string s)`
+- **`.ZZVX()`** — L7986 — `public string ZZVX(string s)`
   Sets or reads the VAC2 TX Gain
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.VAC2GainTX()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZVY()`** — L7930 — `public string ZZVY(string s)`
+- **`.ZZVY()`** — L8025 — `public string ZZVY(string s)`
   Sets or reads the VAC1 Buffer Size
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZVZ()`** — L7984 — `public string ZZVZ(string s)`
+- **`.ZZVZ()`** — L8079 — `public string ZZVZ(string s)`
   Sets or reads the VAC1 Buffer Size
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWA()`** — L8034 — `public string ZZWA(string s)`
+- **`.ZZWA()`** — L8129 — `public string ZZWA(string s)`
   Sets or reads the F5K Mixer Mic Gain
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWB()`** — L8041 — `public string ZZWB(string s)`
+- **`.ZZWB()`** — L8136 — `public string ZZWB(string s)`
   Sets or reads the F5K Line In RCA level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWC()`** — L8048 — `public string ZZWC(string s)`
+- **`.ZZWC()`** — L8143 — `public string ZZWC(string s)`
   Sets or reads the F5K Line In Phono level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWD()`** — L8055 — `public string ZZWD(string s)`
+- **`.ZZWD()`** — L8150 — `public string ZZWD(string s)`
   Sets or reads the F5K Mixer Line In DB9 level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWE()`** — L8063 — `public string ZZWE(string s)`
+- **`.ZZWE()`** — L8158 — `public string ZZWE(string s)`
   Sets or reads the F1500F5K Mixer Mic Selected Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWF()`** — L8070 — `public string ZZWF(string s)`
+- **`.ZZWF()`** — L8165 — `public string ZZWF(string s)`
   Sets or reads the F5K Mixer Line In RCA Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWG()`** — L8077 — `public string ZZWG(string s)`
+- **`.ZZWG()`** — L8172 — `public string ZZWG(string s)`
   Sets or reads the F5K Mixer Line In Phono Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWH()`** — L8084 — `public string ZZWH(string s)`
+- **`.ZZWH()`** — L8179 — `public string ZZWH(string s)`
   Sets or reads the F1500/F5K Mixer Line In FlexWire/DB9 Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWJ()`** — L8092 — `public string ZZWJ(string s)`
+- **`.ZZWJ()`** — L8187 — `public string ZZWJ(string s)`
   Sets or reads the F5K Mixer Mute All Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWK()`** — L8099 — `public string ZZWK(string s)`
+- **`.ZZWK()`** — L8194 — `public string ZZWK(string s)`
   Sets or reads the F5K Mixer Internal Speaker level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWL()`** — L8106 — `public string ZZWL(string s)`
+- **`.ZZWL()`** — L8201 — `public string ZZWL(string s)`
   Sets or reads the F5K Mixer External Speaker level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWM()`** — L8113 — `public string ZZWM(string s)`
+- **`.ZZWM()`** — L8208 — `public string ZZWM(string s)`
   Sets or reads the F5K Mixer Headphone level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWN()`** — L8120 — `public string ZZWN(string s)`
+- **`.ZZWN()`** — L8215 — `public string ZZWN(string s)`
   Sets or reads the F5K Mixer Line Out RCA level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWO()`** — L8127 — `public string ZZWO(string s)`
+- **`.ZZWO()`** — L8222 — `public string ZZWO(string s)`
   Sets or reads the F5KC Mixer Internal Speaker Selected Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWP()`** — L8134 — `public string ZZWP(string s)`
+- **`.ZZWP()`** — L8229 — `public string ZZWP(string s)`
   Sets or reads the F5K Mixer External Speaker Selected Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWQ()`** — L8141 — `public string ZZWQ(string s)`
+- **`.ZZWQ()`** — L8236 — `public string ZZWQ(string s)`
   Sets or reads the F1500F5K Mixer Headphone Selected Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWR()`** — L8148 — `public string ZZWR(string s)`
+- **`.ZZWR()`** — L8243 — `public string ZZWR(string s)`
   Sets or reads the F1500 FlexWire Out/F5K Mixer Line Out RCA Selected Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWS()`** — L8155 — `public string ZZWS(string s)`
+- **`.ZZWS()`** — L8250 — `public string ZZWS(string s)`
   Sets or reads the F1500/F5K Mixer Output Mute All Checkbox
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWT()`** — L8163 — `public string ZZWT(string s)`
+- **`.ZZWT()`** — L8258 — `public string ZZWT(string s)`
   Reads or sets the F1500 mixer form mic level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWU()`** — L8170 — `public string ZZWU(string s)`
+- **`.ZZWU()`** — L8265 — `public string ZZWU(string s)`
   Reads or sets the F1500 Mixer Form FireWire Input Level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWV()`** — L8177 — `public string ZZWV(string s)`
+- **`.ZZWV()`** — L8272 — `public string ZZWV(string s)`
   Sets ir reads the F1500 Mixer Form Phones level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZWW()`** — L8184 — `public string ZZWW(string s)`
+- **`.ZZWW()`** — L8279 — `public string ZZWW(string s)`
   Sets or reads the F1500 Mixer Form FlexWire Out level
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXC()`** — L8192 — `public string ZZXC()`
+- **`.ZZXC()`** — L8287 — `public string ZZXC()`
   Clears the XIT frequency write only
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.XIT_inc()` (`Console/Midi2CatCommands.cs`), `.XIT_clear()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZXD()`** — L8199 — `public string ZZXD(string s)`
+- **`.ZZXD()`** — L8294 — `public string ZZXD(string s)`
   Decrements XIT
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXF()`** — L8226 — `public string ZZXF(string s)`
+- **`.ZZXF()`** — L8321 — `public string ZZXF(string s)`
   Sets or reads the XIT frequency value
   Called by: `.ZZDU()` (same file), `.ZZXD()` (same file), `.ZZXU()` (same file), `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.XIT()` (`Console/Midi2CatCommands.cs`), `.XIT_inc()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZXH()`** — L8261 — `public string ZZXH(string s)`
+- **`.ZZXH()`** — L8356 — `public string ZZXH(string s)`
   Reads or set the VOX Delay control
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXN()`** — L8290 — `public string ZZXN(string s)`
+- **`.ZZXN()`** — L8385 — `public string ZZXN(string s)`
   Reads RX1 combined status
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXO()`** — L8325 — `public string ZZXO(string s)`
+- **`.ZZXO()`** — L8420 — `public string ZZXO(string s)`
   Reads RX2 combined status
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXS()`** — L8360 — `public string ZZXS(string s)`
+- **`.ZZXS()`** — L8455 — `public string ZZXS(string s)`
   Sets or reads the XIT button status
   Called by: `.XT()` (same file), `.ZZDU()` (same file), `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.XitOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZXT()`** — L8386 — `public string ZZXT(string s)`
+- **`.ZZXT()`** — L8481 — `public string ZZXT(string s)`
   Sets or reads the X2TR button status
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXU()`** — L8411 — `public string ZZXU(string s)`
+- **`.ZZXU()`** — L8506 — `public string ZZXU(string s)`
   Increments XIT
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXV()`** — L8438 — `public string ZZXV(string s)`
+- **`.ZZXV()`** — L8533 — `public string ZZXV(string s)`
   Reads VFO combined status
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZYA()`** — L8471 — `public string ZZYA(string s)`
+- **`.ZZYA()`** — L8566 — `public string ZZYA(string s)`
   Reads or sets the VAC2 Direct I/Q checkbox on the setup form
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZYB()`** — L8496 — `public string ZZYB(string s)`
+- **`.ZZYB()`** — L8591 — `public string ZZYB(string s)`
   Reads or sets the VAC2 IQ Calibrate checkbox on the setup form
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZYC()`** — L8521 — `public string ZZYC(string s)`
+- **`.ZZYC()`** — L8616 — `public string ZZYC(string s)`
   Reads or sets the FM mic gain
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZYR()`** — L8546 — `public string ZZYR(string s)`
+- **`.ZZYR()`** — L8641 — `public string ZZYR(string s)`
   Sets or reads the Rx1/RX2 radio button in collapsed mode
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZZB()`** — L8563 — `public string ZZZB()`
+- **`.ZZZB()`** — L8658 — `public string ZZZB()`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.ZeroBeatPress()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZZZ()`** — L8570 — `public string ZZZZ()`
+- **`.ZZZZ()`** — L8665 — `public string ZZZZ()`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZZT()`** — L8581 — `public string ZZZT(string s)`
+- **`.ZZZT()`** — L8676 — `public string ZZZT(string s)`
   Zooms to band MW0LGE_21k9 depending on ztb mode 0 will recall 1 will store query will return 1 if ztb is set up as store/recall
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.ZoomToBandRecall()` (`Console/Midi2CatCommands.cs`), `.ZoomToBandStore()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZZQ()`** — L8607 — `public string ZZZQ(string s)`
+- **`.ZZZQ()`** — L8702 — `public string ZZZQ(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.RX1AutoAGC()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZZR()`** — L8633 — `public string ZZZR(string s)`
+- **`.ZZZR()`** — L8728 — `public string ZZZR(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.RX2AutoAGC()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZZM()`** — L8660 — `public string ZZZM(string s)`
+- **`.ZZZM()`** — L8755 — `public string ZZZM(string s)`
   hardware model string
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZZV()`** — L8671 — `public string ZZZV(string s)`
+- **`.ZZZV()`** — L8766 — `public string ZZZV(string s)`
   hardware version title string
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZZW()`** — L8682 — `public string ZZZW(string s)`
+- **`.ZZZW()`** — L8777 — `public string ZZZW(string s)`
   swap vfo wheels, vfoA becomes vfoB, B becomes A
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZZN()`** — L8701 — `public string ZZZN(string s)`
+- **`.ZZZN()`** — L8796 — `public string ZZZN(string s)`
   [2.10.1.0]MW0LGE enable/disable quick split mode
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.QuickSplitOnOff()` (`Console/Midi2CatCommands.cs`), `.QuickSplitOnOffandSplitOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.ZZZO()`** — L8723 — `public string ZZZO(string s)`
+- **`.ZZZO()`** — L8818 — `public string ZZZO(string s)`
   [2.10.1.0]MW0LGE enable/disable quick split and turn split on/off at same time
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`)
-- **`.ZZXA()`** — L8748 — `public string ZZXA(string s)`
+- **`.ZZXA()`** — L8843 — `public string ZZXA(string s)`
   Called by: `.ParseExtended()` (`Console/CAT/CATParser.cs`), `.AudioAmpOnOff()` (`Console/Midi2CatCommands.cs`)
-- **`.AddLeadingZeros()`** — L8773 — `private string AddLeadingZeros(int n, int pad_len = -1)`
+- **`.AddLeadingZeros()`** — L8868 — `private string AddLeadingZeros(int n, int pad_len = -1)`
   Adds leading zeros.
-  Called by: `.AG()` (same file), `.MG()` (same file), `.SQ()` (same file), `.ZZAA()` (same file), `.ZZAB()` (same file), `.ZZAC()` (same file) — and 79 more
-- **`.JustSuffix()`** — L8793 — `private string JustSuffix(string s)`
+  Called by: `.AG()` (same file), `.MG()` (same file), `.SQ()` (same file), `.ZZAA()` (same file), `.ZZAB()` (same file), `.ZZAC()` (same file) — and 81 more
+- **`.JustSuffix()`** — L8888 — `private string JustSuffix(string s)`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.OffsetDirection2String()`** — L8805 — `private string OffsetDirection2String()`
+- **`.OffsetDirection2String()`** — L8900 — `private string OffsetDirection2String()`
   Called by: `.ZZOS()` (same file)
-- **`.String2OffsetDirection()`** — L8827 — `private void String2OffsetDirection(string s)`
+- **`.String2OffsetDirection()`** — L8922 — `private void String2OffsetDirection(string s)`
   Called by: `.ZZOS()` (same file)
-- **`.String2CTCSSFreq()`** — L8846 — `private double String2CTCSSFreq(string s)`
+- **`.String2CTCSSFreq()`** — L8941 — `private double String2CTCSSFreq(string s)`
   Called by: `.ZZTB()` (same file)
-- **`.CTCSSFreq2String()`** — L9005 — `private string CTCSSFreq2String(int freq)`
+- **`.CTCSSFreq2String()`** — L9100 — `private string CTCSSFreq2String(int freq)`
   Called by: `.ZZTB()` (same file)
-- **`.GetMemoryList()`** — L9164 — `private SortableBindingList<MemoryRecord> GetMemoryList()`
+- **`.GetMemoryList()`** — L9259 — `private SortableBindingList<MemoryRecord> GetMemoryList()`
   Returns memory list.
   Called by: `.GetChannelRecord()` (same file), `.GetIndex()` (same file)
-- **`.GetChannelRecord()`** — L9178 — `private MemoryRecord GetChannelRecord(string channel)`
+- **`.GetChannelRecord()`** — L9273 — `private MemoryRecord GetChannelRecord(string channel)`
   Returns channel record.
   Called by: `.ZZMW()` (same file), `.ZZMZ()` (same file)
-- **`.GetIndex()`** — L9197 — `private int GetIndex(string channel)`
+- **`.GetIndex()`** — L9292 — `private int GetIndex(string channel)`
   Returns index.
   Called by: `.ZZMX()` (same file), `.ZZMZ()` (same file)
-- **`.GetNextChannelNumber()`** — L9216 — `private int GetNextChannelNumber()`
+- **`.GetNextChannelNumber()`** — L9311 — `private int GetNextChannelNumber()`
   Returns next channel number.
   Called by: `.ZZMY()` (same file)
-- **`.StrVFOFreq()`** — L9239 — `private string StrVFOFreq(string vfo)`
+- **`.StrVFOFreq()`** — L9334 — `private string StrVFOFreq(string vfo)`
   Converts a vfo frequency to a proper CAT frequency string
   Called by: `.ZZFA()` (same file), `.ZZFB()` (same file), `.ZZQM()` (same file)
-- **`.Filter2String()`** — L9282 — `public string Filter2String(Filter f)`
+- **`.Filter2String()`** — L9377 — `public string Filter2String(Filter f)`
   Called by: `.FW()` (same file)
-- **`.String2Filter()`** — L9331 — `public Filter String2Filter(string f)`
+- **`.String2Filter()`** — L9426 — `public Filter String2Filter(string f)`
   Called by: `.FW()` (same file)
-- **`.SetFilterCenterAndWidth()`** — L9381 — `private void SetFilterCenterAndWidth(int center, int width)`
+- **`.SetFilterCenterAndWidth()`** — L9476 — `private void SetFilterCenterAndWidth(int center, int width)`
   set variable filter 1 to indicate center and width if either center or width is zero, current value of center or width is contained fixme ... what should this thing do for am, fm, dsb ... ignore width?
   Called by: `.ZZSF()` (same file)
-- **`.Frequency2Code()`** — L9424 — `private string Frequency2Code(int f, string n)`
+- **`.Frequency2Code()`** — L9519 — `private string Frequency2Code(int f, string n)`
   Converts interger filter frequency into Kenwood SL/SH codes
   Called by: `.SH()` (same file), `.SL()` (same file), `.SetFilter()` (same file)
-- **`.Code2Frequency()`** — L9525 — `private int Code2Frequency(string c, string n)`
+- **`.Code2Frequency()`** — L9620 — `private int Code2Frequency(string c, string n)`
   Converts a frequency code pair to frequency in hz according to the Kenwood TS-2000 spec. Receives code and calling methd as parameters
   Called by: `.SetFilter()` (same file)
-- **`.SetFilter()`** — L9811 — `private void SetFilter(string c, string n)`
+- **`.SetFilter()`** — L9906 — `private void SetFilter(string c, string n)`
   Sets filter.
   Called by: `.SH()` (same file), `.SL()` (same file)
-- **`.String2Mode()`** — L9874 — `public void String2Mode(string pIndex)`
+- **`.String2Mode()`** — L9969 — `public void String2Mode(string pIndex)`
   Called by: `.ZZMD()` (same file)
-- **`.Mode2String()`** — L9919 — `public string Mode2String(DSPMode pMode)`
+- **`.Mode2String()`** — L10014 — `public string Mode2String(DSPMode pMode)`
   Called by: `.ZZIF()` (same file), `.ZZMD()` (same file), `.ZZME()` (same file)
-- **`.KString2Mode()`** — L9971 — `public void KString2Mode(string pIndex)`
+- **`.KString2Mode()`** — L10066 — `public void KString2Mode(string pIndex)`
   converts Kenwood single digit mode code to SDR mode
   Called by: `.MD()` (same file)
-- **`.Mode2KString()`** — L10022 — `public string Mode2KString(DSPMode pMode)`
+- **`.Mode2KString()`** — L10117 — `public string Mode2KString(DSPMode pMode)`
   converts SDR mode to Kenwood single digit mode code
   Called by: `.IF()` (same file), `.MD()` (same file)
-- **`.MakeBandList()`** — L10072 — `private void MakeBandList()`
+- **`.MakeBandList()`** — L10167 — `private void MakeBandList()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetBandGroup()`** — L10090 — `private void SetBandGroup(int band)`
+- **`.SetBandGroup()`** — L10185 — `private void SetBandGroup(int band)`
   Sets band group.
   Called by: `.GetBand()` (same file)
-- **`.GetBand()`** — L10102 — `private string GetBand(string b)`
+- **`.GetBand()`** — L10197 — `private string GetBand(string b)`
   Returns band.
   Called by: `.ZZBS()` (same file)
-- **`.BandUp()`** — L10129 — `private void BandUp()`
+- **`.BandUp()`** — L10224 — `private void BandUp()`
   Called by: `.ZZBU()` (same file)
-- **`.BandDown()`** — L10142 — `private void BandDown()`
+- **`.BandDown()`** — L10237 — `private void BandDown()`
   Called by: `.ZZBD()` (same file)
-- **`.Band2String()`** — L10155 — `private string Band2String(Band pBand)`
+- **`.Band2String()`** — L10250 — `private string Band2String(Band pBand)`
   Called by: `.ZZBT()` (same file), `.GetBand()` (same file)
-- **`.String2Band()`** — L10253 — `private Band String2Band(string pBand)`
+- **`.String2Band()`** — L10348 — `private Band String2Band(string pBand)`
   Called by: `.ZZBT()` (same file), `.GetBand()` (same file)
-- **`.Step2Freq()`** — L10355 — `private double Step2Freq(int step)`
+- **`.Step2Freq()`** — L10450 — `private double Step2Freq(int step)`
   Called by: `.ZZAD()` (same file), `.ZZAU()` (same file), `.ZZBM()` (same file), `.ZZBP()` (same file)
-- **`.Step2String()`** — L10412 — `private string Step2String(int pSize)`
+- **`.Step2String()`** — L10507 — `private string Step2String(int pSize)`
   Called by: `.IF()` (same file), `.ZZIF()` (same file), `.ZZST()` (same file)
-- **`.String2RXMeter()`** — L10508 — `private void String2RXMeter(int m)`
+- **`.String2RXMeter()`** — L10603 — `private void String2RXMeter(int m)`
   Called by: `.ZZMR()` (same file)
-- **`.RXMeter2String()`** — L10513 — `private string RXMeter2String()`
+- **`.RXMeter2String()`** — L10608 — `private string RXMeter2String()`
   Called by: `.ZZMR()` (same file)
-- **`.String2TXMeter()`** — L10518 — `private void String2TXMeter(int m)`
+- **`.String2TXMeter()`** — L10613 — `private void String2TXMeter(int m)`
   Called by: `.ZZMT()` (same file)
-- **`.TXMeter2String()`** — L10523 — `private string TXMeter2String()`
+- **`.TXMeter2String()`** — L10618 — `private string TXMeter2String()`
   Called by: `.ZZMT()` (same file)
-- **`.CAT2RigType()`** — L10532 — `private string CAT2RigType()`
+- **`.CAT2RigType()`** — L10627 — `private string CAT2RigType()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.RigType2CAT()`** — L10537 — `private string RigType2CAT()`
+- **`.RigType2CAT()`** — L10632 — `private string RigType2CAT()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.Width2Index()`** — L10546 — `private string Width2Index(int txt)`
+- **`.Width2Index()`** — L10641 — `private string Width2Index(int txt)`
   Called by: `.ZZHA()` (same file), `.ZZHR()` (same file), `.ZZHT()` (same file), `.ZZHU()` (same file), `.ZZHV()` (same file), `.ZZHW()` (same file) — and 1 more
-- **`.Index2Width()`** — L10579 — `private int Index2Width(string ndx)`
+- **`.Index2Width()`** — L10674 — `private int Index2Width(string ndx)`
   Called by: `.ZZHA()` (same file), `.ZZHR()` (same file), `.ZZHT()` (same file), `.ZZHU()` (same file), `.ZZHV()` (same file), `.ZZHW()` (same file) — and 1 more
 
 ---

@@ -12,6 +12,7 @@
 - Uses (outgoing references to other files):
   - `ChannelMaster/cmsetup.c` (calls ×7)
   - `ChannelMaster/ivac.c` (calls ×4)
+  - `ChannelMaster/radae.c` (calls ×4)
   - `wdsp/nob.c` (calls ×3)
   - `wdsp/nobII.c` (calls ×3)
   - `ChannelMaster/tci.c` (calls ×3)
@@ -36,46 +37,46 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`create_pipe()`** — L79 — `void create_pipe()`
   Constructor for the `pipe` block: allocates its state/buffers and computes initial coefficients.
   Called by: `CreateRadio()` (`ChannelMaster/cmsetup.c`)
-- **`destroy_pipe()`** — L119 — `void destroy_pipe()`
+- **`destroy_pipe()`** — L120 — `void destroy_pipe()`
   Destroys the `pipe` block, freeing its allocated buffers.
   Called by: `DestroyRadio()` (`ChannelMaster/cmsetup.c`)
-- **`xplaywave()`** — L133 — `void xplaywave(int rx, int state, double* data)`
+- **`xplaywave()`** — L135 — `void xplaywave(int rx, int state, double* data)`
   Runs the `playwave` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
   Called by: `xpipe()` (same file)
-- **`xrecordwave()`** — L142 — `void xrecordwave(int rx, int state, int pos, double* data)`
+- **`xrecordwave()`** — L144 — `void xrecordwave(int rx, int state, int pos, double* data)`
   Runs the `recordwave` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
   Called by: `xpipe()` (same file)
-- **`xscope()`** — L151 — `void xscope(int rx, int state, double* data)`
+- **`xscope()`** — L153 — `void xscope(int rx, int state, double* data)`
   Runs the `scope` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
   Called by: `xpipe()` (same file)
-- **`xpipe()`** — L160 — `void xpipe (int stream, int pos, double** buffs)`
+- **`xpipe()`** — L162 — `void xpipe (int stream, int pos, double** buffs)`
   Runs the `pipe` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
   Called by: `xcmaster()` (`ChannelMaster/cmaster.c`)
-- **`SendCBCreateScope()`** — L257 — `PORT void SendCBCreateScope (void (__stdcall *create_Scope)(int id))`
+- **`SendCBCreateScope()`** — L273 — `PORT void SendCBCreateScope (void (__stdcall *create_Scope)(int id))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SendCBScope()`** — L263 — `PORT void SendCBScope (int id, void (__stdcall *xscope)(int state, double* data))`
+- **`SendCBScope()`** — L279 — `PORT void SendCBScope (int id, void (__stdcall *xscope)(int state, double* data))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SetScopeRun()`** — L269 — `PORT void SetScopeRun(int id, int run)`
+- **`SetScopeRun()`** — L285 — `PORT void SetScopeRun(int id, int run)`
   Sets scope run — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SendCBCreateWRecord()`** — L275 — `PORT void SendCBCreateWRecord (void (__stdcall *create_WaveRecord)(int id))`
+- **`SendCBCreateWRecord()`** — L291 — `PORT void SendCBCreateWRecord (void (__stdcall *create_WaveRecord)(int id))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SendCBWaveRecorder()`** — L281 — `PORT void SendCBWaveRecorder (int id, void (__stdcall *xrecordwave)(int state, int pos, double* data))`
+- **`SendCBWaveRecorder()`** — L297 — `PORT void SendCBWaveRecorder (int id, void (__stdcall *xrecordwave)(int state, int pos, double* data))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SetWaveRecorderRun()`** — L287 — `PORT void SetWaveRecorderRun(int id, int run)`
+- **`SetWaveRecorderRun()`** — L303 — `PORT void SetWaveRecorderRun(int id, int run)`
   Sets wave recorder run — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SendCBCreateWPlay()`** — L293 — `PORT void SendCBCreateWPlay (void (__stdcall *create_WavePlay)(int id))`
+- **`SendCBCreateWPlay()`** — L309 — `PORT void SendCBCreateWPlay (void (__stdcall *create_WavePlay)(int id))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SendCBWavePlayer()`** — L299 — `PORT void SendCBWavePlayer (int id, void (__stdcall *xplaywave)(int state, double* data))`
+- **`SendCBWavePlayer()`** — L315 — `PORT void SendCBWavePlayer (int id, void (__stdcall *xplaywave)(int state, double* data))`
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SetWavePlayerRun()`** — L305 — `PORT void SetWavePlayerRun(int id, int run)`
+- **`SetWavePlayerRun()`** — L321 — `PORT void SetWavePlayerRun(int id, int run)`
   Sets wave player run — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SetTopPan3Run()`** — L311 — `PORT void SetTopPan3Run (int run)`
+- **`SetTopPan3Run()`** — L327 — `PORT void SetTopPan3Run (int run)`
   Sets top pan3 run — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
-- **`SetTXVAC()`** — L317 — `PORT void SetTXVAC (int txid, int txvac)`
+- **`SetTXVAC()`** — L333 — `PORT void SetTXVAC (int txid, int txvac)`
   Sets txvac — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/cmaster.cs`.
 

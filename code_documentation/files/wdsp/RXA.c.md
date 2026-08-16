@@ -29,7 +29,7 @@
   - `wdsp/amsq.c` (calls ×8)
   - `wdsp/amd.c` (calls ×7)
   - `wdsp/anf.c` (calls ×7)
-  - …and 20 more files
+  - …and 21 more files
 - Most-referenced symbols from other files: `RXAbp1Check()` (×7), `RXAbp1Set()` (×7), `RXAbpsnbaCheck()` (×2), `RXAbpsnbaSet()` (×2), `create_rxa()` (×1), `destroy_rxa()` (×1), `flush_rxa()` (×1), `xrxa()` (×1)
 
 ## Outline
@@ -41,44 +41,44 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`create_rxa()`** — L31 — `void create_rxa (int channel)`
   Constructor for the `rxa` block: allocates its state/buffers and computes initial coefficients.
   Called by: `create_main()` (`wdsp/main.c`)
-- **`destroy_rxa()`** — L560 — `void destroy_rxa (int channel)`
+- **`destroy_rxa()`** — L568 — `void destroy_rxa (int channel)`
   Destroys the `rxa` block, freeing its allocated buffers.
   Called by: `destroy_main()` (`wdsp/main.c`)
-- **`flush_rxa()`** — L601 — `void flush_rxa (int channel)`
+- **`flush_rxa()`** — L610 — `void flush_rxa (int channel)`
   Flushes (zeroes) the `rxa` block’s internal buffers/state.
   Called by: `flush_main()` (`wdsp/main.c`)
-- **`xrxa()`** — L638 — `void xrxa (int channel)`
+- **`xrxa()`** — L648 — `void xrxa (int channel)`
   Runs the `rxa` block on one buffer of samples — the per-buffer processing entry called from the owning chain.
   Called by: `wdspmain()` (`wdsp/main.c`)
-- **`setInputSamplerate_rxa()`** — L685 — `void setInputSamplerate_rxa (int channel)`
+- **`setInputSamplerate_rxa()`** — L696 — `void setInputSamplerate_rxa (int channel)`
   Called by: `setInputSamplerate_main()` (`wdsp/main.c`)
-- **`setOutputSamplerate_rxa()`** — L701 — `void setOutputSamplerate_rxa (int channel)`
+- **`setOutputSamplerate_rxa()`** — L712 — `void setOutputSamplerate_rxa (int channel)`
   Called by: `setOutputSamplerate_main()` (`wdsp/main.c`)
-- **`setDSPSamplerate_rxa()`** — L712 — `void setDSPSamplerate_rxa (int channel)`
+- **`setDSPSamplerate_rxa()`** — L723 — `void setDSPSamplerate_rxa (int channel)`
   Called by: `setDSPSamplerate_main()` (`wdsp/main.c`)
-- **`setDSPBuffsize_rxa()`** — L763 — `void setDSPBuffsize_rxa (int channel)`
+- **`setDSPBuffsize_rxa()`** — L775 — `void setDSPBuffsize_rxa (int channel)`
   Called by: `setDSPBuffsize_main()` (`wdsp/main.c`)
-- **`SetRXAMode()`** — L848 — `PORT void SetRXAMode (int channel, int mode)`
+- **`SetRXAMode()`** — L862 — `PORT void SetRXAMode (int channel, int mode)`
   Sets rxamode — API setter, typically called from the console via P/Invoke.
   Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
-- **`RXAResCheck()`** — L892 — `void RXAResCheck (int channel)`
+- **`RXAResCheck()`** — L906 — `void RXAResCheck (int channel)`
   RXA chain operation — res check; part of the receive/transmit chain API.
   Called by: `create_rxa()` (same file), `setInputSamplerate_rxa()` (same file), `setOutputSamplerate_rxa()` (same file), `setDSPSamplerate_rxa()` (same file)
-- **`RXAbp1Check()`** — L903 — `void RXAbp1Check (int channel, int amd_run, int snba_run, int emnr_run, int anf_run, int anr_run, int rnnr_run, int sbnr_run)`
+- **`RXAbp1Check()`** — L917 — `void RXAbp1Check (int channel, int amd_run, int snba_run, int emnr_run, int anf_run, int anr_run, int rnnr_run, int sbnr_run)`
   Called by: `SetRXAMode()` (same file), `SetRXAAMDRun()` (`wdsp/amd.c`), `SetRXAANFRun()` (`wdsp/anf.c`), `SetRXAANRRun()` (`wdsp/anr.c`), `SetRXAEMNRRun()` (`wdsp/emnr.c`), `SetRXARNNRRun()` (`wdsp/rnnr.c`) — and 2 more
-- **`RXAbp1Set()`** — L921 — `void RXAbp1Set (int channel)`
+- **`RXAbp1Set()`** — L935 — `void RXAbp1Set (int channel)`
   Called by: `SetRXAMode()` (same file), `SetRXAAMDRun()` (`wdsp/amd.c`), `SetRXAANFRun()` (`wdsp/anf.c`), `SetRXAANRRun()` (`wdsp/anr.c`), `SetRXAEMNRRun()` (`wdsp/emnr.c`), `SetRXARNNRRun()` (`wdsp/rnnr.c`) — and 2 more
-- **`RXAbpsnbaCheck()`** — L937 — `void RXAbpsnbaCheck (int channel, int mode, int notch_run)`
+- **`RXAbpsnbaCheck()`** — L951 — `void RXAbpsnbaCheck (int channel, int mode, int notch_run)`
   Called by: `SetRXAMode()` (same file), `RXANBPSetNotchesRun()` (`wdsp/nbp.c`), `SetRXASNBARun()` (`wdsp/snb.c`)
-- **`RXAbpsnbaSet()`** — L991 — `void RXAbpsnbaSet (int channel)`
+- **`RXAbpsnbaSet()`** — L1005 — `void RXAbpsnbaSet (int channel)`
   Called by: `SetRXAMode()` (same file), `RXANBPSetNotchesRun()` (`wdsp/nbp.c`), `SetRXASNBARun()` (`wdsp/snb.c`)
-- **`RXASetPassband()`** — L1034 — `PORT void RXASetPassband (int channel, double f_low, double f_high)`
+- **`RXASetPassband()`** — L1048 — `PORT void RXASetPassband (int channel, double f_low, double f_high)`
   RXA chain operation — set passband; part of the receive/transmit chain API.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`RXASetNC()`** — L1042 — `PORT void RXASetNC (int channel, int nc)`
+- **`RXASetNC()`** — L1056 — `PORT void RXASetNC (int channel, int nc)`
   RXA chain operation — set nc; part of the receive/transmit chain API.
   Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
-- **`RXASetMP()`** — L1056 — `PORT void RXASetMP (int channel, int mp)`
+- **`RXASetMP()`** — L1070 — `PORT void RXASetMP (int channel, int mp)`
   RXA chain operation — set mp; part of the receive/transmit chain API.
   Called from C# via P/Invoke — declared/wrapped in `Console/dsp.cs`.
 

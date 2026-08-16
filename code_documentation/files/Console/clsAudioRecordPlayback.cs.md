@@ -273,12 +273,12 @@ _No extracted members._
 - **`.ReadBuffer()`** — L3817 — `private void ReadBuffer(ref BinaryReader r)`
   Reads buffer.
   Called by: `.ProcessBuffers()` (same file)
-- **`.GetPlayBuffer()`** — L3993 — `unsafe public void GetPlayBuffer(float* left, float* right)`
+- **`.GetPlayBuffer()`** — L4007 — `unsafe public void GetPlayBuffer(float* left, float* right)`
   Returns play buffer.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.queueFinish()`** — L4023 — `private void queueFinish(Exception ex)`
+- **`.queueFinish()`** — L4037 — `private void queueFinish(Exception ex)`
   Called by: `.ProcessBuffers()` (same file), `.GetPlayBuffer()` (same file)
-- **`.finishPlayback()`** — L4035 — `private void finishPlayback()`
+- **`.finishPlayback()`** — L4049 — `private void finishPlayback()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---

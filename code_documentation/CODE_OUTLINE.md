@@ -7,7 +7,7 @@ signal processing), **ChannelMaster.dll** (C/C++ — audio and network I/O routi
 **cmASIO.dll** (C++ — ASIO driver access). All paths below are relative to `Project Files/Source/`.
 
 This outline was generated with the help of a [graphify](https://graphify.net) knowledge graph of
-the source tree (15,492 nodes / 36,536 edges / 434 communities). See
+the source tree (15,653 nodes / 36,901 edges / 461 communities). See
 [Exploring further](#exploring-the-code-with-the-knowledge-graph) at the end.
 
 **Per-file documentation:** every file listed below has its own page under
@@ -183,6 +183,12 @@ Warren Pratt NR0V. The console talks to it through `dsp.cs`/`specHPSDR.cs`.
 | `eer.c` | Envelope elimination and restoration (polar) TX processing. |
 | `amsq.c`, `fmsq.c`, `ssql.c` | AM squelch, FM squelch, and syllabic (voice-detecting) squelch. |
 
+**Digital voice (FreeDV)** — HL2 fork addition, `FreeDV` branch
+
+| File | Role |
+|------|------|
+| `fdv.c` | FreeDV 700E RX decode block. Sits post-AGC in the RXA chain; resamples to/from the modem's 8 kHz rate, normalises blocks into `libcodec2`'s 16-bit domain via a smoothed AGC, drives `freedv_rx()` per `freedv_nin()`-sized block, and passes raw modem audio through until synced/primed so the signal stays audible for tuning. RADE V1's equivalent decode block lives in ChannelMaster (`radae.c`, §8) rather than here, since it uses a separate native library (`rade_c`) instead of `libcodec2`. |
+
 **Noise reduction and blanking**
 
 | File | Role |
@@ -244,6 +250,9 @@ resamplers and allocators (`aamix.c → resample.c/utilities.c`).
 | `bandwidth_monitor.c`, `nanotime.c` | Network bandwidth statistics and high-resolution timestamps. |
 | `pro.c`, `zeer.c`, `znob.c`, `znobII.c` | Auxiliary DSP experiments retained from upstream (protocol processing, zero-delay EER, noise blanker variants). |
 | `cmUtilities.c`, `version.c` | Shared helpers and version export. |
+| `radae.c` | RADE V1 neural-mode RX decode block (HL2 fork addition, `FreeDV` branch). RX-only: hooked into `pipe.c`'s `xpipe()` hot path, drives the `rade_c`/`rade.lib` native decoder plus `lpcnet`/`fargan` speech synthesis, gated by `RXRadaeEnabled` (CAT `ZZDW`/`ZZDZ`, Setup → DSP → FreeDV tab). |
+| `radae_micdsp.c` | Mic-path DSP helpers (biquad EQ, RNNoise, EBU R128 loudness normalisation, AGC) prepared for a future RADE V1 TX path — not yet wired to `xradae_tx` as of this branch. |
+| `r8brain_wrap.cpp` | C-callable wrapper around the vendored r8brain-free-src `CDSPResampler24`, used by `radae.c` for its own internal sample-rate conversion. |
 
 ## 9. Audio devices, VAC, and ASIO
 

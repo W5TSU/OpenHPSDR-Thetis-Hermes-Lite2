@@ -9,12 +9,13 @@
 - Used by (incoming references from other files):
   - `ChannelMaster/ivac.c` (calls ×19)
   - `ChannelMaster/cmasio.c` (calls ×9)
+  - `ChannelMaster/radae.c` (calls ×5)
 - Uses (outgoing references to other files):
   - `wdsp/utilities.c` (calls ×5)
   - `cmASIO/asiosdk_2.3.3_2019-06-14/common/combase.h` (calls ×3)
   - `wdsp/varsamp.c` (calls ×3)
   - `wdsp/comm.h` (imports ×1)
-- Most-referenced symbols from other files: `xrmatchIN()` (×5), `xrmatchOUT()` (×4), `forceRMatchVar()` (×3), `create_rmatchV()` (×2), `destroy_rmatchV()` (×2), `getRMatchDiags()` (×2), `resetRMatchDiags()` (×2), `setRMatchFeedbackGain()` (×1)
+- Most-referenced symbols from other files: `xrmatchIN()` (×5), `destroy_rmatchV()` (×4), `xrmatchOUT()` (×4), `resetRMatchDiags()` (×4), `create_rmatchV()` (×3), `forceRMatchVar()` (×3), `getRMatchDiags()` (×2), `setRMatchFeedbackGain()` (×1)
 
 ## Outline
 
@@ -75,15 +76,15 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`getRMatchDiags()`** — L469 — `PORT void getRMatchDiags (void* b, int* underflows, int* overflows, double* var, int* ringsize, int* nring)`
   Called by: `getCMAevents()` (`ChannelMaster/cmasio.c`), `getIVACdiags()` (`ChannelMaster/ivac.c`)
 - **`resetRMatchDiags()`** — L482 — `PORT void resetRMatchDiags (void* b)`
-  Called by: `resetCMAevents()` (`ChannelMaster/cmasio.c`), `resetIVACdiags()` (`ChannelMaster/ivac.c`)
+  Called by: `resetCMAevents()` (`ChannelMaster/cmasio.c`), `resetIVACdiags()` (`ChannelMaster/ivac.c`), `rebuild_tx_resamplers()` (`ChannelMaster/radae.c`), `xradae_tx()` (`ChannelMaster/radae.c`)
 - **`forceRMatchVar()`** — L490 — `PORT void forceRMatchVar (void* b, int force, double fvar)`
   Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`), `create_resamps()` (`ChannelMaster/ivac.c`), `forceIVACvar()` (`ChannelMaster/ivac.c`)
 - **`create_rmatchV()`** — L500 — `PORT void* create_rmatchV(int in_size, int out_size, int nom_inrate, int nom_outrate, int ringsize, double var)`
   Constructor for the `rmatchV` block: allocates its state/buffers and computes initial coefficients.
-  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`), `create_resamps()` (`ChannelMaster/ivac.c`)
+  Called by: `create_cmasio()` (`ChannelMaster/cmasio.c`), `create_resamps()` (`ChannelMaster/ivac.c`), `rebuild_tx_resamplers()` (`ChannelMaster/radae.c`)
 - **`destroy_rmatchV()`** — L529 — `PORT void destroy_rmatchV (void* ptr)`
   Destroys the `rmatchV` block, freeing its allocated buffers.
-  Called by: `destroy_cmasio()` (`ChannelMaster/cmasio.c`), `destroy_resamps()` (`ChannelMaster/ivac.c`)
+  Called by: `destroy_cmasio()` (`ChannelMaster/cmasio.c`), `destroy_resamps()` (`ChannelMaster/ivac.c`), `rebuild_tx_resamplers()` (`ChannelMaster/radae.c`), `destroy_radae()` (`ChannelMaster/radae.c`)
 - **`setRMatchInsize()`** — L536 — `PORT void setRMatchInsize (void* ptr, int insize)`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 - **`setRMatchOutsize()`** — L548 — `PORT void setRMatchOutsize (void* ptr, int outsize)`

@@ -22,36 +22,36 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`.InitVersions()`** — L97 — `public void InitVersions(string version, string build, string db_version, string dx_version, string radio_model, string firmware_version, string protocol, string supported_protocol`
   Inits versions.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.btnOK_Click()`** — L148 — `private void btnOK_Click(object sender, EventArgs e)`
+- **`.btnOK_Click()`** — L156 — `private void btnOK_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnOK` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.btnCopyContributors_Click()`** — L153 — `private void btnCopyContributors_Click(object sender, EventArgs e)`
+- **`.btnCopyContributors_Click()`** — L161 — `private void btnCopyContributors_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnCopyContributors` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.btnSysInfo_Click()`** — L168 — `private void btnSysInfo_Click(object sender, EventArgs e)`
+- **`.btnSysInfo_Click()`** — L176 — `private void btnSysInfo_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnSysInfo` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.btnDXDiag_Click()`** — L173 — `private void btnDXDiag_Click(object sender, EventArgs e)`
+- **`.btnDXDiag_Click()`** — L181 — `private void btnDXDiag_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnDXDiag` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.lnkLicence_LinkClicked()`** — L178 — `private void lnkLicence_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)`
+- **`.lnkLicence_LinkClicked()`** — L186 — `private void lnkLicence_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.btnVisit_Click()`** — L183 — `private void btnVisit_Click(object sender, EventArgs e)`
+- **`.btnVisit_Click()`** — L191 — `private void btnVisit_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnVisit` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.lstLinks_SelectedIndexChanged()`** — L221 — `private void lstLinks_SelectedIndexChanged(object sender, EventArgs e)`
+- **`.lstLinks_SelectedIndexChanged()`** — L229 — `private void lstLinks_SelectedIndexChanged(object sender, EventArgs e)`
   WinForms event handler: runs when `lstLinks` selection changes.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.handleVersionInfo()`** — L225 — `private void handleVersionInfo()`
+- **`.handleVersionInfo()`** — L233 — `private void handleVersionInfo()`
   Called by: `.fetchJsonAsync()` (same file)
-- **`.cancelFetchJsonTask()`** — L260 — `private void cancelFetchJsonTask()`
+- **`.cancelFetchJsonTask()`** — L268 — `private void cancelFetchJsonTask()`
   Called by: `.InitVersions()` (same file)
-- **`.fetchJsonAsync()`** — L269 — `private async Task fetchJsonAsync(CancellationToken cancellationToken)`
+- **`.fetchJsonAsync()`** — L277 — `private async Task fetchJsonAsync(CancellationToken cancellationToken)`
   Called by: `.InitVersions()` (same file)
-- **`.btnUpdatedRelease_Click()`** — L322 — `private void btnUpdatedRelease_Click(object sender, EventArgs e)`
+- **`.btnUpdatedRelease_Click()`** — L330 — `private void btnUpdatedRelease_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnUpdatedRelease` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
-- **`.btnReleaseNotes_Click()`** — L328 — `private void btnReleaseNotes_Click(object sender, EventArgs e)`
+- **`.btnReleaseNotes_Click()`** — L336 — `private void btnReleaseNotes_Click(object sender, EventArgs e)`
   WinForms event handler: runs when `btnReleaseNotes` is clicked.
   Called by: WinForms event wiring at runtime (no static call sites).
 

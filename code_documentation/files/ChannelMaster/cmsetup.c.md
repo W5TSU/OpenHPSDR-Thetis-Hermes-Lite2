@@ -14,13 +14,14 @@
   - `ChannelMaster/networkproto1.c` (calls ×2)
   - `ChannelMaster/ivac.c` (calls ×1)
   - `ChannelMaster/network.c` (calls ×1)
+  - `ChannelMaster/radae.c` (calls ×1)
 - Uses (outgoing references to other files):
   - `ChannelMaster/cmaster.c` (calls ×2)
   - `ChannelMaster/pipe.c` (calls ×2)
   - `ChannelMaster/sync.c` (calls ×2)
   - `ChannelMaster/cmaster.h` (imports ×1)
   - `ChannelMaster/cmsetup.h` (imports ×1)
-- Most-referenced symbols from other files: `inid()` (×15), `chid()` (×10), `getbuffsize()` (×8), `txid()` (×4), `rxid()` (×3), `stype()` (×3), `sp0id()` (×2), `mixinid()` (×2)
+- Most-referenced symbols from other files: `inid()` (×16), `chid()` (×10), `getbuffsize()` (×8), `txid()` (×4), `rxid()` (×3), `stype()` (×3), `sp0id()` (×2), `mixinid()` (×2)
 
 ## Outline
 
@@ -56,7 +57,7 @@ _Each entry: symbol — line — signature, then a description (from source comm
 - **`chid()`** — L175 — `PORT int chid (int stream, int subrx)`
   Called by: `tx_analyzers()` (`ChannelMaster/analyzers.c`), `create_rcvr()` (`ChannelMaster/cmaster.c`), `destroy_rcvr()` (`ChannelMaster/cmaster.c`), `create_xmtr()` (`ChannelMaster/cmaster.c`), `destroy_xmtr()` (`ChannelMaster/cmaster.c`), `xcmaster()` (`ChannelMaster/cmaster.c`) — and 4 more
 - **`inid()`** — L194 — `PORT int inid (int stype, int id)`
-  Called by: `getInputRate()` (same file), `alloc_analyzer()` (`ChannelMaster/analyzers.c`), `create_rcvr()` (`ChannelMaster/cmaster.c`), `destroy_rcvr()` (`ChannelMaster/cmaster.c`), `create_xmtr()` (`ChannelMaster/cmaster.c`), `destroy_xmtr()` (`ChannelMaster/cmaster.c`) — and 10 more
+  Called by: `getInputRate()` (same file), `alloc_analyzer()` (`ChannelMaster/analyzers.c`), `create_rcvr()` (`ChannelMaster/cmaster.c`), `destroy_rcvr()` (`ChannelMaster/cmaster.c`), `create_xmtr()` (`ChannelMaster/cmaster.c`), `destroy_xmtr()` (`ChannelMaster/cmaster.c`) — and 11 more
 - **`mixinid()`** — L216 — `int mixinid (int stream, int subrx)`
   Called by: `SetRcvrChannelOutrate()` (`ChannelMaster/cmaster.c`), `SetXmtrChannelOutrate()` (`ChannelMaster/cmaster.c`)
 

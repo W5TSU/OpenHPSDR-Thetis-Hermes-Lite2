@@ -25,7 +25,7 @@ _Each entry: symbol — line — signature, then a description (from source comm
 
 - **`.Copy()`** — L282 — `public void Copy(RadioDSPRX rx)`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.Parse()`** — L4358 — `public static MNotch Parse(string s)`
+- **`.Parse()`** — L4405 — `public static MNotch Parse(string s)`
   Called by: `.GetState()` (`Console/console.cs`), `.ImportAndMergeDatabase()` (`Console/database.cs`)
 
 ### Types
@@ -51,74 +51,74 @@ _Each entry: symbol — line — signature, then a description (from source comm
 
 #### `RadioDSPRX` (type, L270)
 
-- **`.SyncAll()`** — L388 — `private void SyncAll()`
+- **`.SyncAll()`** — L389 — `private void SyncAll()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetRXFilter()`** — L597 — `public void SetRXFilter(int low, int high)`
+- **`.SetRXFilter()`** — L599 — `public void SetRXFilter(int low, int high)`
   Sets rxfilter.
   Called by: `.Copy()` (same file), `.SyncAll()` (same file)
-- **`.SetNRVals()`** — L683 — `public void SetNRVals(int taps, int delay, double gain, double leak)`
+- **`.SetNRVals()`** — L685 — `public void SetNRVals(int taps, int delay, double gain, double leak)`
   Sets nrvals.
   Called by: `.Copy()` (same file), `.SyncAll()` (same file)
-- **`.SetANFVals()`** — L730 — `public void SetANFVals(int taps, int delay, double gain, double leak)`
+- **`.SetANFVals()`** — L732 — `public void SetANFVals(int taps, int delay, double gain, double leak)`
   Sets anfvals.
   Called by: `.Copy()` (same file), `.SyncAll()` (same file)
-- **`.GetNotchOn()`** — L1449 — `public bool GetNotchOn(int index)`
+- **`.GetNotchOn()`** — L1451 — `public bool GetNotchOn(int index)`
   Returns notch on.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetNotchOn()`** — L1454 — `public void SetNotchOn(uint index, bool b)`
+- **`.SetNotchOn()`** — L1456 — `public void SetNotchOn(uint index, bool b)`
   Sets notch on.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.GetNotchFreq()`** — L1468 — `public double GetNotchFreq(uint index)`
+- **`.GetNotchFreq()`** — L1470 — `public double GetNotchFreq(uint index)`
   Returns notch freq.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetNotchFreq()`** — L1473 — `public void SetNotchFreq(uint index, double freq)`
+- **`.SetNotchFreq()`** — L1475 — `public void SetNotchFreq(uint index, double freq)`
   Sets notch freq.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.GetNotchBW()`** — L1487 — `public double GetNotchBW(uint index)`
+- **`.GetNotchBW()`** — L1489 — `public double GetNotchBW(uint index)`
   Returns notch bw.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetNotchBW()`** — L1497 — `public void SetNotchBW(uint index, double bw)`
+- **`.SetNotchBW()`** — L1499 — `public void SetNotchBW(uint index, double bw)`
   Sets the notch bandwidth
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
-#### `RadioDSPTX` (type, L2471)
+#### `RadioDSPTX` (type, L2518)
 
-- **`.SyncAll()`** — L2480 — `private void SyncAll()`
+- **`.SyncAll()`** — L2527 — `private void SyncAll()`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.SetTXFilter()`** — L2732 — `public void SetTXFilter(int low, int high)`
+- **`.SetTXFilter()`** — L2779 — `public void SetTXFilter(int low, int high)`
   Sets txfilter.
   Called by: `.SyncAll()` (same file)
 
-#### `MNotchDB` (type, L4192)
+#### `MNotchDB` (type, L4239)
 
-- **`.Clear()`** — L4205 — `public static void Clear()`
+- **`.Clear()`** — L4252 — `public static void Clear()`
   get { lock (_listLock) { return _lstNotches; } } }
   Called by: `.SaveNotchesToDatabase()` (`Console/setup.cs`)
-- **`.IndexOf()`** — L4212 — `public static int IndexOf(MNotch mNotch)`
+- **`.IndexOf()`** — L4259 — `public static int IndexOf(MNotch mNotch)`
   Called by: `.ChangeNotchBW()` (`Console/console.cs`), `.ChangeNotchCentreFrequency()` (`Console/console.cs`), `.changeNotchActive()` (`Console/console.cs`), `.toggleNotchActive()` (`Console/console.cs`), `.removeNotch()` (`Console/console.cs`)
-- **`.Add()`** — L4219 — `public static void Add(MNotch mNotch)`
+- **`.Add()`** — L4266 — `public static void Add(MNotch mNotch)`
   Called by: `.GetState()` (`Console/console.cs`), `.SaveNotchesToDatabase()` (`Console/setup.cs`)
-- **`.NotchFromIndex()`** — L4236 — `public static MNotch NotchFromIndex(int index)`
+- **`.NotchFromIndex()`** — L4283 — `public static MNotch NotchFromIndex(int index)`
   Called by: `.onNotchDelete()` (`Console/console.cs`), `.onBWChanged()` (`Console/console.cs`), `.onActiveChanged()` (`Console/console.cs`), `.GetStateList()` (`Console/console.cs`), `.ShowNotchPopup()` (`Console/console.cs`), `.RestoreNotchesFromDatabase()` (`Console/setup.cs`)
-- **`.GetFirstNotchThatMatches()`** — L4246 — `public static MNotch GetFirstNotchThatMatches(double freqHz, double fwidth, bool bActive)`
+- **`.GetFirstNotchThatMatches()`** — L4293 — `public static MNotch GetFirstNotchThatMatches(double freqHz, double fwidth, bool bActive)`
   MW0LGE return a notch that matches
   Called by: `.ChangeNotchBW()` (`Console/console.cs`), `.ChangeNotchCentreFrequency()` (`Console/console.cs`), `.changeNotchActive()` (`Console/console.cs`), `.toggleNotchActive()` (`Console/console.cs`)
-- **`.NotchNearFreq()`** — L4261 — `public static bool NotchNearFreq(double freqHz, int deltaHz)`
+- **`.NotchNearFreq()`** — L4308 — `public static bool NotchNearFreq(double freqHz, int deltaHz)`
   MW0LGE check if notch close by
   Called by: `.AddNotch()` (`Console/console.cs`)
-- **`.NotchesInBW()`** — L4276 — `public static List<MNotch> NotchesInBW(double centreBWFreqHz, int lowHz, int highHz)`
+- **`.NotchesInBW()`** — L4323 — `public static List<MNotch> NotchesInBW(double centreBWFreqHz, int lowHz, int highHz)`
   MW0LGE return list of notches in given bandwidth notch is included if filter width is enough to be within the BW
   Called by: `.NotchThatSurroundsFrequencyInBW()` (same file), `.Init()` (`Console/MeterManager.cs`), `.handleNotches()` (`Console/display.cs`)
-- **`.NotchThatSurroundsFrequencyInBW()`** — L4297 — `public static MNotch NotchThatSurroundsFrequencyInBW(double centreBWFreqHz, int lowHz, int highHz, double freqHz, int nPadWidth = 0)`
+- **`.NotchThatSurroundsFrequencyInBW()`** — L4344 — `public static MNotch NotchThatSurroundsFrequencyInBW(double centreBWFreqHz, int lowHz, int highHz, double freqHz, int nPadWidth = 0)`
   MW0LGE return first notch found that surrounds a given frequency in the given bandwidth
   Called by: `.pnlDisplay_MouseMove()` (`Console/console.cs`)
 
-#### `MNotch` (type, L4328)
+#### `MNotch` (type, L4375)
 
-- **`.ToString()`** — L4376 — `public override string ToString()`
+- **`.ToString()`** — L4423 — `public override string ToString()`
   Returns the string representation.
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
-- **`.CompareTo()`** — L4381 — `public int CompareTo(object obj)`
+- **`.CompareTo()`** — L4428 — `public int CompareTo(object obj)`
   No callers found in the graph — likely invoked via P/Invoke, UI/event wiring, a delegate, a thread start, or externally.
 
 ---
