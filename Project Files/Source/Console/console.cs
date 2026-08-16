@@ -54773,18 +54773,38 @@ namespace Thetis
             if (id == "quick")
             {
                 // quick playback
-                if (playing)
+                // W5TSU: fix - this async "started" callback can arrive after a
+                // fast on/off cycle (e.g. a scripted CAT quickplay on/off) has
+                // already unchecked ckQuickPlay and moved on. Root cause of the
+                // long-standing "ckQuickPlay.Enabled stuck False" bug
+                // (FreeDV-Plan.md, Phase 3 item 7): a stale playing=true here
+                // used to unconditionally re-disable ckQuickPlay/enable
+                // ckQuickRec with no corresponding playing=false ever following
+                // (the real playback that owned this callback already stopped),
+                // leaving the checkbox permanently unusable until the
+                // documented quickrec on/off workaround unstuck it. Guarding on
+                // ckQuickPlay.Checked makes this convergent on the checkbox's
+                // own current intent instead of trusting event ordering.
+                if (playing && ckQuickPlay.Checked)
                 {
                     ckQuickPlay.Enabled = true;
                     ckQuickRec.Enabled = false;
                 }
-                else
+                else if (!playing)
                 {
                     ckQuickPlay.Enabled = true;
                     ckQuickRec.Enabled = true;
 
                     if (ckQuickPlay.Checked) ckQuickPlay.Checked = false;
                 }
+                // W5TSU: DEBUG - remove alongside the other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} arp_PlayingingChanged id=quick playing={1} checked={2} -> ckQuickPlay.Enabled={3}\n",
+                        DateTime.Now, playing, ckQuickPlay.Checked, ckQuickPlay.Enabled));
+                }
+                catch { }
 
                 QuickPlayChangedHandlers?.Invoke(1, !playing, playing);
             }
@@ -54826,18 +54846,32 @@ namespace Thetis
             if(id == "quick")
             {
                 // quick recording
-                if (recording)
+                // W5TSU: fix - same stale-async-callback guard as
+                // arp_PlayingingChanged's "quick" branch above; see that
+                // comment. A late recording=true here (after a fast
+                // quickrec on/off cycle already stopped it) used to
+                // unconditionally re-disable ckQuickPlay with no matching
+                // recording=false ever following.
+                if (recording && ckQuickRec.Checked)
                 {
                     ckQuickPlay.Enabled = false;
-                    ckQuickRec.Enabled = true;                    
+                    ckQuickRec.Enabled = true;
                 }
-                else
+                else if (!recording)
                 {
                     ckQuickPlay.Enabled = true;
                     ckQuickRec.Enabled = true;
 
                     if (ckQuickRec.Checked) ckQuickRec.Checked = false;
                 }
+                // W5TSU: DEBUG - remove alongside the other fdv debug instrumentation.
+                try
+                {
+                    string evtPath = Path.Combine(Path.GetTempPath(), "fdv_debug_events.txt");
+                    File.AppendAllText(evtPath, string.Format("{0:O} arp_RecordingChanged id=quick recording={1} checked={2} -> ckQuickPlay.Enabled={3}\n",
+                        DateTime.Now, recording, ckQuickRec.Checked, ckQuickPlay.Enabled));
+                }
+                catch { }
 
                 QuickRecordChangedHandlers?.Invoke(1, !recording, recording);
             }
