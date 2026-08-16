@@ -711,15 +711,29 @@ and squelch **off** (`Thetis_VB-Audio_config.md` §7).
      retest via a graceful close (`CloseMainWindow()`) was tried instead —
      it found no valid main-window handle (empty `MainWindowTitle`, never
      exited within 15 s) and couldn't be made to trigger a clean shutdown
-     remotely, so a true graceful-exit persistence test remains unconfirmed
-     either way. Practical read: `chkFreeDVDecode_CheckedChanged`
+     remotely, so a true graceful-exit persistence test remained unconfirmed
+     at the time. Practical read: `chkFreeDVDecode_CheckedChanged`
      (`setup.cs`) only sets `RXAFDVRun` in memory with no visible immediate
-     settings write, so whether this is "never actually persisted" or "only
-     flushed on a clean exit, and both restarts here were effectively
-     unclean" is still open — but either way, an operator hitting an
-     unplanned Thetis restart today will find FreeDV decode off afterward.
-     Box state fully restored afterward (freq/mode back to 14236000 DIGU,
-     freedv off, matching how it was found).
+     settings write.
+
+     **Resolved (2026-08-16, later same day): confirmed via a real graceful
+     restart, done by the operator at the physical/RDP console, not remote
+     scripting.** Set `freedv on` + `power on`, operator closed Thetis
+     normally and relaunched it (new PID, same `git:d93e3bb0` build,
+     confirmed via `Get-Process`/CAT version) — **both `freedv` and `power`
+     read back `false`**, the same negative result as the earlier
+     forced-kill test. Notably, **VFO frequency/mode *did* survive this
+     restart** (14236000 DIGU carried over, unlike the forced-kill test
+     where it reverted to the 14074000 default) — so this isn't a
+     wholesale "nothing persists" issue, it's specific: freq/mode go
+     through a real save path, `freedv`/`power` don't, regardless of
+     whether the restart is clean or forced. Two independent restarts
+     (one forced, one graceful) now agree: **an operator hitting any
+     Thetis restart today will find FreeDV decode and radio power both
+     off afterward**, even if they were on before. A real fix (persisting
+     these like every other Setup checkbox) is Phase 4/5 follow-up work,
+     not done here. Box left with `freedv`/`power` back on for continued
+     testing.
 
 **Exit criteria**: bench decode + at least one live off-air decode with believable
 SNR readings — **met** (2026-08-15 HackRF positive control). Iteration findings
