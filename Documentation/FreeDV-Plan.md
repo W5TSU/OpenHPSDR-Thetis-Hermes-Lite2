@@ -1565,6 +1565,103 @@ picking this up. Commits: `8c1f07b0`..`b494d3f2` on `FreeDV` (see `git log`
 for the full sequence — CAT diagnostics, single-shot-encode correction, and
 this write-up).
 
+### ✅ Resolved, same session: real bug (VAC routing) found and fixed, plus a genuine self-correction, ending in the first confirmed intelligible RADE V1 decode through Thetis
+
+Continued past the pause above rather than stopping — real, decisive progress
+came from two directions the CAT/file-log diagnostics alone couldn't reach:
+a screenshot of the operator's actual audio setup, and a proper reference
+comparison instead of more statistics.
+
+- **Root cause of "no audio" found: VAC was tapped before the RADE V1
+  decode, not after.** The operator directly reported the key clue —
+  enabling FreeDV 700E audibly changes the sound, enabling RADE V1 decode
+  never does, "static remains." That asymmetry was the tell. A screenshot of
+  Setup → Audio → VAC 1 confirmed the operator's actual listening path is
+  VAC 1 → Voicemeeter (matching the station's documented
+  AT2020→Scarlett→Voicemeeter→VAC1 chain) — not the native local-speaker
+  mixer every diagnostic that night had been checking. Reading `pipe.c`
+  found it immediately once looking in the right place: `xvacOUT()` was
+  called *before* `xradae_rx()` at both `xpipe()` call sites, so VAC always
+  got the original, never-decoded audio regardless of RADE V1's state — the
+  same bug the `1c185f14` local-speaker fix addressed for `xMixAudio`, but
+  explicitly left unaddressed for VAC at the time ("VAC actually didn't
+  either, since it's called before xradae_rx" — noted in that same commit's
+  write-up, 2026-08-15) because the local speaker was the reported symptom
+  back then. This also cleanly explains the 700E/RADE V1 asymmetry: 700E's
+  decode runs inside the WDSP RXA chain (`fexchange0`, before `xpipe` is
+  even called), already baked into what VAC receives; RADE V1's decode is a
+  separate ChannelMaster-level hook that, until now, was wired into TCI and
+  the local speaker but never VAC. **Fix**: moved `xvacOUT()` to after
+  `xradae_rx()` at both call sites, matching where `xtciOUT()` already sits
+  (`1425318d`). Verified with a direct proof-of-execution log at both the
+  pre- and post-copy points — confirmed `buffs[0]` genuinely receives the
+  decoded/silence content before `xMixAudio` reads it, ruling out a
+  build/deployment mismatch as an alternative explanation before trusting
+  the fix.
+- **First live test after the VAC fix: correctly silent, not broken.**
+  Sync held 26 s (SNR 7–10 dB) with total silence on VAC throughout —
+  initially looked like a new problem, but it's actually the fix working
+  exactly as designed: VAC now genuinely reflects RADE V1's decode state,
+  and at that point the decode chain's actual output was still an open
+  question (see below). A separate minor quirk — audio staying silent even
+  after the transmission ended, needing a MUT cycle to recover — was read
+  as a likely VAC/Voicemeeter stream-buffering artifact from extended
+  silence, not a Thetis bug, and not chased further.
+- **A real self-correction: the "FARGAN produces degenerate output"
+  finding from earlier that session doesn't hold up.** Added feature/PCM
+  tracing (`radae_fargan_debug.txt`, `radae_raderx_debug.txt`) right at the
+  `rade_rx()`/`fargan_synthesize()` boundary. A small manual sample of the
+  log looked alarming — `feat0` seemingly frozen near -12, `pcm_rms` near
+  zero almost every call — and was reported as a likely decode/synthesis
+  bug. **Proper statistics over the full log told a different story**:
+  `feat0` actually ranges -13.4 to +8.8 (std 3.16), not frozen at all — the
+  earlier read was an artifact of too small a sample. Settled it
+  conclusively with real ground truth: freedv-gui's own `-rxfeaturefile`
+  option dumps the reference decoder's actual feature vectors for the
+  identical modem file. The reference shows the *same* pattern (feat0 mean
+  -12.4, occasional excursions to +5.2) and, more tellingly, **the
+  reference's own confirmed-correct decoded audio is silent in 95.2% of its
+  10 ms frames** (median RMS exactly 0.0) — this vocoder's raw output is
+  inherently peaky/mostly-silent even when producing genuine, correct
+  speech, not a sign of anything broken. The right lesson: judge novel
+  vocoder output against a real reference before calling it broken, not
+  against an assumption of what "healthy" should look like.
+- **The actual pattern: RADE V1 needs a long runway after sync before real
+  audio appears — confirmed independently by the reference decoder
+  itself.** The reference decode of a 28.8 s test clip was silent until
+  *the last second* — not a Thetis artifact, since this is freedv-gui's own
+  bundled reference implementation with no Thetis code involved at all.
+  That reframed the whole session's short (28–32 s) test transmissions as
+  simply too short to demonstrate real decode, and pointed straight back at
+  the existing 126.3 s file (`radev1_test_iq_long.wav`) with a specific
+  prediction: real content should show up in the *later* part of a long
+  sustained sync window, not the start — matching a pattern already visible
+  but previously mis-read in an earlier 126 s test that same session (rising
+  energy/dynamics in the back half).
+- **✅ Confirmed: first-ever intelligible RADE V1 decode through Thetis's
+  real pipeline.** Re-ran the 126.3 s HackRF positive control (near-
+  continuous sync, t≈2–119 s, SNR 6–10 dB) with a concurrent TCI capture,
+  sent both that capture and the reference decoder's own output to the
+  operator to listen to side by side. First pass (a shorter single-shot
+  file) was unrecognizable even amplified — consistent with "too short."
+  The 126 s capture, focused on the **last ~30 s of the sustained sync
+  window**: **"I heard every word."** Audio level was fine, no gain tuning
+  needed (unlike 700E's `FDV_SPEECH_GAIN` fix earlier the same session).
+  This closes out the "sync but no audio" question that opened this entire
+  investigation — the fix was real (VAC), and what looked like a second bug
+  was a mix of that fix's own correctly-silent behavior plus a genuine
+  analysis mistake, not an actual decode/synthesis defect.
+
+**Net status**: RADE V1 RX is now confirmed working end-to-end through
+Thetis's real pipeline — sync, decode, and audible speech via VAC — given a
+long enough transmission (~2 minutes demonstrated; the exact minimum
+runway isn't characterized yet). Real off-air confirmation (as opposed to
+a HackRF positive control) is still open, same as 700E's own remaining
+off-air-capture gap. Debug instrumentation from this and the prior entry
+is still in place, all still correctly tagged for removal — worth a
+cleanup pass now that the investigation has actually concluded, rather
+than leaving it for "next time."
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
