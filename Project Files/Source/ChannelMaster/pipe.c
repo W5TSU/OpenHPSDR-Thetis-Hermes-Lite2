@@ -190,6 +190,31 @@ void xpipe (int stream, int pos, double** buffs)
 			xscope(rx, 0, ppip->rbuff[rx]);														// scope
 			xvacOUT(rx, 1, ppip->rbuff[rx]);													// data to VAC
 			xradae_rx(rx, ppip->rbuff[rx]);											// W5TSU: RADE V1 (experimental)
+			// W5TSU: DEBUG - direct proof this branch runs, GetRadaeRxEnabled's
+			// live value here, and the actual bytes about to reach buffs[0]/
+			// xMixAudio, to rule out a build/deployment mismatch given the
+			// operator's live listening test found zero audible change from
+			// toggling RADE V1 decode despite this fix looking correct in
+			// source. Unconditional, capped, remove once resolved.
+			{
+				static long dbg_pipe_count = 0;
+				if (dbg_pipe_count < 3000)
+				{
+					int en = GetRadaeRxEnabled(rx);
+					char pathbuf[512];
+					const char* dir = getenv("TEMP");
+					if (dir) snprintf(pathbuf, sizeof(pathbuf), "%s\\pipe_radae_debug.txt", dir);
+					else snprintf(pathbuf, sizeof(pathbuf), "C:\\pipe_radae_debug.txt");
+					FILE* pf = fopen(pathbuf, "a");
+					if (pf)
+					{
+						fprintf(pf, "stream=%d rx=%d en=%d rbuff0=%.6f buffs0_before=%.6f\n",
+							stream, rx, en, ppip->rbuff[rx][0], buffs[0][0]);
+						fclose(pf);
+					}
+					dbg_pipe_count++;
+				}
+			}
 			if (GetRadaeRxEnabled(rx))												// W5TSU: decode must also reach local monitor audio -- xMixAudio (cmaster.c) reads buffs[], not rbuff[rx], so VAC/TCI/wav got the decode but the speakers didn't
 			{
 				memcpy (buffs[0], ppip->rbuff[rx], pcm->rcvr[rx].ch_outsize * sizeof (complex));
