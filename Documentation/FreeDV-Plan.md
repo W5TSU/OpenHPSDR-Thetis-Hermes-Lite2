@@ -1708,17 +1708,12 @@ P/Invoke + CAT wiring.
 6. RADE V1 TX (`xradae_tx`) is still entirely unwired — out of scope until
    RX is fully solid.
 
-**Box state left at session end**: `hl2winbox` still running the last debug
-build (`git:1425318d`) — the final cleanup commit (`71f9b26e`) is pushed and
-CI-verified (green build) but **not yet deployed**; the MSI is already
-staged in `Downloads\Thetis-Test-v2.10.3.x64-final.msi` on the box, so
-deploying it is a quick first step next session (admin-extract →
-robocopy → relaunch, same as every other deploy tonight). Not deployed
-tonight to avoid one more restart at this hour. Functionally harmless
-either way — `ZZDI`/`ZZDJ` on the currently-running build are just inert
-extra CAT commands. RADE V1 decode on, power on, tuned 14.236 MHz DIGU,
-VAC 1 enabled per the operator's normal setup. No TX in progress, nothing
-armed.
+**Box state left at session end**: `hl2winbox` running the final cleaned-up
+build, `git:71f9b26e`, confirmed via `thetisctl cat version` — deployed and
+`ZZDT` re-verified working post-cleanup. RADE V1 decode on, power on, tuned
+14.236 MHz DIGU, VAC 1 enabled per the operator's normal setup. No TX in
+progress, nothing armed. Nothing left to deploy next session — start
+straight into the open-items list above.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
