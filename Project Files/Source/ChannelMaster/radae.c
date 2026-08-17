@@ -1099,6 +1099,20 @@ PORT void ArmRadaeRxDebug(void)
         FILE* f2 = fopen(path2, "w");
         if (f2) fclose(f2);
     }
+    {
+        char path3[512];
+        if (dir) snprintf(path3, sizeof(path3), "%s\\radae_fargan_debug.txt", dir);
+        else snprintf(path3, sizeof(path3), "C:\\radae_fargan_debug.txt");
+        FILE* f3 = fopen(path3, "w");
+        if (f3) fclose(f3);
+    }
+    {
+        char path4[512];
+        if (dir) snprintf(path4, sizeof(path4), "%s\\radae_raderx_debug.txt", dir);
+        else snprintf(path4, sizeof(path4), "C:\\radae_raderx_debug.txt");
+        FILE* f4 = fopen(path4, "w");
+        if (f4) fclose(f4);
+    }
     _InterlockedExchange(&g_radae_rx_dbg_armed, 1);
 }
 
@@ -1270,6 +1284,27 @@ void xradae_rx(int rx, double* rbuff_io)
             }
             nout = rade_rx(g_rade[rx], g_rade_rx_features[rx], &has_eoo, g_rade_eoo_bits_rx[rx],
                            g_rade_rx_in[rx]);
+            // W5TSU: DEBUG - every rade_rx() call's raw nout/has_eoo, before
+            // either branch below runs. has_eoo resets accumulated features
+            // to 0 -- if it fires too often, features never reach
+            // NB_TOTAL_FEATURES and fargan_synthesize() rarely/never runs
+            // with real data, which would also explain near-silent output
+            // despite confirmed sync. Shares ZZDJ's arm flag/cap.
+            if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
+            {
+                const char* dir = getenv("TEMP");
+                char path[512];
+                if (dir) snprintf(path, sizeof(path), "%s\\radae_raderx_debug.txt", dir);
+                else snprintf(path, sizeof(path), "C:\\radae_raderx_debug.txt");
+                FILE* f = fopen(path, "a");
+                if (f)
+                {
+                    fprintf(f, "rx=%d nin=%d nout=%d has_eoo=%d pending_n=%d sync=%ld\n",
+                        rx, nin, nout, has_eoo, g_rx_pending_features_n[rx],
+                        _InterlockedAnd(&g_radae_sync[rx], 0xffffffff));
+                    fclose(f);
+                }
+            }
             if (has_eoo)
             {
                 if (g_rade_text_rx[rx] != NULL && g_rade_n_eoo_bits[rx] > 0)
@@ -1287,6 +1322,46 @@ void xradae_rx(int rx, double* rbuff_io)
                         float fpcm[LPCNET_FRAME_SIZE];
                         fargan_synthesize(&g_fargan[rx], fpcm, g_rx_pending_features[rx]);
                         g_rx_pending_features_n[rx] = 0;
+                        // W5TSU: DEBUG - trace the decode pipeline past the
+                        // level meter: real feature values reaching FARGAN,
+                        // and what FARGAN actually synthesizes from them.
+                        // Shares ZZDJ's arm flag/cap. Remove once the
+                        // decode/synthesis bug (audio never reaches the
+                        // speaker despite confirmed sync) is found.
+                        if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
+                        {
+                            int k;
+                            double fsum = 0.0, fmax = 0.0;
+                            double psum = 0.0, ppeak = 0.0;
+                            for (k = 0; k < NB_TOTAL_FEATURES; k++)
+                            {
+                                double a = fabs((double)g_rx_pending_features[rx][k]);
+                                fsum += a;
+                                if (a > fmax) fmax = a;
+                            }
+                            for (k = 0; k < LPCNET_FRAME_SIZE; k++)
+                            {
+                                double a = fabs((double)fpcm[k]);
+                                psum += a * a;
+                                if (a > ppeak) ppeak = a;
+                            }
+                            double prms = sqrt(psum / LPCNET_FRAME_SIZE);
+                            const char* dir = getenv("TEMP");
+                            char path[512];
+                            if (dir) snprintf(path, sizeof(path), "%s\\radae_fargan_debug.txt", dir);
+                            else snprintf(path, sizeof(path), "C:\\radae_fargan_debug.txt");
+                            FILE* f = fopen(path, "a");
+                            if (f)
+                            {
+                                fprintf(f,
+                                    "rx=%d feat_meanabs=%.5f feat_max=%.5f feat0=%.5f feat1=%.5f "
+                                    "pcm_rms=%.6f pcm_peak=%.6f pcm0=%.6f pcm1=%.6f\n",
+                                    rx, fsum / NB_TOTAL_FEATURES, fmax,
+                                    g_rx_pending_features[rx][0], g_rx_pending_features[rx][1],
+                                    prms, ppeak, fpcm[0], fpcm[1]);
+                                fclose(f);
+                            }
+                        }
                         fifo_push_check(g_rx_speech_fifo[rx], &g_rx_speech_fifo_n[rx],
                                         g_rx_speech_fifo_cap[rx], fpcm, LPCNET_FRAME_SIZE,
                                         &g_rx_ovrun_count[rx], "rx.speech_fifo");
