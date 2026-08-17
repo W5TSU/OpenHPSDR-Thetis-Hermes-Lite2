@@ -34,34 +34,39 @@ a hand-designed vocoder plus a separate modem, RADE trains a neural encoder and
 decoder *end-to-end*, together with a model of the radio channel itself — there's no
 discrete "700 bits/second" bitstream in the middle, just a continuous learned
 representation optimized jointly with how HF actually distorts a signal. The payoff is
-meant to be noticeably more natural-sounding speech than Codec2 at a comparable bit
-rate — but **that payoff isn't audible yet on this build: see the callout below.**
-Its "sync"/SNR figures come from pilot correlation and model confidence rather than an
-LDPC parity-check pass, so they don't map onto 700E's numbers directly.
+noticeably more natural-sounding speech than Codec2 at a comparable bit rate — now
+confirmed audible on this build, see the note below on how long sync needs to run
+first. Its "sync"/SNR figures come from pilot correlation and model confidence rather
+than an LDPC parity-check pass, so they don't map onto 700E's numbers directly.
 
-> ⚠️ **RADE V1 currently syncs but produces no decoded audio.** As of 2026-08-16,
-> RX sync reproduces *reliably* against a controlled test signal — runs up to ~110
-> seconds continuous, SNR 8–10 dB, not marginal — but the speaker/monitor output
-> stays noise regardless of sync duration, confirmed by direct listening. This isn't
-> the earlier local-speaker-routing bug (fixed 2026-08-15, `1c185f14`) — that fix is
-> confirmed working correctly. The bug is upstream of it, in the actual decode/
-> synthesis chain, and is under active investigation (`FreeDV-Plan.md`, Stage C).
-> Until it's resolved, RADE V1 is not usable for actually listening to a QSO — 700E
-> is the only mode that currently produces real decoded audio.
+> ℹ️ **RADE V1 needs a sustained signal before audio engages.** As of 2026-08-16, RX
+> sync and decoded audio both work end-to-end — first confirmed intelligible RADE V1
+> decode through Thetis — but only after a couple of minutes of continuous sync;
+> a quick or weak signal may show sync with no audible speech yet (that's expected
+> behavior for this vocoder, not a bug — its own reference decoder does the same).
+> A separate, now-fixed bug (`1425318d`) had VAC (Virtual Audio Cable) users hearing
+> nothing regardless of sync duration, because VAC was tapping the audio stream
+> *before* RADE V1's decode ran; if you're on the native speaker/monitor path rather
+> than VAC, that specific bug never applied to you. See `FreeDV-Plan.md` Stage C for
+> the full trace, including a self-correction along the way (an early read of the
+> decoded audio as "broken" turned out to be normal — this vocoder's raw output really
+> is mostly silence per short frame; only a proper full-length comparison against
+> freedv-gui's own reference decoder caught that).
 
 | | FreeDV 700E | RADE V1 |
 |---|---|---|
 | Speech engine | Codec2 vocoder, 700 bit/s | Neural autoencoder, continuous latent, trained jointly with the channel |
 | Modem/FEC | Coherent OFDM/PSK + LDPC | Learned constellation, own pilot/sync scheme |
-| Sound | Compressed/robotic, clearly a vocoder | No decoded audio yet (see callout above) — intended to be more natural ("AI voice"-ish) |
-| Sync behavior | Locks/drops fairly quickly; passthrough audio while unsynced | Now reproduces reliably on a controlled signal (up to ~110 s continuous, SNR 8–10 dB) |
+| Sound | Compressed/robotic, clearly a vocoder | More natural ("AI voice"-ish) — confirmed audible, needs sustained sync first |
+| Sync behavior | Locks/drops fairly quickly; passthrough audio while unsynced | Reproduces reliably on a controlled signal; audio follows after ~2 min of sustained sync |
 | Underlying library | `libcodec2.dll` | `radae_c` (`rade.lib`) — separate native library |
-| Maturity here | RX prototype working, tested against bench + real-RF signals | Sync reliably reproduces; decoded audio does not yet reach the speaker — investigation ongoing |
+| Maturity here | RX prototype working, tested against bench + real-RF signals | Sync + decoded audio both confirmed working (HackRF positive control); real off-air confirmation still open |
 
-Bottom line: **700E** is the only mode worth using to actually listen to a QSO right
-now — mature, predictable, and it works. **RADE V1** syncs and reports a healthy SNR,
-but don't expect to hear anything through it yet; it's a decode/synthesis-chain bug
-away from being useful, not a tuning problem.
+Bottom line: **700E** is the mature, predictable mode — reach for it first when
+checking that a signal is even present, or working weaker/shorter signals where a
+clean sync/no-sync behavior is what you want. **RADE V1** now genuinely works and
+sounds better once it's decoding, but give it real time — don't judge it on a signal
+that's only been synced for a few seconds.
 
 ## Using it in Thetis
 
@@ -94,14 +99,17 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
 
 ## Known issues / recent changes
 
-- **RADE V1 produces no decoded audio (open, as of 2026-08-16).** Sync now
-  reproduces reliably on a controlled test signal (see the callout above), a
-  first for this project, but decoded speech never reaches the speaker at any
-  tested sync duration — confirmed by direct listening, not just level meters.
-  Not the local-speaker-routing bug fixed a day earlier (`1c185f14`, confirmed
-  still working correctly); this is further upstream, in decode/synthesis
-  itself. Under active investigation — see `FreeDV-Plan.md` Stage C for the
-  evidence trail. **Use 700E if you actually want to hear something decoded.**
+- **RADE V1 decoded audio (fixed 2026-08-16).** Confirmed working end-to-end for the
+  first time: sync, decode, and audible speech, given a couple of minutes of
+  sustained signal. The real bug (`1425318d`) was specific to VAC (Virtual Audio
+  Cable) users — VAC tapped the audio stream *before* RADE V1's decode ran, so VAC
+  output was always raw/undecoded regardless of sync state, the same class of gap
+  the `1c185f14` local-speaker fix had already closed for the native speaker path a
+  day earlier. Native speaker/monitor listeners were never affected by this specific
+  bug. Separately (not a bug, just a characteristic worth knowing): RADE V1's raw
+  decoder output is mostly silence within any short window — this vocoder needs a
+  sustained sync run before real speech content shows up, confirmed against
+  freedv-gui's own reference decoder behaving the same way.
 - **700E decoded volume (fixed 2026-08-16).** Earlier builds dropped noticeably
   quieter than passthrough audio the moment sync engaged (~28 dB quieter, RMS) —
   a jarring "why did it just go quiet" effect. Fixed by raising the decoder's
