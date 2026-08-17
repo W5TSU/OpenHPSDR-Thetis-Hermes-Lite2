@@ -1657,10 +1657,70 @@ Thetis's real pipeline — sync, decode, and audible speech via VAC — given a
 long enough transmission (~2 minutes demonstrated; the exact minimum
 runway isn't characterized yet). Real off-air confirmation (as opposed to
 a HackRF positive control) is still open, same as 700E's own remaining
-off-air-capture gap. Debug instrumentation from this and the prior entry
-is still in place, all still correctly tagged for removal — worth a
-cleanup pass now that the investigation has actually concluded, rather
-than leaving it for "next time."
+off-air-capture gap.
+
+✅ **Debug instrumentation cleaned up, same session (`71f9b26e`).** Removed
+`ZZDI`/`ZZDJ` and all the `radae_*_debug.txt`/`pipe_radae_debug.txt`
+file-logging code from `radae.c`/`radae.h`/`pipe.c`/`dsp.cs`/
+`CATCommands.cs`/`CATParser.cs`/`CATStructs.xml` — all were explicitly
+tagged temporary. Kept `ZZDT` (RX decoder-input level/clip), which was
+built as a real permanent diagnostic (same tier as `ZZDW`/`ZZDZ`), not
+debug scaffolding. Verified after cleanup that both real fixes survived
+intact: `pipe.c`'s `xvacOUT`-after-`xradae_rx` reordering, and `ZZDT`'s
+P/Invoke + CAT wiring.
+
+### 🟢 Session wrap-up (2026-08-16 → 2026-08-17) — pick up here next time
+
+**What shipped tonight, all on `FreeDV`, all pushed:**
+- `fix(freedv)`: `ckQuickPlay.Enabled` stale-async-callback race — fixed,
+  live-verified.
+- `feat(freedv)`: `FDV_SPEECH_GAIN` 0.30f → 0.75f (700E decoded speech was
+  ~28.5 dB quieter than passthrough) — fixed, live-verified, no clipping.
+- `docs`: code_documentation regenerated for the branch's new files.
+- `docs`: FreeDV/power checkbox persistence confirmed broken across a real
+  graceful restart (not just forced-kill) — documented, not fixed.
+- **`fix(radae)`: VAC output was tapped before RADE V1 decode, not after
+  — the actual root cause of "sync but no audio" for anyone listening via
+  VAC (this station's real setup: VAC1→Voicemeeter). Fixed, and for the
+  first time ever, real intelligible RADE V1 speech confirmed decoding
+  through Thetis** ("I heard every word" — 126.3 s HackRF positive
+  control, last ~30 s of a sustained sync window).
+- `chore`: all temporary debug CAT commands/logging from that
+  investigation removed again once it resolved.
+
+**What's still open, roughly in priority order:**
+1. **RADE V1 real off-air confirmation** — everything tonight was a HackRF
+   positive control (a known-good signal, deliberately transmitted). No
+   real over-the-air QSO has been confirmed to both sync *and* produce
+   audible speech yet. Same standing gap 700E has for its own off-air
+   capture (Phase 3 step 5).
+2. **RADE V1's minimum required "runway"** isn't characterized — only know
+   ~2 minutes reliably works and ~30 s doesn't. Worth narrowing if it
+   matters for real-world usability (most real QSOs may or may not run
+   that long).
+3. **`freedv`/`power` checkbox persistence** — confirmed broken (doesn't
+   survive any Thetis restart, graceful or forced) but not fixed. Low
+   urgency, real annoyance for operators.
+4. **DSP buffer size/rate robustness** — never exercised remotely (no
+   CAT/TCI hook for it), still open from Phase 3 item 7.
+5. **Phase 4 wrap-up items** (installer identity revert, release notes)
+   — deliberately deferred until the merge-to-master decision, not before.
+6. RADE V1 TX (`xradae_tx`) is still entirely unwired — out of scope until
+   RX is fully solid.
+
+**Box state left at session end**: `hl2winbox` still running the last debug
+build (`git:1425318d`) — the final cleanup commit (`71f9b26e`) is pushed and
+CI-verified (green build) but **not yet deployed**; the MSI is already
+staged in `Downloads\Thetis-Test-v2.10.3.x64-final.msi` on the box, so
+deploying it is a quick first step next session (admin-extract →
+robocopy → relaunch, same as every other deploy tonight). Not deployed
+tonight to avoid one more restart at this hour. Functionally harmless
+either way — `ZZDI`/`ZZDJ` on the currently-running build are just inert
+extra CAT commands. RADE V1 decode on, power on, tuned 14.236 MHz DIGU,
+VAC 1 enabled per the operator's normal setup. No TX in progress, nothing
+armed.
+
+## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
