@@ -1116,6 +1116,11 @@ PORT void ArmRadaeRxDebug(void)
     _InterlockedExchange(&g_radae_rx_dbg_armed, 1);
 }
 
+PORT int GetRadaeRxDebugArmed(void)
+{
+    return (int)_InterlockedAnd(&g_radae_rx_dbg_armed, 1);
+}
+
 static void radae_rx_dbg_log(int rx, double* rbuff_io)
 {
     if (!_InterlockedAnd(&g_radae_rx_dbg_armed, 1)) return;

@@ -195,24 +195,24 @@ void xpipe (int stream, int pos, double** buffs)
 			// xMixAudio, to rule out a build/deployment mismatch given the
 			// operator's live listening test found zero audible change from
 			// toggling RADE V1 decode despite this fix looking correct in
-			// source. Unconditional, capped, remove once resolved.
+			// source. Gated on the same reset-on-demand arm flag as the
+			// other radae_*_debug.txt logs (ZZDJ/ArmRadaeRxDebug) rather
+			// than a separate fixed cap -- a first attempt with its own
+			// 3000-entry cap exhausted in ~4s of idle logging, well before
+			// a test transmission could even start. Remove once resolved.
+			if (GetRadaeRxDebugArmed())
 			{
-				static long dbg_pipe_count = 0;
-				if (dbg_pipe_count < 3000)
+				int en = GetRadaeRxEnabled(rx);
+				char pathbuf[512];
+				const char* dir = getenv("TEMP");
+				if (dir) snprintf(pathbuf, sizeof(pathbuf), "%s\\pipe_radae_debug.txt", dir);
+				else snprintf(pathbuf, sizeof(pathbuf), "C:\\pipe_radae_debug.txt");
+				FILE* pf = fopen(pathbuf, "a");
+				if (pf)
 				{
-					int en = GetRadaeRxEnabled(rx);
-					char pathbuf[512];
-					const char* dir = getenv("TEMP");
-					if (dir) snprintf(pathbuf, sizeof(pathbuf), "%s\\pipe_radae_debug.txt", dir);
-					else snprintf(pathbuf, sizeof(pathbuf), "C:\\pipe_radae_debug.txt");
-					FILE* pf = fopen(pathbuf, "a");
-					if (pf)
-					{
-						fprintf(pf, "stream=%d rx=%d en=%d rbuff0=%.6f buffs0_before=%.6f\n",
-							stream, rx, en, ppip->rbuff[rx][0], buffs[0][0]);
-						fclose(pf);
-					}
-					dbg_pipe_count++;
+					fprintf(pf, "stream=%d rx=%d en=%d rbuff0=%.6f buffs0_before=%.6f\n",
+						stream, rx, en, ppip->rbuff[rx][0], buffs[0][0]);
+					fclose(pf);
 				}
 			}
 			if (GetRadaeRxEnabled(rx))												// W5TSU: decode must also reach local monitor audio -- xMixAudio (cmaster.c) reads buffs[], not rbuff[rx], so VAC/TCI/wav got the decode but the speakers didn't
@@ -220,6 +220,22 @@ void xpipe (int stream, int pos, double** buffs)
 				memcpy (buffs[0], ppip->rbuff[rx], pcm->rcvr[rx].ch_outsize * sizeof (complex));
 				for (i = 1; i < pcm->cmSubRCVR; i++)
 					memset (buffs[i], 0, pcm->rcvr[rx].ch_outsize * sizeof (complex));
+				// W5TSU: DEBUG - confirms the memcpy actually landed in
+				// buffs[0] (i.e. pcm->rcvr[rx].audio[0]) before xMixAudio
+				// reads it a few lines later in cmaster.c. Same arm flag.
+				if (GetRadaeRxDebugArmed())
+				{
+					char pathbuf2[512];
+					const char* dir2 = getenv("TEMP");
+					if (dir2) snprintf(pathbuf2, sizeof(pathbuf2), "%s\\pipe_radae_debug.txt", dir2);
+					else snprintf(pathbuf2, sizeof(pathbuf2), "C:\\pipe_radae_debug.txt");
+					FILE* pf2 = fopen(pathbuf2, "a");
+					if (pf2)
+					{
+						fprintf(pf2, "  -> buffs0_after=%.6f\n", buffs[0][0]);
+						fclose(pf2);
+					}
+				}
 			}
 			xtciOUT(rx, 1, ppip->rbuff[rx]);													// data to TCI rx audio
 			xrecordwave(rx, 0, 1, ppip->rbuff[rx]);												// wav recorder
