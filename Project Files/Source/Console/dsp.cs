@@ -291,14 +291,6 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeClip", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetRadaeClip(int rx);
-
-        // W5TSU: DEBUG - see radae.c's GetRadaeDiag doc comment. Remove once
-        // the "GetRadaeRxLevelDb always -120" bug is found.
-        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeDiag", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int GetRadaeDiag(int rx);
-
-        [DllImport("ChannelMaster.dll", EntryPoint = "ArmRadaeRxDebug", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void ArmRadaeRxDebug();
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

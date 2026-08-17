@@ -1449,20 +1449,6 @@
     <ngetparms>0</ngetparms>
     <nansparms>5</nansparms>
   </catstruct>
-  <catstruct code="ZZDI">
-    <desc>RADE RX internal diagnostic (debug, temporary)</desc>
-    <active>true</active>
-    <nsetparms>-1</nsetparms>
-    <ngetparms>0</ngetparms>
-    <nansparms>7</nansparms>
-  </catstruct>
-  <catstruct code="ZZDJ">
-    <desc>Arm RADE RX call-entry debug log (debug, temporary, set-only)</desc>
-    <active>true</active>
-    <nsetparms>1</nsetparms>
-    <ngetparms>-1</ngetparms>
-    <nansparms>0</nansparms>
-  </catstruct>
   <catstruct code="ZZDZ">
     <desc>RADE RX decode sync/SNR status</desc>
     <active>true</active>

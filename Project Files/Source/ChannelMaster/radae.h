@@ -65,15 +65,6 @@ PORT int   GetRadaeSnrDb(int rx);         /* dB SNR estimate */
 PORT int   GetRadaeRxLevelDb(int rx);     /* peak |sample| as dBFS, -120 if no signal */
 PORT int   GetRadaeClip(int rx);          /* 1 if any block-peak hit clip in last ~500 ms */
 
-/* W5TSU: DEBUG - shared reset-on-demand arm flag for the various
- * radae_*_debug.txt file logs (see xradae_rx's doc comment in radae.c).
- * ArmRadaeRxDebug() (ZZDJ) sets it; GetRadaeRxDebugArmed() lets other
- * translation units (pipe.c) gate their own logging on the same flag
- * instead of a separate fixed cap. Remove both once the decode/routing
- * bug under investigation is found. */
-PORT void  ArmRadaeRxDebug(void);
-PORT int   GetRadaeRxDebugArmed(void);
-
 /* Per-RX most recently decoded remote callsign. */
 PORT int   GetRadaeRemoteCallsign(int rx, char* dst, int max);
 PORT int   GetRadaeRemoteCallsignSeq(int rx);

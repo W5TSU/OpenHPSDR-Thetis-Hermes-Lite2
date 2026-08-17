@@ -7443,37 +7443,6 @@ namespace Thetis
 
             return sign + AddLeadingZeros(level, 3) + (clip ? "1" : "0");
         }
-        // W5TSU: DEBUG - see radae.c's GetRadaeDiag doc comment. Format:
-        // "<outsize 4 digits><initialized 0|1><handle_valid 0|1><rx_in_range 0|1>".
-        // Remove once the "GetRadaeRxLevelDb always -120" bug is found.
-        public string ZZDI()
-        {
-            const int rx = 0;
-            int packed = WDSP.GetRadaeDiag(rx);
-            int outsize = packed / 10;
-            int flags = packed % 10;
-            int initialized = (flags >> 2) & 1;
-            int handleValid = (flags >> 1) & 1;
-            int rxInRange = flags & 1;
-
-            return AddLeadingZeros(outsize, 4) + initialized + handleValid + rxInRange;
-        }
-        // W5TSU: DEBUG - arms the radae_xrx_debug.txt call-entry log (see
-        // radae.c's xradae_rx doc comment) for the next RADAE_RX_DBG_CAP
-        // calls. Set-only trigger, any value arms it. Remove once the
-        // "GetRadaeRxLevelDb always -120" bug is found.
-        public string ZZDJ(string s)
-        {
-            if (s.Length == parser.nSet)
-            {
-                WDSP.ArmRadaeRxDebug();
-                return "";
-            }
-            else
-            {
-                return parser.Error1;
-            }
-        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

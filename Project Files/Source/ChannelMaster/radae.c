@@ -747,25 +747,6 @@ PORT int GetRadaeClip(int rx)
     return ((now - t) >= 0 && (now - t) < RADAE_CLIP_HOLD_MS) ? 1 : 0;
 }
 
-/* W5TSU: DEBUG - added while chasing a "GetRadaeRxLevelDb always -120" bug:
- * xradae_rx() early-returns before the level computation if g_initialized is
- * false, rade_open() silently failed for this rx (g_rade[rx] == NULL -- only
- * ever logged via an ephemeral OutputDebugStringA, nothing persistent), or
- * rx >= pcm->cmRCVR. All three would look identical from ZZDW/ZZDZ/ZZDT
- * alone (enabled=true, sync=false, level=-120 forever) since none of those
- * getters can tell "never actually ran" apart from "ran and saw silence."
- * Remove or keep behind a debug flag once the underlying bug is found. */
-PORT int GetRadaeDiag(int rx)
-{
-    int initialized  = g_initialized ? 1 : 0;
-    int handle_valid = (radae_rx_valid(rx) && g_rade[rx] != NULL) ? 1 : 0;
-    int rx_in_range  = (pcm != NULL && rx < pcm->cmRCVR) ? 1 : 0;
-    int outsize      = (radae_rx_valid(rx) && rx_in_range) ? pcm->rcvr[rx].ch_outsize : 0;
-    if (outsize < 0) outsize = 0;
-    if (outsize > 9999) outsize = 9999;
-    return (outsize * 10) + (initialized * 4) + (handle_valid * 2) + rx_in_range;
-}
-
 PORT int GetRadaeRemoteCallsign(int rx, char* dst, int max)
 {
     int n = 0;
@@ -1071,89 +1052,8 @@ PORT void SetRadaeEooCallsign(const char* callsign)
  * Hot-path: RX (post-WDSP demod -> speakers).  Per-rx dispatch.
  * ============================================================ */
 
-/* W5TSU: DEBUG - unconditional call-entry log to find why GetRadaeRxLevelDb
- * stays pinned at -120 despite TCI proving real RX1 audio flows concurrently.
- * Reset-on-demand (ArmRadaeRxDebug/ZZDJ) rather than a fixed cap, since this
- * runs at DSP block rate (outsize=64 @ 48kHz implies ~750 calls/sec -- a
- * fixed cap would exhaust in seconds, long before a test can be armed and
- * run). Logs every guard's value at entry, before any early return, plus
- * rbuff_io[0] to directly check for real audio at the source. Remove once
- * the bug is found. */
-static volatile long g_radae_rx_dbg_armed = 0;
-static volatile long g_radae_rx_dbg_count = 0;
-#define RADAE_RX_DBG_CAP 60000
-
-PORT void ArmRadaeRxDebug(void)
-{
-    _InterlockedExchange(&g_radae_rx_dbg_count, 0);
-    const char* dir = getenv("TEMP");
-    char path[512];
-    if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug.txt", dir);
-    else snprintf(path, sizeof(path), "C:\\radae_xrx_debug.txt");
-    FILE* f = fopen(path, "w");
-    if (f) fclose(f);
-    {
-        char path2[512];
-        if (dir) snprintf(path2, sizeof(path2), "%s\\radae_xrx_debug2.txt", dir);
-        else snprintf(path2, sizeof(path2), "C:\\radae_xrx_debug2.txt");
-        FILE* f2 = fopen(path2, "w");
-        if (f2) fclose(f2);
-    }
-    {
-        char path3[512];
-        if (dir) snprintf(path3, sizeof(path3), "%s\\radae_fargan_debug.txt", dir);
-        else snprintf(path3, sizeof(path3), "C:\\radae_fargan_debug.txt");
-        FILE* f3 = fopen(path3, "w");
-        if (f3) fclose(f3);
-    }
-    {
-        char path4[512];
-        if (dir) snprintf(path4, sizeof(path4), "%s\\radae_raderx_debug.txt", dir);
-        else snprintf(path4, sizeof(path4), "C:\\radae_raderx_debug.txt");
-        FILE* f4 = fopen(path4, "w");
-        if (f4) fclose(f4);
-    }
-    _InterlockedExchange(&g_radae_rx_dbg_armed, 1);
-}
-
-PORT int GetRadaeRxDebugArmed(void)
-{
-    return (int)_InterlockedAnd(&g_radae_rx_dbg_armed, 1);
-}
-
-static void radae_rx_dbg_log(int rx, double* rbuff_io)
-{
-    if (!_InterlockedAnd(&g_radae_rx_dbg_armed, 1)) return;
-    long n = _InterlockedIncrement(&g_radae_rx_dbg_count);
-    if (n > RADAE_RX_DBG_CAP)
-    {
-        _InterlockedExchange(&g_radae_rx_dbg_armed, 0);
-        return;
-    }
-    long en_dbg     = (rx >= 0 && rx < RADAE_NRX) ? _InterlockedAnd(&g_radae_rx_enabled[rx], 1) : -1;
-    int init_dbg    = g_initialized;
-    int handle_dbg  = (rx >= 0 && rx < RADAE_NRX) ? (g_rade[rx] != NULL) : -1;
-    int rx_ok_dbg   = (pcm != NULL) ? (rx < pcm->cmRCVR) : -1;
-    int outrate_dbg = (pcm != NULL && rx >= 0 && rx < RADAE_NRX) ? pcm->rcvr[rx].ch_outrate : -1;
-    int outsize_dbg = (pcm != NULL && rx >= 0 && rx < RADAE_NRX) ? pcm->rcvr[rx].ch_outsize : -1;
-    double s0 = (rbuff_io != NULL) ? rbuff_io[0] : -9999.0;
-    double s1 = (rbuff_io != NULL) ? rbuff_io[1] : -9999.0;
-    const char* dir = getenv("TEMP");
-    char path[512];
-    if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug.txt", dir);
-    else snprintf(path, sizeof(path), "C:\\radae_xrx_debug.txt");
-    FILE* f = fopen(path, "a");
-    if (f)
-    {
-        fprintf(f, "n=%ld rx=%d en=%ld init=%d handle=%d rxok=%d or=%d os=%d s0=%.6f s1=%.6f\n",
-            n, rx, en_dbg, init_dbg, handle_dbg, rx_ok_dbg, outrate_dbg, outsize_dbg, s0, s1);
-        fclose(f);
-    }
-}
-
 void xradae_rx(int rx, double* rbuff_io)
 {
-    radae_rx_dbg_log(rx, rbuff_io);
     if (rx < 0 || rx >= RADAE_NRX) return;
     long en = _InterlockedAnd(&g_radae_rx_enabled[rx], 1);
     if (!en) return;
@@ -1234,25 +1134,6 @@ void xradae_rx(int rx, double* rbuff_io)
             if (db < -120) db = -120;
             if (db > 0)    db = 0;
             _InterlockedExchange(&g_rx_in_level_dbfs_q[rx], db);
-            // W5TSU: DEBUG - log the computed value right at the write site,
-            // plus an immediate re-read of the same variable, to settle
-            // whether the write itself is wrong or something downstream
-            // (the CAT getter path) disagrees with it. See radae_rx_dbg_log.
-            if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
-            {
-                int readback = (int)_InterlockedAnd(&g_rx_in_level_dbfs_q[rx], 0xffffffff);
-                const char* dir = getenv("TEMP");
-                char path[512];
-                if (dir) snprintf(path, sizeof(path), "%s\\radae_xrx_debug2.txt", dir);
-                else snprintf(path, sizeof(path), "C:\\radae_xrx_debug2.txt");
-                FILE* f = fopen(path, "a");
-                if (f)
-                {
-                    fprintf(f, "rx=%d loopback=%d rx_scale=%.4f blk_peak=%.6f db=%d readback=%d\n",
-                        rx, loopback_on, rx_scale, blk_peak, db, readback);
-                    fclose(f);
-                }
-            }
         }
         if (blk_peak >= RADAE_RX_CLIP_THRESHOLD)
             _InterlockedExchange(&g_rx_in_clip_last_tick[rx], (long)GetTickCount());
@@ -1289,27 +1170,6 @@ void xradae_rx(int rx, double* rbuff_io)
             }
             nout = rade_rx(g_rade[rx], g_rade_rx_features[rx], &has_eoo, g_rade_eoo_bits_rx[rx],
                            g_rade_rx_in[rx]);
-            // W5TSU: DEBUG - every rade_rx() call's raw nout/has_eoo, before
-            // either branch below runs. has_eoo resets accumulated features
-            // to 0 -- if it fires too often, features never reach
-            // NB_TOTAL_FEATURES and fargan_synthesize() rarely/never runs
-            // with real data, which would also explain near-silent output
-            // despite confirmed sync. Shares ZZDJ's arm flag/cap.
-            if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
-            {
-                const char* dir = getenv("TEMP");
-                char path[512];
-                if (dir) snprintf(path, sizeof(path), "%s\\radae_raderx_debug.txt", dir);
-                else snprintf(path, sizeof(path), "C:\\radae_raderx_debug.txt");
-                FILE* f = fopen(path, "a");
-                if (f)
-                {
-                    fprintf(f, "rx=%d nin=%d nout=%d has_eoo=%d pending_n=%d sync=%ld\n",
-                        rx, nin, nout, has_eoo, g_rx_pending_features_n[rx],
-                        _InterlockedAnd(&g_radae_sync[rx], 0xffffffff));
-                    fclose(f);
-                }
-            }
             if (has_eoo)
             {
                 if (g_rade_text_rx[rx] != NULL && g_rade_n_eoo_bits[rx] > 0)
@@ -1327,46 +1187,6 @@ void xradae_rx(int rx, double* rbuff_io)
                         float fpcm[LPCNET_FRAME_SIZE];
                         fargan_synthesize(&g_fargan[rx], fpcm, g_rx_pending_features[rx]);
                         g_rx_pending_features_n[rx] = 0;
-                        // W5TSU: DEBUG - trace the decode pipeline past the
-                        // level meter: real feature values reaching FARGAN,
-                        // and what FARGAN actually synthesizes from them.
-                        // Shares ZZDJ's arm flag/cap. Remove once the
-                        // decode/synthesis bug (audio never reaches the
-                        // speaker despite confirmed sync) is found.
-                        if (_InterlockedAnd(&g_radae_rx_dbg_armed, 1))
-                        {
-                            int k;
-                            double fsum = 0.0, fmax = 0.0;
-                            double psum = 0.0, ppeak = 0.0;
-                            for (k = 0; k < NB_TOTAL_FEATURES; k++)
-                            {
-                                double a = fabs((double)g_rx_pending_features[rx][k]);
-                                fsum += a;
-                                if (a > fmax) fmax = a;
-                            }
-                            for (k = 0; k < LPCNET_FRAME_SIZE; k++)
-                            {
-                                double a = fabs((double)fpcm[k]);
-                                psum += a * a;
-                                if (a > ppeak) ppeak = a;
-                            }
-                            double prms = sqrt(psum / LPCNET_FRAME_SIZE);
-                            const char* dir = getenv("TEMP");
-                            char path[512];
-                            if (dir) snprintf(path, sizeof(path), "%s\\radae_fargan_debug.txt", dir);
-                            else snprintf(path, sizeof(path), "C:\\radae_fargan_debug.txt");
-                            FILE* f = fopen(path, "a");
-                            if (f)
-                            {
-                                fprintf(f,
-                                    "rx=%d feat_meanabs=%.5f feat_max=%.5f feat0=%.5f feat1=%.5f "
-                                    "pcm_rms=%.6f pcm_peak=%.6f pcm0=%.6f pcm1=%.6f\n",
-                                    rx, fsum / NB_TOTAL_FEATURES, fmax,
-                                    g_rx_pending_features[rx][0], g_rx_pending_features[rx][1],
-                                    prms, ppeak, fpcm[0], fpcm[1]);
-                                fclose(f);
-                            }
-                        }
                         fifo_push_check(g_rx_speech_fifo[rx], &g_rx_speech_fifo_n[rx],
                                         g_rx_speech_fifo_cap[rx], fpcm, LPCNET_FRAME_SIZE,
                                         &g_rx_ovrun_count[rx], "rx.speech_fifo");
