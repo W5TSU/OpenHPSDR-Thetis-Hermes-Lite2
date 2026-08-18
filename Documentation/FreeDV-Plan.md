@@ -820,10 +820,10 @@ open items for Phase 4, not blockers on Phase 3 itself.
 ## Stage B — Full FDV mode *(future, after the prototype proves out)*
 
 - 🟡 TX path: mirror block in `TXA.c` using `freedv_tx()` — mic audio → 8 kHz →
-  modem audio → SSB modulator. **Encoder built, wired, and proven structurally
-  sound via a real PTT test, 2026-08-18** — see the dated entries below. Still
-  open: console/CAT arming beyond the test-only `ZZEF`, a MOX/PTT arbiter, and
-  off-air decode confirmation.
+  modem audio → SSB modulator. **Encoder built, wired, verified via real PTT
+  tests, and a graceful-drain MOX/PTT arbiter added, 2026-08-18** — see the
+  dated entries below. Still open: console/CAT arming beyond the test-only
+  `ZZEF`, and off-air decode confirmation.
 - ⬜ Mode selection: 1600 / 700D / 700E (`SetRXAFDVMode`), RX2/subRX support
 - ⬜ 700D/E text messages: callsign beacon TX + received-text display
 - ⬜ Real UI: console mode button or info-bar sync light; entering FDV auto-applies the
@@ -918,12 +918,64 @@ pipeline (`fexchange0`'s semaphore-driven worker thread) rather than
 anything wrong with the encoder — recorded here as unexplained-but-benign
 rather than either hidden or overclaimed as understood.
 
+> **Resolved, next session (`d9e82adb`, 2026-08-18)**: before trusting a
+> timeout-based drain design on top of this unexplained gap, it got rechecked
+> with tight timestamp bracketing and an immediate dump check — 3.92s of
+> audio from a ~4.46s real window, right on target. It was a measurement
+> artifact (this session's own delay before checking the dump), not a
+> runaway backlog. No corruption theory needed after all.
+
 `ZZEF` disarmed afterward, station back to idle. A good, real checkpoint:
 the encoder itself is proven structurally sound. **Still open, same shape as
 RADE V1 TX's remaining gaps**: a MOX/PTT arbiter for real end-to-end
 operation (RADE V1 TX's EOO-flush-before-drop design is the template), and
 eventually off-air decode confirmation — the same standing gap RADE V1 TX
 also still has.
+
+### 🟢 700E TX MOX/PTT arbiter — graceful drain on key-up, real-PTT verified (`d9e82adb`, 2026-08-18)
+
+Closes the "no MOX/PTT arbiter at all yet" gap from the entry above. Turns
+out 700E TX's *run* gate already is the real MOX transition (`xtxa()`/
+`xfdvtx()` only execute while wdsp's `ch[channel].exchange` is on, flipped
+by `SetChannelState()` inside `chkMOX_CheckedChanged2`) — unlike RADE V1 TX,
+which taps ChannelMaster's raw mic buffer before wdsp runs and needed an
+explicit MOX-state push. What 700E TX actually lacked was **graceful
+drain**: the instant `SetChannelState(channel, 0, ...)` fired, whatever was
+still sitting in `out_ring` (already-encoded modem audio not yet output) or
+a partial `speech_ring` block got silently discarded, cutting off the tail
+of the operator's last words.
+
+**Design**: a new `draining` flag on `FDVTX` (`fdv.h`/`fdv.c`). While set,
+`xfdvtx()` stops ingesting new mic audio but keeps draining what's already
+buffered. New PORT functions `SetTXAFDVDraining`/`GetTXAFDVDrained`/
+`FlushTXAFDV`. `console.cs`'s `OnMoxPreChangeHandler_FDVTX`, registered on
+the same `MoxPreChangeHandlers` delegate as RADE V1 TX's arbiter — same
+blocking-before-real-transition mechanism. Key-down flushes the ring
+buffers (a stale-carry-over guard, mirroring `RadaeNotifyBeginOver`).
+Key-up sets `draining=1` and blocks polling `GetTXAFDVDrained()`,
+hard-capped at 2000ms — same principle as RADE V1 TX's EOO-flush cap.
+Gated on `GetTXAFDVRun`, so normal SSB/CW/FM/etc PTT sees zero added delay
+when 700E TX isn't armed.
+
+**Verified tonight, precisely timed**:
+1. First resolved the prior session's "~8.96s from a 4s hold" oddity before
+   trusting a timeout design on top of it — see the resolution note above.
+2. Regression check: `ZZEF=0` (disarmed), 2s hold, ~0.59s round-trip
+   overhead — baseline.
+3. Armed test: `ZZEF=1`, 3s hold, ~0.54s overhead — essentially identical
+   to baseline, confirming the drain adds negligible delay (well under the
+   2000ms cap, a small bounded backlog as expected).
+4. Pulled and analyzed the resulting recording: 23,040 samples (2.88s),
+   peak -6.03dBFS / RMS -12.6dBFS (matches the prior measurements exactly),
+   zero NaN, and critically — the *last* samples right at the drain
+   boundary are real, well-formed signal, not garbage/zero/clipped,
+   confirming the drain logic doesn't corrupt the trailing edge.
+
+`ZZEF` disarmed afterward, station idle. Closes both the "structurally
+sound" and "don't lose the tail on key-up" pieces for 700E TX. **Still
+open**: actual off-air decode confirmation (same standing gap RADE V1 TX
+has), and the encoder currently reads raw pre-mic-gain audio with no
+operator-facing UI/level meter — both future work, not blocking.
 
 ## Stage C — RADE neural mode *(external dependency)*
 

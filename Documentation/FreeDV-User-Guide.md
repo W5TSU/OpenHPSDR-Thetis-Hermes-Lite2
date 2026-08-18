@@ -7,10 +7,11 @@
 > carrying a valid station-ID (end-of-over callsign) burst — but it is **not ready
 > for normal operation**: nothing confirms the transmitted signal actually decodes
 > anywhere, since there's no second receiver at this station yet to check. **700E
-> TX** also now exists (a from-scratch encoder, separate effort from RADE V1) and
-> has had one real-RF verification test confirming clean output, but it has no
-> MOX/PTT arbiter at all yet — even further from usable than RADE V1 TX. Both TX
-> encoders are disarmed by default. Treat TX as an active development item, not a
+> TX** also now exists (a from-scratch encoder, separate effort from RADE V1) with
+> its own MOX/PTT arbiter (graceful drain on key-up, verified with real-RF
+> timing tests) — same "mechanics proven, no decode confirmation" state as
+> RADE V1 TX. Both TX encoders are disarmed by default. Treat TX as an active
+> development item, not a
 > feature — see "Known issues / recent changes" below. This is not part of a
 > released Thetis build; it's available on side-loaded
 > `Thetis-Test` builds from the `FreeDV` development branch. See
@@ -151,16 +152,18 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
   correctly, not that the signal itself is received/decoded elsewhere. TX encoder
   is disarmed by default after testing. Don't treat this as an operator-usable
   transmit mode yet — see `FreeDV-Plan.md`'s 2026-08-18 entries.
-- **700E TX encoder built, wired, verified via real PTT test (2026-08-18) —
-  further from usable than RADE V1 TX.** A separate, from-scratch encoder (700E
-  had no TX code to reuse, unlike RADE V1). CAT-armable via a test-only field,
-  `ZZEF`. One real 4-second silent PTT test confirmed the encoder produces clean,
+- **700E TX encoder built, wired, and MOX/PTT arbiter added (2026-08-18) — same
+  maturity level as RADE V1 TX now.** A separate, from-scratch encoder (700E had
+  no TX code to reuse, unlike RADE V1). CAT-armable via a test-only field, `ZZEF`.
+  A real 4-second silent PTT test confirmed the encoder produces clean,
   correctly-scaled modem audio (no clipping, no NaN, spectrum matches expected
-  audio-passband OFDM occupancy) — a real structural checkpoint. But **there is no
-  MOX/PTT arbiter for this mode at all yet** — nothing manages the end of a
-  transmission properly — so this is meaningfully less ready than RADE V1 TX, not
-  a parallel feature at the same stage. Disarmed by default. See `FreeDV-Plan.md`
-  Stage B for the full trace.
+  audio-passband OFDM occupancy). A follow-up added graceful drain on key-up
+  (buffered modem audio isn't discarded mid-word when PTT releases, hard-capped
+  at 2000ms, same principle as RADE V1 TX's EOO-flush arbiter) — verified with
+  precisely-timed real-RF tests showing negligible added delay and a clean,
+  uncorrupted trailing edge. **What's still open, same as RADE V1 TX:** no
+  second receiver confirms the transmitted signal actually decodes anywhere.
+  Disarmed by default. See `FreeDV-Plan.md` Stage B for the full trace.
 
 See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
 issues still open.
