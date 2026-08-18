@@ -46289,6 +46289,7 @@ namespace Thetis
             VFOAFrequencyChangeHandlers += OnVFOAFrequencyChangeHandler;    //VFOA changed
             VFOBFrequencyChangeHandlers += OnVFOBFrequencyChangeHandler;    //VFOB changed
             MoxPreChangeHandlers += OnMoxPreChangeHandler_Radae;        // W5TSU: RADE V1 MOX/PTT push + EOO-flush hold, before real mox changed
+            MoxPreChangeHandlers += OnMoxPreChangeHandler_FDVTX;        // W5TSU: FreeDV 700E TX drain-before-unkey, before real mox changed
             MoxChangeHandlers += OnMoxChangeHandler;                    // mox changed
             SetBandChangeHanders += OnSetBandChangeHander;              // SetBand completed
             PowerChangeHanders += OnPowerChangeHander;                  // power state changed
@@ -46321,6 +46322,7 @@ namespace Thetis
             VFOAFrequencyChangeHandlers -= OnVFOAFrequencyChangeHandler;
             VFOBFrequencyChangeHandlers -= OnVFOBFrequencyChangeHandler;
             MoxPreChangeHandlers -= OnMoxPreChangeHandler_Radae;        // W5TSU
+            MoxPreChangeHandlers -= OnMoxPreChangeHandler_FDVTX;        // W5TSU
             MoxChangeHandlers -= OnMoxChangeHandler;
             SetBandChangeHanders -= OnSetBandChangeHander;
             CentreFrequencyHandlers -= OnCentreFrequencyChanged;
@@ -46934,6 +46936,48 @@ namespace Thetis
                     WDSP.SetRadaeTxSilenceHold(0);
                 }
                 WDSP.SetRadaeMoxState(0);
+            }
+        }
+
+        // W5TSU: FreeDV 700E TX MOX/PTT arbiter. Same blocking-before-real-
+        // transition principle as OnMoxPreChangeHandler_Radae above, adapted
+        // to 700E's very different architecture: xtxa()/xfdvtx() only run at
+        // all while wdsp's own ch[channel].exchange gate is on (SetChannelState,
+        // called later in this same MOX transition by chkMOX_CheckedChanged2)
+        // -- so unlike RADE V1 TX there's no separate "push MOX state" step
+        // needed on key-down, the channel-on/off transition IS the encoder's
+        // run gate. What this arbiter actually buys: without it, whatever the
+        // encoder has already produced into out_ring (and any partial
+        // speech_ring block) gets silently discarded the instant
+        // SetChannelState(channel, 0, ...) fires, cutting off the tail of the
+        // operator's last words -- confirmed the pipeline paces close to real
+        // time first (2026-08-18, no runaway backlog), so this is a small,
+        // bounded drain, not an open-ended one. Key-down flushes the ring
+        // buffers so a stale carry-over from a previous over can't bleed into
+        // a new one (matches RadaeNotifyBeginOver's role above). Gated on
+        // GetTXAFDVRun so a normal SSB/CW/FM/etc PTT release sees zero added
+        // delay when 700E TX isn't armed.
+        private const int FDVTX_DRAIN_TIMEOUT_MS = 2000; // hard cap, same principle as RADAE_EOO_FLUSH_TIMEOUT_MS above
+        private const int FDVTX_DRAIN_POLL_MS = 15;
+        private void OnMoxPreChangeHandler_FDVTX(int rx, bool currentMox, bool expectedMox)
+        {
+            if (expectedMox == currentMox) return;
+            if (WDSP.GetTXAFDVRun(WDSP.id(1, 0)) == 0) return; // not armed, nothing to do
+
+            if (expectedMox) // about to key down (RX -> TX)
+            {
+                WDSP.FlushTXAFDV(WDSP.id(1, 0));
+            }
+            else // about to key up (TX -> RX) -- drain buffered modem audio before the real unkey
+            {
+                WDSP.SetTXAFDVDraining(WDSP.id(1, 0), 1);
+                int waited = 0;
+                while (WDSP.GetTXAFDVDrained(WDSP.id(1, 0)) == 0 && waited < FDVTX_DRAIN_TIMEOUT_MS)
+                {
+                    Thread.Sleep(FDVTX_DRAIN_POLL_MS);
+                    waited += FDVTX_DRAIN_POLL_MS;
+                }
+                WDSP.SetTXAFDVDraining(WDSP.id(1, 0), 0);
             }
         }
 

@@ -277,6 +277,18 @@ namespace Thetis
         [DllImport("wdsp.dll", EntryPoint = "GetTXAFDVRun", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetTXAFDVRun(int channel);
 
+        // FreeDV 700E TX MOX/PTT arbiter, called from console.cs's
+        // OnMoxPreChangeHandler_FDVTX -- same principle as RADE V1 TX's
+        // EOO-flush-before-drop arbiter, adapted to 700E's architecture. // W5TSU
+        [DllImport("wdsp.dll", EntryPoint = "SetTXAFDVDraining", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetTXAFDVDraining(int channel, int draining);
+
+        [DllImport("wdsp.dll", EntryPoint = "GetTXAFDVDrained", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetTXAFDVDrained(int channel);
+
+        [DllImport("wdsp.dll", EntryPoint = "FlushTXAFDV", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void FlushTXAFDV(int channel);
+
         // RADE V1 RX decode (ChannelMaster/radae.c) -- experimental, RX-only so far.
         // Minimal hook: run flag + sync/SNR status, matching the FreeDV FDV pattern
         // above. rx: 0 = RX1, 1 = RX2. W5TSU

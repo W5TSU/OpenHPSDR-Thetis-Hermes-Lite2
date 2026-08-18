@@ -305,6 +305,7 @@ static void fdvtx_reset(FDVTX a)
     flush_resampleF(a->rs_down);
     flush_resampleF(a->rs_up);
     a->agc_seeded = 0;
+    a->draining = 0;
 }
 
 FDVTX create_fdvtx(int run, int size, double* in, double* out, int rate)
@@ -388,14 +389,20 @@ void xfdvtx(FDVTX a)
 
         // downsample this buffer's mono mic audio to the speech rate --
         // tap point is right after the input resampler, before mic gain/
-        // panel/compressor/EQ/CESSB/ALC (see fdv.h's comment on this struct)
-        for (i = 0; i < a->size; i++)
-            a->rs_down_in[i] = (float)a->in[2 * i + 0];
-        a->rs_down->size = a->size;
-        int nsp = xresampleF(a->rs_down);
+        // panel/compressor/EQ/CESSB/ALC (see fdv.h's comment on this struct).
+        // Skipped while draining (MOX/PTT arbiter): the operator has already
+        // released PTT, so no new speech should enter the pipeline -- only
+        // what's already buffered gets encoded and drained out below.
+        if (!a->draining)
+        {
+            for (i = 0; i < a->size; i++)
+                a->rs_down_in[i] = (float)a->in[2 * i + 0];
+            a->rs_down->size = a->size;
+            int nsp = xresampleF(a->rs_down);
 
-        for (i = 0; i < nsp; i++)
-            fdv_rb_put(&a->speech_ring, a->rs_down_out[i]);
+            for (i = 0; i < nsp; i++)
+                fdv_rb_put(&a->speech_ring, a->rs_down_out[i]);
+        }
 
         // encode every complete speech block
         while (a->speech_ring.count >= a->n_speech_samples)
@@ -787,6 +794,27 @@ PORT
 int GetTXAFDVRun(int channel)
 {
     return txa[channel].fdvtx.p->run;
+}
+
+// W5TSU: FreeDV 700E TX MOX/PTT arbiter (see fdv.h's comment on FDVTX's
+// draining field, and console.cs's OnMoxPreChangeHandler_FDVTX).
+PORT
+void SetTXAFDVDraining(int channel, int draining)
+{
+    txa[channel].fdvtx.p->draining = draining;
+}
+
+PORT
+int GetTXAFDVDrained(int channel)
+{
+    FDVTX a = txa[channel].fdvtx.p;
+    return (a->speech_ring.count < a->n_speech_samples && a->out_ring.count == 0) ? 1 : 0;
+}
+
+PORT
+void FlushTXAFDV(int channel)
+{
+    flush_fdvtx(txa[channel].fdvtx.p);
 }
 
 // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

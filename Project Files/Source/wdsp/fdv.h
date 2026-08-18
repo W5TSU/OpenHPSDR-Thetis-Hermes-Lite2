@@ -133,6 +133,18 @@ typedef struct _fdvtx
     float agc_gain_db;
     int agc_seeded;
 
+    // W5TSU: MOX/PTT arbiter (console.cs's OnMoxPreChangeHandler_FDVTX).
+    // While draining, xfdvtx() stops ingesting new mic audio into
+    // speech_ring but keeps draining whatever's already buffered there and
+    // in out_ring -- the console-side arbiter holds the real key-up
+    // (SetChannelState, which is what actually stops xtxa()/xfdvtx() from
+    // running at all) until GetTXAFDVDrained() reports empty, so the tail
+    // of the operator's last words isn't silently discarded the instant
+    // MOX drops. Same principle as RADE V1 TX's EOO-flush-before-drop
+    // arbiter, adapted to 700E's very different architecture (see
+    // ChannelMaster/radae.c's g_radae_tx_silence_hold).
+    int draining;
+
     CRITICAL_SECTION cs;
 } fdvtx, *FDVTX;
 
