@@ -1837,6 +1837,59 @@ TX encoder disarmed (`ZZDK=0`) after testing — station left in a safe
 default state (normal QSOs can't accidentally get RADE-encoded), still at
 14.236 MHz DIGU, power on, nothing armed.
 
+### ✅ Callsign-ID gap closed — real EOO callsign wired, second on-air test (`3b6ef75b`, `7aa77f6d`, 2026-08-18)
+
+Closes the "⚠️ not a real callsign" item flagged just above. `SetRadaeEooCallsign`
+(present in `radae.c` since the original port, never called) finally got a
+real caller: new CAT command **`ZZDJ`** — fixed-width 15-char field, Kenwood-CAT
+convention (same shape as `KY`), space-padded on set, trimmed/re-padded on get.
+Also added `GetRadaeEooCallsign` (a getter didn't exist before — no way to read
+back what was set). *(Note: `ZZDJ` was previously used for the now-removed
+`GetRadaeTxDebug` diagnostic tap from the loopback milestone above — command
+letter reused after cleanup, same convention as elsewhere in this project;
+unrelated to the current `ZZDJ`.)*
+
+**Two real bugs found and fixed while wiring this in:**
+
+1. `SetRadaeEooCallsign` called `EnterCriticalSection` unconditionally, missing
+   the `g_radae_cs_inited` guard every other use of that critical section in
+   the file has. Harmless while it had zero callers; a real crash risk now
+   it's CAT-reachable before power-on (a `ZZDJ` sent too early would have hit
+   an uninitialized critical section). Fixed both the new getter and the
+   existing setter.
+2. **`CATParser` response-framing quirk, found on first real test.** A raw
+   socket probe showed `ZZDW`/`ZZDT` returning properly framed replies
+   (`ZZDW1;`, `ZZDT-1200;`) while the first `ZZDJ` GET implementation came
+   back as bare, unterminated text (`TEST`, no prefix, no `;`). Root cause:
+   `ParseExtended()` only wraps a reply in its command-name/`;` framing when
+   `rtncmd.Length == nAns` *exactly* — the first implementation returned a
+   variable-length trimmed string instead of the full 15-char field `nAns=15`
+   expects. Fixed by padding the GET response to the full width. Worth
+   remembering for any future fixed-width CAT field: `nAns` isn't just
+   documentation, `ParseExtended` silently drops framing if the actual
+   response length doesn't match it exactly.
+
+Also hit the project's known mixed-line-ending trap on `CATCommands.cs`
+mid-fix (see `mixed-line-endings-warning` — caught this time via
+`git diff --stat` showing 1370+ changed lines for a 2-line logic fix, before
+committing; reverted and redid via byte-precise Python splicing).
+
+**Test**: round-trip verified via raw socket + `thetisctl` after the framing
+fix. Operator confirmed `W5TSU` as their real callsign, set via `ZZDJ`, then a
+**second real 6-second over-the-air transmission** (same protocol as the
+previous milestone — operator's live voice, `--confirm-tx`) — this one now
+carries a valid EOO callsign burst instead of uninitialized bits. Clean
+key/unkey again, operator confirmed nothing unusual. TX encoder disarmed
+(`ZZDK=0`) afterward, station left idle at 14.236 MHz DIGU.
+
+**Still open, unchanged from the milestone above**: no second receiver at
+this station, so still no independent confirmation that a real RADE V1
+signal transmitted here is actually decodable anywhere. Everything tested
+so far proves the TX chain is mechanically correct and now carries a real
+station ID — not that the signal is received/decoded elsewhere. That
+remains the one open item standing between this and calling RADE V1 TX
+genuinely finished.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

@@ -2,14 +2,14 @@
 
 > **Status: prototype, `FreeDV` branch, decode is usable — transmit is not.** Both
 > modes' RX/decode side work as described below. RADE V1 TX exists and, as of
-> 2026-08-18, has been keyed once over real RF as a controlled mechanics test
-> (`thetisctl` + `--confirm-tx`, not through the normal UI) — but it is **not ready
+> 2026-08-18, has been keyed twice over real RF as controlled mechanics tests
+> (`thetisctl` + `--confirm-tx`, not through the normal UI), the second one
+> carrying a valid station-ID (end-of-over callsign) burst — but it is **not ready
 > for normal operation**: nothing confirms the transmitted signal actually decodes
-> anywhere (no second receiver at this station yet), and the end-of-over burst goes
-> out with an uninitialized bit pattern instead of a real callsign, so it is **not
-> station identification**. The TX encoder is disarmed by default. Treat TX as an
-> active development item, not a feature — see "Known issues / recent changes"
-> below. This is not part of a released Thetis build; it's available on side-loaded
+> anywhere, since there's no second receiver at this station yet to check. The TX
+> encoder is disarmed by default. Treat TX as an active development item, not a
+> feature — see "Known issues / recent changes" below. This is not part of a
+> released Thetis build; it's available on side-loaded
 > `Thetis-Test` builds from the `FreeDV` development branch. See
 > `Documentation/FreeDV-Plan.md` for build/implementation details and progress notes.
 
@@ -137,13 +137,17 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
   arms the encoder, key-up holds real PTT open up to 2s (hard-capped) so the
   end-of-over burst can flush before the radio unkeys, normal SSB/CW/FM PTT release
   is unaffected. Tested with a real 6-second over-the-air transmission — clean
-  key/unkey, no stuck PTT, Thetis stayed responsive. **Two things this did not
-  prove, both still open:** (1) no second receiver at this station confirms the
-  transmitted signal actually decodes anywhere; (2) the end-of-over burst went out
-  with an uninitialized bit pattern, not a real callsign — **it is not a valid
-  station identification**, `SetRadaeEooCallsign` has never been wired to a real
-  callsign yet. TX encoder is disarmed by default after testing. Don't treat this
-  as an operator-usable transmit mode — see `FreeDV-Plan.md`'s 2026-08-18 entry.
+  key/unkey, no stuck PTT, Thetis stayed responsive.
+- **Callsign ID wired, second on-air test (2026-08-18).** `SetRadaeEooCallsign` is
+  now reachable via a new CAT field, `ZZDJ` (fixed 15-char, `KY`-style). A second
+  real 6-second over-the-air transmission confirmed the end-of-over burst now
+  carries a real, operator-set callsign rather than the earlier uninitialized bit
+  pattern — that specific gap is closed. **What's still open:** no second receiver
+  at this station confirms the transmitted signal actually decodes anywhere —
+  everything tested so far proves the TX chain keys/unkeys cleanly and IDs
+  correctly, not that the signal itself is received/decoded elsewhere. TX encoder
+  is disarmed by default after testing. Don't treat this as an operator-usable
+  transmit mode yet — see `FreeDV-Plan.md`'s 2026-08-18 entries.
 
 See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
 issues still open.
