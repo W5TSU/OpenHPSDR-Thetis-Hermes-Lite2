@@ -268,6 +268,15 @@ namespace Thetis
         [DllImport("wdsp.dll", EntryPoint = "GetRXAFDVSnr", CallingConvention = CallingConvention.Cdecl)]
         public static extern double GetRXAFDVSnr(int channel);
 
+        // FreeDV 700E TX encode (fdv.c) -- see ZZEF. Inert by default (run=0),
+        // no MOX/PTT arbiter wired yet, matching RADE V1 TX's own encoder-
+        // wiring/PTT-wiring session split. // W5TSU
+        [DllImport("wdsp.dll", EntryPoint = "SetTXAFDVRun", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetTXAFDVRun(int channel, int run);
+
+        [DllImport("wdsp.dll", EntryPoint = "GetTXAFDVRun", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetTXAFDVRun(int channel);
+
         // RADE V1 RX decode (ChannelMaster/radae.c) -- experimental, RX-only so far.
         // Minimal hook: run flag + sync/SNR status, matching the FreeDV FDV pattern
         // above. rx: 0 = RX1, 1 = RX2. W5TSU
@@ -355,6 +364,9 @@ namespace Thetis
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
         [DllImport("wdsp.dll", EntryPoint = "ResetRXAFDVDebug", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ResetRXAFDVDebug();
+
+        [DllImport("wdsp.dll", EntryPoint = "ResetTXAFDVDebug", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void ResetTXAFDVDebug();
         //
 
         //libspecbleach

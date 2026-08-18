@@ -2552,6 +2552,7 @@ namespace Thetis
 			TXCompandOn = tx_compand_on;
 			TXCompandLevel = tx_compand_level;
             TXOsctrlOn = tx_osctrl_on;
+            TXAFDVRun = tx_fdv_run;    // W5TSU: FreeDV 700E TX encode
             CTCSSFreqHz = ctcss_freq_hz;
             TXFMDeviation = tx_fm_deviation;
             CTCSSFlag = ctcss_flag;
@@ -3137,6 +3138,30 @@ namespace Thetis
                     {
                         WDSP.SetTXAosctrlRun(WDSP.id(thread, 0), value);
                         tx_osctrl_on_dsp = value;
+                    }
+                }
+            }
+        }
+
+        // W5TSU: FreeDV 700E TX encode (fdv.c). Inert by default -- nothing
+        // arms it via CAT/console yet beyond this property; MOX/PTT wiring
+        // (matching RADE V1 TX's own EOO-flush-before-drop arbiter) is a
+        // separate, later step. See ZZEF.
+        private int tx_fdv_run_dsp = 0;
+        private int tx_fdv_run = 0;
+        public int TXAFDVRun
+        {
+            get { return tx_fdv_run; }
+            set
+            {
+                tx_fdv_run = value;
+
+                if (update)
+                {
+                    if (value != tx_fdv_run_dsp || force)
+                    {
+                        WDSP.SetTXAFDVRun(WDSP.id(thread, 0), value);
+                        tx_fdv_run_dsp = value;
                     }
                 }
             }

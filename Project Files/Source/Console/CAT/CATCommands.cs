@@ -7332,6 +7332,27 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets the FreeDV 700E TX encode (fdv.c xfdvtx) enable
+        // state, mirroring ZZDV's RX-side shape exactly (console.radio.
+        // GetDSPTX(0).TXAFDVRun). Arms the encoder only -- no MOX/PTT arbiter
+        // wired yet (matching RADE V1 TX's own EOO-flush-before-drop design),
+        // so this alone cannot key real audio onto the air. // W5TSU
+        public string ZZEF(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                console.radio.GetDSPTX(0).TXAFDVRun = (s == "1") ? 1 : 0;
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (console.radio.GetDSPTX(0).TXAFDVRun != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         // Reads or sets the FreeDV RX decode (fdv.c) enable state. RX1/subrx0
         // only, matching the Setup DSP tab's current single-channel prototype
         // scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). ZZFD/ZZFS were

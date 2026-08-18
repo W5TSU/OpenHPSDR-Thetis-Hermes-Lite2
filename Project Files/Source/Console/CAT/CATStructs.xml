@@ -1428,6 +1428,13 @@
     <ngetparms>0</ngetparms>
     <nansparms>1</nansparms>
   </catstruct>
+  <catstruct code="ZZEF">
+    <desc>FreeDV 700E TX encode enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
   <catstruct code="ZZDS">
     <desc>FreeDV RX decode sync/SNR status</desc>
     <active>true</active>

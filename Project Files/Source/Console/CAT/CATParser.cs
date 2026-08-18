@@ -1170,6 +1170,9 @@ namespace Thetis
                 case "ZZDV":
                     rtncmd = cmdlist.ZZDV(suffix);
                     break;
+                case "ZZEF":
+                    rtncmd = cmdlist.ZZEF(suffix);
+                    break;
                 case "ZZDS":
                     rtncmd = cmdlist.ZZDS();
                     break;

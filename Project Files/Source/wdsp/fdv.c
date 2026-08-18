@@ -71,6 +71,10 @@ static int fdv_dbg_audio_count = 0;
 static int fdv_dbg_resamp_count = 0;
 static int fdv_dbg_nin_count = 0; // W5TSU: DEBUG - traces freedv_nin()/ring state on every xfdv() call, to catch the modem-block loop silently never running; remove before merge
 
+// W5TSU: DEBUG - temporary TX-side dump counter, reset via ResetTXAFDVDebug().
+// See xfdvtx()'s fdvtx_debug_modem.raw dump.
+static int fdvtx_dbg_count = 0;
+
 // W5TSU: DEBUG - scratch buffer for freedv_get_modem_extended_stats(), which
 // exposes the OFDM demod's own internal sync/timing/freq-offset estimates
 // (sync_metric, foff, rx_timing, clock_offset) instead of just the coarse
@@ -425,6 +429,28 @@ void xfdvtx(FDVTX a)
             }
 
             freedv_tx(a->f, a->mod_out, a->speech_in);   // always produces n_nom_modem_samples
+
+            // W5TSU: DEBUG - temporary raw dump of the encoder's modem output
+            // (short PCM at a->modem_rate, i.e. freedv_get_modem_sample_rate())
+            // so a first real ZZEF=1 arm can be verified off-box without any
+            // MOX/PTT -- xtxa() runs continuously regardless of key state
+            // (confirmed 2026-08-18 via the mic capture path), so this starts
+            // filling as soon as the encoder is armed and power is on. Remove
+            // once the encode path is confirmed sane.
+            if (fdvtx_dbg_count < 2000)
+            {
+                const char* dir = getenv("TEMP");
+                char path[512];
+                if (dir) snprintf(path, sizeof(path), "%s\\fdvtx_debug_modem.raw", dir);
+                else snprintf(path, sizeof(path), "C:\\fdvtx_debug_modem.raw");
+                FILE* mf = fopen(path, "ab");
+                if (mf)
+                {
+                    fwrite(a->mod_out, sizeof(short), a->n_nom_modem_samples, mf);
+                    fclose(mf);
+                }
+                fdvtx_dbg_count++;
+            }
 
             for (i = 0; i < a->n_nom_modem_samples; i++)
                 a->rs_up_in[i] = a->mod_out[i] * (FDV_TX_MODEM_GAIN / 32768.0f);
@@ -798,4 +824,18 @@ void ResetRXAFDVDebug(void)
     else snprintf(path, sizeof(path), "C:\\fdv_debug_nin.txt");
     FILE* ninf2 = fopen(path, "w");
     if (ninf2) fclose(ninf2);
+}
+
+// W5TSU: DEBUG - temporary, remove once the TX encode path is confirmed sane.
+PORT
+void ResetTXAFDVDebug(void)
+{
+    fdvtx_dbg_count = 0;
+
+    const char* dir = getenv("TEMP");
+    char path[512];
+    if (dir) snprintf(path, sizeof(path), "%s\\fdvtx_debug_modem.raw", dir);
+    else snprintf(path, sizeof(path), "C:\\fdvtx_debug_modem.raw");
+    FILE* mf = fopen(path, "wb");
+    if (mf) fclose(mf);
 }
