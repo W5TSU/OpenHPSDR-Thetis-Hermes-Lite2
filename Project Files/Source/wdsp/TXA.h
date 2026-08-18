@@ -88,6 +88,10 @@ struct _txa
 	} rsmpin, rsmpout;
 	struct
 	{
+		FDVTX p; // W5TSU: FreeDV 700E TX encode
+	} fdvtx;
+	struct
+	{
 		PANEL p;
 	} panel;
 	struct

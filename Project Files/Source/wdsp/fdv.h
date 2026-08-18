@@ -88,4 +88,60 @@ extern void setBuffers_fdv (FDV a, double* in, double* out);
 extern void setSize_fdv (FDV a, int size);
 extern void setSamplerate_fdv (FDV a, int rate);
 
+// W5TSU: FreeDV 700E TX encode -- mirrors fdv's RX ring-buffer/resampler
+// structure in the opposite direction. Sits early in the TXA chain, right
+// after the input resampler and before mic gain/compressor/EQ/CESSB/ALC:
+// when run, it replaces raw mic audio in place with the 700E modem
+// waveform, which then flows through the rest of the normal TX chain
+// unmodified (same choice already shipped for RADE V1 TX in ChannelMaster/
+// radae.c -- whether passing a digital modem waveform through analog-voice
+// dynamics processing, CESSB included, degrades it enough to matter is an
+// open question shared by both features, not decided here).
+typedef struct _fdvtx
+{
+    int run;
+    int size;                   // dsp buffer size (complex samples per call)
+    double* in;
+    double* out;
+    int rate;                   // dsp sample rate
+
+    struct freedv* f;
+    int mode;                   // FREEDV_MODE_* (700E for the prototype, matches fdv's RX side)
+    int modem_rate;             // freedv_get_modem_sample_rate()
+    int speech_rate;            // freedv_get_speech_sample_rate()
+    int n_speech_samples;       // freedv_get_n_speech_samples() -- fixed freedv_tx() input block
+    int n_nom_modem_samples;    // freedv_get_n_nom_modem_samples() -- fixed freedv_tx() output block
+
+    // dsp rate <-> speech/modem rate converters (non-complex float)
+    RESAMPLEF rs_down;          // rate -> speech_rate (mic audio down)
+    RESAMPLEF rs_up;            // modem_rate -> rate (modem audio up)
+    float* rs_down_in;
+    float* rs_down_out;
+    float* rs_up_in;
+    float* rs_up_out;
+
+    fdv_ring_buffer speech_ring; // speech-rate mic samples awaiting a full freedv_tx() block
+    fdv_ring_buffer out_ring;    // modem audio at dsp rate awaiting output
+
+    short* speech_in;           // freedv_tx() input, n_speech_samples
+    short* mod_out;              // freedv_tx() output, n_nom_modem_samples
+    float* speech_scratch;      // one popped speech_ring block, float domain, n_speech_samples
+
+    // input level normalisation into the short domain, same smoothed-AGC
+    // approach as fdv's RX side (see fdv.c) -- this tap is pre mic-gain/
+    // panel, so the raw level here is whatever the audio device delivers
+    float agc_gain_db;
+    int agc_seeded;
+
+    CRITICAL_SECTION cs;
+} fdvtx, *FDVTX;
+
+extern FDVTX create_fdvtx (int run, int size, double* in, double* out, int rate);
+extern void destroy_fdvtx (FDVTX a);
+extern void flush_fdvtx (FDVTX a);
+extern void xfdvtx (FDVTX a);
+extern void setBuffers_fdvtx (FDVTX a, double* in, double* out);
+extern void setSize_fdvtx (FDVTX a, int size);
+extern void setSamplerate_fdvtx (FDVTX a, int rate);
+
 #endif //_fdv_h

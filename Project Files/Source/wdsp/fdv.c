@@ -48,6 +48,20 @@ size and the modem's variable freedv_nin() block size. Uses libcodec2
 // re-verified final value.
 #define FDV_SPEECH_GAIN     (0.75f)
 
+// W5TSU: TX-side mic normalisation into the short domain for freedv_tx(),
+// mirroring the RX target above but tuned for a mic-level speech signal
+// rather than a received/attenuated RF one -- ~8000 counts, a reasoned
+// first pass (not yet measured against real hardware; the RX target above
+// only reached its current value after a live measurement pass of its own).
+#define FDV_TX_TARGET_RMS_DB (78.0f)     // ~8000 counts
+// W5TSU: modem output level into midbuff, matching the RX side's
+// FDV_SPEECH_GAIN comment style -- ceiling is this value itself (mod_out is
+// int16-range), so max amplitude here is FDV_TX_MODEM_GAIN * 32767/32768.
+// Unmeasured first pass; revisit once there's a way to check the resulting
+// on-air level (TX-side meter or a captured loopback, matching how RADE V1
+// TX's own RADE_TX_SCALE_* constants got tuned via measured modem-RMS ratio).
+#define FDV_TX_MODEM_GAIN    (0.5f)
+
 // W5TSU: DEBUG - temporary diagnostic dump state, remove before merge.
 // Process-lifetime counters, not per-channel: reset via ResetRXAFDVDebug()
 // so each Quick-Play session starts a fresh capture instead of exhausting
@@ -241,6 +255,213 @@ static float fdv_block_rms(const float* x, int n)
     for (int i = 0; i < n; i++) { double v = (double)x[i]; s += v * v; }
     float r = (float)sqrt(s / (double)n);
     return (r < 1e-9f) ? 1e-9f : r;
+}
+
+/********************************************************************************************************
+*                                                                                                       *
+*                                    FreeDV 700E TX encode (see fdv.h)                                  *
+*                                                                                                       *
+********************************************************************************************************/
+
+static void fdvtx_alloc_streams(FDVTX a)
+{
+    int down_out_cap = (int)((long long)a->size * a->speech_rate / a->rate) + 16;
+    int up_out_cap = (int)((long long)a->n_nom_modem_samples * a->rate / a->modem_rate) + 16;
+
+    a->rs_down_in = malloc0(a->size * sizeof(float));
+    a->rs_down_out = malloc0(down_out_cap * sizeof(float));
+    a->rs_up_in = malloc0(a->n_nom_modem_samples * sizeof(float));
+    a->rs_up_out = malloc0(up_out_cap * sizeof(float));
+
+    a->rs_down = create_resampleF(1, a->size, a->rs_down_in, a->rs_down_out, a->rate, a->speech_rate);
+    a->rs_up = create_resampleF(1, a->n_nom_modem_samples, a->rs_up_in, a->rs_up_out, a->modem_rate, a->rate);
+
+    fdv_rb_init(&a->speech_ring, a->speech_rate + a->n_speech_samples);  // ~1 s + one speech block
+    fdv_rb_init(&a->out_ring, a->rate);                                  // ~1 s at dsp rate
+}
+
+static void fdvtx_free_streams(FDVTX a)
+{
+    destroy_resampleF(a->rs_down);
+    destroy_resampleF(a->rs_up);
+    a->rs_down = NULL;
+    a->rs_up = NULL;
+    _aligned_free(a->rs_down_in);
+    _aligned_free(a->rs_down_out);
+    _aligned_free(a->rs_up_in);
+    _aligned_free(a->rs_up_out);
+    fdv_rb_free(&a->speech_ring);
+    fdv_rb_free(&a->out_ring);
+}
+
+static void fdvtx_reset(FDVTX a)
+{
+    fdv_rb_clear(&a->speech_ring);
+    fdv_rb_clear(&a->out_ring);
+    flush_resampleF(a->rs_down);
+    flush_resampleF(a->rs_up);
+    a->agc_seeded = 0;
+}
+
+FDVTX create_fdvtx(int run, int size, double* in, double* out, int rate)
+{
+    FDVTX a = malloc0(sizeof(fdvtx));
+    InitializeCriticalSectionAndSpinCount(&a->cs, 2500);
+    a->run = run;
+    a->size = size;
+    a->in = in;
+    a->out = out;
+    a->rate = rate;
+    a->mode = FREEDV_MODE_700E;
+    a->agc_gain_db = 40.0f;
+    a->agc_seeded = 0;
+
+    a->f = freedv_open(a->mode);
+    a->modem_rate = freedv_get_modem_sample_rate(a->f);
+    a->speech_rate = freedv_get_speech_sample_rate(a->f);
+    a->n_speech_samples = freedv_get_n_speech_samples(a->f);
+    a->n_nom_modem_samples = freedv_get_n_nom_modem_samples(a->f);
+
+    a->speech_in = malloc0(a->n_speech_samples * sizeof(short));
+    a->mod_out = malloc0(a->n_nom_modem_samples * sizeof(short));
+    a->speech_scratch = malloc0(a->n_speech_samples * sizeof(float));
+
+    fdvtx_alloc_streams(a);
+    return a;
+}
+
+void destroy_fdvtx(FDVTX a)
+{
+    EnterCriticalSection(&a->cs);
+    fdvtx_free_streams(a);
+    freedv_close(a->f);
+    a->f = NULL;
+    LeaveCriticalSection(&a->cs);
+    DeleteCriticalSection(&a->cs);
+    _aligned_free(a->speech_in);
+    _aligned_free(a->mod_out);
+    _aligned_free(a->speech_scratch);
+    _aligned_free(a);
+}
+
+void flush_fdvtx(FDVTX a)
+{
+    EnterCriticalSection(&a->cs);
+    fdvtx_reset(a);
+    LeaveCriticalSection(&a->cs);
+}
+
+void setBuffers_fdvtx(FDVTX a, double* in, double* out)
+{
+    a->in = in;
+    a->out = out;
+}
+
+void setSize_fdvtx(FDVTX a, int size)
+{
+    EnterCriticalSection(&a->cs);
+    fdvtx_free_streams(a);
+    a->size = size;
+    fdvtx_alloc_streams(a);
+    LeaveCriticalSection(&a->cs);
+}
+
+void setSamplerate_fdvtx(FDVTX a, int rate)
+{
+    EnterCriticalSection(&a->cs);
+    fdvtx_free_streams(a);
+    a->rate = rate;
+    fdvtx_alloc_streams(a);
+    LeaveCriticalSection(&a->cs);
+}
+
+void xfdvtx(FDVTX a)
+{
+    if (a->run && a->f)
+    {
+        int i;
+        EnterCriticalSection(&a->cs);
+
+        // downsample this buffer's mono mic audio to the speech rate --
+        // tap point is right after the input resampler, before mic gain/
+        // panel/compressor/EQ/CESSB/ALC (see fdv.h's comment on this struct)
+        for (i = 0; i < a->size; i++)
+            a->rs_down_in[i] = (float)a->in[2 * i + 0];
+        a->rs_down->size = a->size;
+        int nsp = xresampleF(a->rs_down);
+
+        for (i = 0; i < nsp; i++)
+            fdv_rb_put(&a->speech_ring, a->rs_down_out[i]);
+
+        // encode every complete speech block
+        while (a->speech_ring.count >= a->n_speech_samples)
+        {
+            fdv_rb_get_bulk(&a->speech_ring, a->speech_scratch, a->n_speech_samples);
+
+            // normalise the block into the short domain, same smoothed-AGC
+            // shape as fdv's RX side (see xfdv's agc_gain_db handling)
+            float rms = fdv_block_rms(a->speech_scratch, a->n_speech_samples) * 32767.0f;
+            float cur_db = 20.0f * log10f(rms);
+            float desired_db = FDV_TX_TARGET_RMS_DB - cur_db;
+            if (!a->agc_seeded)
+            {
+                a->agc_gain_db = desired_db;
+                a->agc_seeded = 1;
+            }
+            else
+            {
+                a->agc_gain_db += FDV_GAIN_SMOOTH * (desired_db - a->agc_gain_db);
+            }
+            if (a->agc_gain_db < FDV_GAIN_MIN_DB) a->agc_gain_db = FDV_GAIN_MIN_DB;
+            if (a->agc_gain_db > FDV_GAIN_MAX_DB) a->agc_gain_db = FDV_GAIN_MAX_DB;
+            float g = 32767.0f * powf(10.0f, a->agc_gain_db / 20.0f);
+
+            for (i = 0; i < a->n_speech_samples; i++)
+            {
+                float v = a->speech_scratch[i] * g;
+                if (v > FDV_SHORT_CEIL) v = FDV_SHORT_CEIL;
+                if (v < -FDV_SHORT_CEIL) v = -FDV_SHORT_CEIL;
+                a->speech_in[i] = (short)v;
+            }
+
+            freedv_tx(a->f, a->mod_out, a->speech_in);   // always produces n_nom_modem_samples
+
+            for (i = 0; i < a->n_nom_modem_samples; i++)
+                a->rs_up_in[i] = a->mod_out[i] * (FDV_TX_MODEM_GAIN / 32768.0f);
+            a->rs_up->size = a->n_nom_modem_samples;
+            int nup = xresampleF(a->rs_up);
+            for (i = 0; i < nup; i++)
+                fdv_rb_put(&a->out_ring, a->rs_up_out[i]);
+        }
+
+        // drain modem audio into a->out this block. Unlike RX's "prime then
+        // pass raw audio through while priming" strategy, an underrun here
+        // outputs silence, never falls back to the raw mic -- with FDV TX
+        // armed, live mic audio must never leak onto the air disguised as
+        // (or alongside) a digital signal, same principle RADE V1 TX's own
+        // silence-on-underrun already follows (ChannelMaster/radae.c step 6).
+        if (a->out_ring.count >= a->size)
+        {
+            fdv_rb_get_bulk(&a->out_ring, a->rs_down_in, a->size); // reuse as scratch
+            for (i = 0; i < a->size; i++)
+            {
+                a->out[2 * i + 0] = (double)a->rs_down_in[i];
+                a->out[2 * i + 1] = 0.0;
+            }
+        }
+        else
+        {
+            for (i = 0; i < a->size; i++)
+            {
+                a->out[2 * i + 0] = 0.0;
+                a->out[2 * i + 1] = 0.0;
+            }
+        }
+
+        LeaveCriticalSection(&a->cs);
+    }
+    // else: a->in and a->out are the same buffer (midbuff) in practice --
+    // true passthrough by construction, nothing to copy
 }
 
 void xfdv(FDV a)
@@ -516,6 +737,30 @@ PORT
 double GetRXAFDVSnr(int channel)
 {
     return (double)rxa[channel].fdv.p->snr;
+}
+
+// W5TSU: FreeDV 700E TX encode enable. Inert by default (run=0 at
+// create_fdvtx) and nothing calls this yet -- console/CAT wiring, and the
+// MOX/PTT arbiter RADE V1 TX needed (see console.cs's OnMoxPreChangeHandler_
+// Radae), are both still open, matching this project's precedent of
+// splitting encoder-wiring from PTT-wiring across separate sessions.
+PORT
+void SetTXAFDVRun(int channel, int run)
+{
+    FDVTX a = txa[channel].fdvtx.p;
+    if (a->run != run)
+    {
+        EnterCriticalSection(&ch[channel].csDSP);
+        flush_fdvtx(a);
+        a->run = run;
+        LeaveCriticalSection(&ch[channel].csDSP);
+    }
+}
+
+PORT
+int GetTXAFDVRun(int channel)
+{
+    return txa[channel].fdvtx.p->run;
 }
 
 // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

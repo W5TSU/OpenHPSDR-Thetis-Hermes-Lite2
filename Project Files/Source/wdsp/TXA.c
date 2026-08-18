@@ -48,6 +48,14 @@ void create_txa (int channel)
 		0,											// select ncoef automatically
 		1.0);										// gain
 
+	// FreeDV 700E TX encode	// W5TSU
+	txa[channel].fdvtx.p = create_fdvtx (
+		0,											// run
+		ch[channel].dsp_size,						// buffer size
+		txa[channel].midbuff,						// input buffer
+		txa[channel].midbuff,						// output buffer
+		ch[channel].dsp_rate);						// samplerate
+
 	txa[channel].gen0.p = create_gen (
 		0,											// run
 		ch[channel].dsp_size,						// buffer size
@@ -511,6 +519,7 @@ void destroy_txa (int channel)
 	destroy_phrot (txa[channel].phrot.p);
 	destroy_panel (txa[channel].panel.p);
 	destroy_gen (txa[channel].gen0.p);
+	destroy_fdvtx (txa[channel].fdvtx.p);	// W5TSU: FreeDV 700E TX encode
 	destroy_resample (txa[channel].rsmpin.p);
 	_aligned_free (txa[channel].midbuff);
 	_aligned_free (txa[channel].outbuff);
@@ -523,6 +532,7 @@ void flush_txa (int channel)
 	memset (txa[channel].outbuff, 0, 1 * ch[channel].dsp_outsize * sizeof (complex));
 	memset (txa[channel].midbuff, 0, 2 * ch[channel].dsp_size    * sizeof (complex));
 	flush_resample (txa[channel].rsmpin.p);
+	flush_fdvtx (txa[channel].fdvtx.p);	// W5TSU: FreeDV 700E TX encode
 	flush_gen (txa[channel].gen0.p);
 	flush_panel (txa[channel].panel.p);
 	flush_phrot (txa[channel].phrot.p);
@@ -557,6 +567,7 @@ void flush_txa (int channel)
 void xtxa (int channel)
 {
 	xresample (txa[channel].rsmpin.p);				// input resampler
+	xfdvtx (txa[channel].fdvtx.p);					// FreeDV 700E TX encode -- replaces mic audio when armed, before mic gain/compressor/EQ/CESSB/ALC  // W5TSU
 	xgen (txa[channel].gen0.p);						// input signal generator
 	xpanel (txa[channel].panel.p);					// includes MIC gain
 	xphrot (txa[channel].phrot.p);					// phase rotator
@@ -631,6 +642,7 @@ void setDSPSamplerate_txa (int channel)
 	setBuffers_resample (txa[channel].rsmpin.p, txa[channel].inbuff, txa[channel].midbuff);
 	setSize_resample (txa[channel].rsmpin.p, ch[channel].dsp_insize);
 	setOutRate_resample (txa[channel].rsmpin.p, ch[channel].dsp_rate);
+	setSamplerate_fdvtx (txa[channel].fdvtx.p, ch[channel].dsp_rate);	// W5TSU: FreeDV 700E TX encode
 	// dsp_rate blocks
 	setSamplerate_gen (txa[channel].gen0.p, ch[channel].dsp_rate);
 	setSamplerate_panel (txa[channel].panel.p, ch[channel].dsp_rate);
@@ -680,6 +692,8 @@ void setDSPBuffsize_txa (int channel)
 	// input resampler
 	setBuffers_resample (txa[channel].rsmpin.p, txa[channel].inbuff, txa[channel].midbuff);
 	setSize_resample (txa[channel].rsmpin.p, ch[channel].dsp_insize);
+	setBuffers_fdvtx (txa[channel].fdvtx.p, txa[channel].midbuff, txa[channel].midbuff);	// W5TSU: FreeDV 700E TX encode
+	setSize_fdvtx (txa[channel].fdvtx.p, ch[channel].dsp_size);
 	// dsp_size blocks
 	setBuffers_gen (txa[channel].gen0.p, txa[channel].midbuff, txa[channel].midbuff);
 	setSize_gen (txa[channel].gen0.p, ch[channel].dsp_size);
