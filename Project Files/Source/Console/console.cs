@@ -46288,6 +46288,7 @@ namespace Thetis
             ModeChangeHandlers += OnModeChangeHandler;                  // mode was changed
             VFOAFrequencyChangeHandlers += OnVFOAFrequencyChangeHandler;    //VFOA changed
             VFOBFrequencyChangeHandlers += OnVFOBFrequencyChangeHandler;    //VFOB changed
+            MoxPreChangeHandlers += OnMoxPreChangeHandler_Radae;        // W5TSU: RADE V1 MOX/PTT push + EOO-flush hold, before real mox changed
             MoxChangeHandlers += OnMoxChangeHandler;                    // mox changed
             SetBandChangeHanders += OnSetBandChangeHander;              // SetBand completed
             PowerChangeHanders += OnPowerChangeHander;                  // power state changed
@@ -46319,6 +46320,7 @@ namespace Thetis
             ModeChangeHandlers -= OnModeChangeHandler;
             VFOAFrequencyChangeHandlers -= OnVFOAFrequencyChangeHandler;
             VFOBFrequencyChangeHandlers -= OnVFOBFrequencyChangeHandler;
+            MoxPreChangeHandlers -= OnMoxPreChangeHandler_Radae;        // W5TSU
             MoxChangeHandlers -= OnMoxChangeHandler;
             SetBandChangeHanders -= OnSetBandChangeHander;
             CentreFrequencyHandlers -= OnCentreFrequencyChanged;
@@ -46887,6 +46889,52 @@ namespace Thetis
             if (_display_max_bin_enabled[rx - 1] && rx == 2) setupDisplayMaxBinDetect(rx, false, true);
 
             handleVfoSyncFrequency(rx, true);
+        }
+
+        // W5TSU: RADE V1 MOX/PTT wiring. Runs synchronously on the real MOX
+        // transition -- for the 1->0 (release) edge, BLOCKS on this same call
+        // stack (so the actual hardware key-down/up in chkMOX_CheckedChanged2,
+        // which runs after this handler returns, is genuinely delayed) until
+        // either the end-of-over burst has flushed out of mic_io or a hard
+        // safety timeout expires. Cheap/inert whenever RADE TX isn't armed:
+        // SetRadaeMoxState/SetRadaeTxRx/RadaeNotifyBeginOver push state
+        // unconditionally (matches radae.h's documented "every MOX edge"
+        // intent, and radae.c's own g_radae_tx_enabled gate makes them no-ops
+        // when disarmed) but the actual blocking wait only ever runs if
+        // GetRadaeTxEnabled() is true, so a normal SSB/CW/FM/etc PTT release
+        // sees zero added delay.
+        private const int RADAE_EOO_FLUSH_TIMEOUT_MS = 2000; // hard cap -- radio must never hang keyed indefinitely on a stuck flush
+        private const int RADAE_EOO_FLUSH_POLL_MS = 15;
+        private void OnMoxPreChangeHandler_Radae(int rx, bool currentMox, bool expectedMox)
+        {
+            if (expectedMox == currentMox) return;
+
+            int radaeRx = rx - 1; // matches OnMoxChangeHandler's rx-1 convention (1=RX1/VFOA, 2=RX2/VFOB)
+            if (radaeRx < 0) radaeRx = 0;
+            if (radaeRx > 1) radaeRx = 1;
+
+            if (expectedMox) // about to key down (RX -> TX)
+            {
+                WDSP.SetRadaeTxRx(radaeRx);
+                WDSP.SetRadaeMoxState(1);
+                WDSP.RadaeNotifyBeginOver();
+            }
+            else // about to key up (TX -> RX) -- hold real PTT open until the EOO flushes, RADE-armed only
+            {
+                WDSP.RadaeNotifyEndOfOver();
+                if (WDSP.GetRadaeTxEnabled() != 0)
+                {
+                    WDSP.SetRadaeTxSilenceHold(1);
+                    int waited = 0;
+                    while (WDSP.GetRadaeEooFlushed() == 0 && waited < RADAE_EOO_FLUSH_TIMEOUT_MS)
+                    {
+                        Thread.Sleep(RADAE_EOO_FLUSH_POLL_MS);
+                        waited += RADAE_EOO_FLUSH_POLL_MS;
+                    }
+                    WDSP.SetRadaeTxSilenceHold(0);
+                }
+                WDSP.SetRadaeMoxState(0);
+            }
         }
 
         private void OnMoxChangeHandler(int rx, bool oldMox, bool newMox)

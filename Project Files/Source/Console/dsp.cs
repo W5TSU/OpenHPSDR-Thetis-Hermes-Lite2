@@ -317,6 +317,31 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxMicClip", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetRadaeTxMicClip();
+
+        // W5TSU: RADE V1 MOX/PTT wiring -- pushed on every real MOX edge from
+        // console.cs's MoxPreChangeHandlers (matches radae.h's documented
+        // intent). Harmless when SetRadaeTxEnabled(0): radae.c's own
+        // g_radae_tx_enabled gate makes every one of these inert unless the
+        // encoder is actually armed. The EOO/silence-hold pair exists so the
+        // radio can be held keyed just long enough to flush the end-of-over
+        // burst before real PTT drops -- see GetRadaeEooFlushed's caller.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMoxState", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMoxState(int mox);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeTxRx", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeTxRx(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "RadaeNotifyBeginOver", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RadaeNotifyBeginOver();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "RadaeNotifyEndOfOver", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void RadaeNotifyEndOfOver();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeEooFlushed", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeEooFlushed();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeTxSilenceHold", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeTxSilenceHold(int on);
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
