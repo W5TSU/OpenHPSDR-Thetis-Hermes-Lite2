@@ -7520,7 +7520,11 @@ namespace Thetis
             {
                 StringBuilder sb = new StringBuilder(16);
                 WDSP.GetRadaeEooCallsign(sb, 16);
-                return sb.ToString();
+                // W5TSU: fix -- CATParser's extended-command wrap only fires when
+                // rtncmd.Length == nAns exactly (see ParseExtended), so a variable-
+                // length trimmed string here silently returns unterminated/malformed
+                // data on the wire. Must be a fixed nAns-width field both directions.
+                return sb.ToString().PadRight(15).Substring(0, 15);
             }
             else
             {
