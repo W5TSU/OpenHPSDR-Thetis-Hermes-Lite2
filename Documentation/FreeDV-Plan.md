@@ -977,6 +977,33 @@ open**: actual off-air decode confirmation (same standing gap RADE V1 TX
 has), and the encoder currently reads raw pre-mic-gain audio with no
 operator-facing UI/level meter — both future work, not blocking.
 
+### ✅ 700E TX exercised with real speech, not just silence (2026-08-18)
+
+Quick, no-code-change follow-up closing a gap between the two TX features:
+every 700E TX test above used silent PTT holds, while RADE V1 TX had
+already been tested with real speech. A real 5s PTT hold with the operator
+actually talking, `ZZEF` armed — clean key/unkey, app responsive
+throughout, 39,040 samples (4.88s) pulled from the recording. Two checks:
+
+- **Per-chunk RMS is essentially flat (std=0.05dB)** across the recording.
+  Initially looks suspicious — like the encoder is ignoring the input — but
+  this is actually the *correct*, expected characteristic of an OFDM digital
+  voice modem: transmitted power stays roughly constant regardless of the
+  underlying speech dynamics (comfort/quantized frames during silence run
+  at the same modem power as frames from loud speech), unlike an analog SSB
+  envelope, which would show real amplitude variation. Worth remembering so
+  a future reader doesn't misread flat RMS here as a bug.
+- **More decisive**: compared this recording against the earlier
+  silent-PTT-test recording over their overlapping length — not
+  byte-identical, correlation only 0.37. Confirms the encoder is genuinely
+  reactive to different input, not replaying fixed/static frames regardless
+  of what's fed to it.
+
+Disarmed afterward. Closes the "real speech, not just silence" testing gap
+for 700E TX — now exercised with real voice at least once, matching RADE V1
+TX's testing depth. **Still open, same for both TX features**: no second
+receiver, so still no independent off-air decode confirmation.
+
 ## Stage C — RADE neural mode *(external dependency)*
 
 - ⬜ Watch upstream: David Rowe's RADE V2 C port is in progress (classical DSP ported
