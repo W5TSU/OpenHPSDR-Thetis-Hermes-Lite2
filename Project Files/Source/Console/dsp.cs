@@ -317,6 +317,10 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxMicClip", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetRadaeTxMicClip();
+
+        // W5TSU: DEBUG - temporary, remove once the loopback bring-up gate issue is found.
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxDebug", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeTxDebug(int which);
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

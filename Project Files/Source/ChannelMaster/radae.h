@@ -74,6 +74,11 @@ PORT int   GetRadaeEooDecodePulse(int rx);
 PORT int   GetRadaeTxMicLevelDb(void);
 PORT int   GetRadaeTxMicClip(void);
 
+/* W5TSU: DEBUG - temporary, remove once the loopback bring-up gate issue is
+ * found. which: 0=call_count 1=last outrate 2=last outsize 3=last_reason
+ * (0=en 1=init 2=rate/size 3=bypass 4=rade_null 5=mox-gate 9=reached-step1). */
+PORT int   GetRadaeTxDebug(int which);
+
 /* Per-RX dial frequency offset. */
 PORT float GetRadaeFreqOffset(int rx);
 PORT void  SetRadaeFreqOffset(int rx, float hz);

@@ -7502,6 +7502,25 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // W5TSU: DEBUG - temporary, remove once the RADE TX loopback
+        // bring-up gate issue is found. Get-only. Format:
+        // "<reason 1digit><outrate 5digit><outsize 5digit><callcount 6digit>".
+        // reason: 0=en 1=init 2=rate/size 3=bypass 4=rade_null 5=mox-gate 9=reached-step1.
+        public string ZZDJ()
+        {
+            int reason = WDSP.GetRadaeTxDebug(3);
+            int outrate = WDSP.GetRadaeTxDebug(1);
+            int outsize = WDSP.GetRadaeTxDebug(2);
+            int callcount = WDSP.GetRadaeTxDebug(0);
+
+            if (reason < 0) reason = 0;
+            if (reason > 9) reason = 9;
+            outrate = Math.Min(Math.Max(outrate, 0), 99999);
+            outsize = Math.Min(Math.Max(outsize, 0), 99999);
+            callcount = Math.Min(Math.Max(callcount, 0), 999999);
+
+            return reason.ToString() + AddLeadingZeros(outrate, 5) + AddLeadingZeros(outsize, 5) + AddLeadingZeros(callcount, 6);
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

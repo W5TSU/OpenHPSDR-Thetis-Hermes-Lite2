@@ -1285,18 +1285,41 @@ void xradae_rx(int rx, double* rbuff_io)
 #define RADE_TX_SCALE_V1  0.5f
 #define RADE_TX_SCALE_V2  0.66f
 
+/* W5TSU: DEBUG - temporary tap to find which early-return gate is blocking
+ * xradae_tx during the loopback bring-up test; remove once resolved. */
+static volatile long g_txdbg_call_count  = 0;
+static volatile long g_txdbg_outrate     = -2;
+static volatile long g_txdbg_outsize     = -2;
+static volatile long g_txdbg_last_reason = -1; /* 0=en 1=init 2=rate/size 3=bypass 4=rade_null 5=mox-gate 9=reached-step1 */
+
+PORT int GetRadaeTxDebug(int which)
+{
+    switch (which)
+    {
+    case 0: return (int)_InterlockedAnd(&g_txdbg_call_count,  0xffffffff);
+    case 1: return (int)_InterlockedAnd(&g_txdbg_outrate,     0xffffffff);
+    case 2: return (int)_InterlockedAnd(&g_txdbg_outsize,     0xffffffff);
+    case 3: return (int)_InterlockedAnd(&g_txdbg_last_reason, 0xffffffff);
+    default: return -1;
+    }
+}
+
 void xradae_tx(double* mic_io)
 {
     const int tx_in_id = inid(1, 0);
     const int outrate  = pcm ? pcm->xcm_inrate[tx_in_id]  : -1;
     const int outsize  = pcm ? pcm->xcm_insize[tx_in_id]  : -1;
 
-    long en = _InterlockedAnd(&g_radae_tx_enabled, 1);
-    if (!en) return;
-    if (!g_initialized) return;
-    if (outrate <= 0 || outsize <= 0) return;
+    _InterlockedIncrement(&g_txdbg_call_count);
+    _InterlockedExchange(&g_txdbg_outrate, outrate);
+    _InterlockedExchange(&g_txdbg_outsize, outsize);
 
-    if (_InterlockedAnd(&g_radae_bypass_all, 1)) return;
+    long en = _InterlockedAnd(&g_radae_tx_enabled, 1);
+    if (!en) { _InterlockedExchange(&g_txdbg_last_reason, 0); return; }
+    if (!g_initialized) { _InterlockedExchange(&g_txdbg_last_reason, 1); return; }
+    if (outrate <= 0 || outsize <= 0) { _InterlockedExchange(&g_txdbg_last_reason, 2); return; }
+
+    if (_InterlockedAnd(&g_radae_bypass_all, 1)) { _InterlockedExchange(&g_txdbg_last_reason, 3); return; }
 
     /* Loopback is RX1-only; otherwise the encoder follows the transmitting RX
      * (set by SetRadaeTxRx at the MOX edge).  tx_rx selects both the handle and
@@ -1304,7 +1327,7 @@ void xradae_tx(double* mic_io)
     const long lpb0 = _InterlockedAnd(&g_radae_loopback_enabled[0], 1);
     int tx_rx = lpb0 ? 0 : (int)_InterlockedAnd(&g_radae_tx_rx, 1);
     if (tx_rx < 0 || tx_rx >= RADAE_NRX) tx_rx = 0;
-    if (g_rade[tx_rx] == NULL) return;
+    if (g_rade[tx_rx] == NULL) { _InterlockedExchange(&g_txdbg_last_reason, 4); return; }
 
     /* Per-protocol modem-output scale -- V1 and V2 present very different
      * amplitudes to the modulator (see the RADE_TX_SCALE_* comment).  Follows
@@ -1325,10 +1348,11 @@ void xradae_tx(double* mic_io)
         if (!mox && !lpb0 && !eoo && !hold)
         {
             const long drain = _InterlockedAnd(&g_radae_drain_blocks, 0xffffffff);
-            if (drain <= 0) return;
+            if (drain <= 0) { _InterlockedExchange(&g_txdbg_last_reason, 5); return; }
             _InterlockedDecrement(&g_radae_drain_blocks);
         }
     }
+    _InterlockedExchange(&g_txdbg_last_reason, 9); /* reached step 1 */
 
     EnterCriticalSection(&g_radae_tx_cs);
 
