@@ -200,3 +200,108 @@ an ID by itself. For a purely RF-free bench test instead, run the HackRF's TX
 port into a dummy load or an attenuator-terminated cable straight into the
 HL2's antenna port rather than a real antenna — same flowgraphs, nothing
 radiated.
+
+## Testing Thetis's TX output (GNU Radio Companion + HackRF), the other direction
+
+`tx_700e_hackrf.grc`/`tx_radev1_hackrf.grc` above transmit *into* Thetis's RX.
+`rx_offair_capture_hackrf.grc` is the missing other half: it *receives*
+whatever Thetis's own RADE V1 or 700E TX (`ZZDK`/`ZZEF`, this fork's own
+encoders — see `FreeDV-Plan.md`'s "MOX/PTT arbiter" sections for both) is
+actually putting out over the air, via HackRF, so that output can be checked
+against an independent decoder instead of just trusting the encoder's own
+level/spectral self-diagnostics. This is the standing "no off-air decode
+confirmation" gap noted for both TX features as of this writing — this tool
+exists to close it, not to replace the mechanical PTT/arbiter testing already
+done (both are still needed: mechanics-safe and content-decodable are
+different claims).
+
+### What it does
+
+A single generic capture tool, mode-agnostic — it doesn't know or care
+whether RADE V1 or 700E is on the air, it just demodulates and records:
+
+1. **`osmosdr_source`** (HackRF RX) tuned to **Center Frequency (Hz)**
+   (defaults 14.236 MHz, matching every other tool in this repo) at 2 Msps —
+   the same ~2 Msps-or-better floor the TX flowgraphs found HackRF needs for
+   reliable quality applies to RX on the same hardware.
+2. **Frequency Xlating FIR Filter**, doing the actual USB/SSB demod: a
+   *complex* band-pass covering only +300..+2700 Hz (positive frequencies
+   only) around the tuned frequency, decimating straight down to 8 kHz.
+   Because the filter only passes one side of the spectrum, taking the real
+   part of what comes out (**Complex to Real**, next block) directly
+   reconstructs the demodulated USB audio — this **is** software SSB demod
+   when you have full I/Q, the mirror-image technique to how
+   `make_fdv_test_iq.py` builds analytic-signal I/Q for TX, no phasing-method
+   circuitry needed.
+3. **Wav File Sink** records the result — mono, 8 kHz, matching
+   `freedv_get_modem_sample_rate()` for both 700E and RADE V1 exactly, so the
+   file can go straight into a reference decoder with no rate ambiguity
+   (unlike `make_fdv_test_iq.py --input-wav`, which explicitly handles
+   arbitrary input rates — this tool is for the pickier reference-decoder
+   path instead).
+4. Two QT GUI monitors: a wideband spectrum (pre-demod, confirms the signal
+   is present and roughly centred) and a time-domain plot of the demodulated
+   audio (watch for a flat-topped/clipped trace — a sign the gain sliders
+   below are too high for this use case).
+
+**RX IF/VGA Gain** and **RX BB Gain** sliders default low (8 dB each) —
+deliberately different guidance from the TX flowgraphs' 20 dB default:
+Thetis's own real TX is a very strong, very close signal compared to typical
+off-air DX, not something that needs boosting. Start low and raise only if
+the spectrum/waveform actually looks weak; an overloaded front end would
+corrupt the very thing this tool exists to verify.
+
+Unlike the TX flowgraphs (which play a fixed-length wav once and stop), this
+one **runs until you press GRC's stop button** — there's no natural
+end-of-signal marker on receive. Sequence: start this flowgraph first, then
+key Thetis's TX (the usual `thetisctl cat ptt on --confirm-tx=...` protocol),
+let the transmission run, stop this once Thetis unkeys.
+
+### Prerequisites
+
+Same as the TX flowgraphs above (GNU Radio 3.10+ with gr-osmosdr/HackRF
+support, a working `hackrf_info`) — this one also needs some way for the
+HackRF's RX port to actually see Thetis's TX output: a real antenna (with
+everything the licensing note above implies), or a dummy-load/attenuated
+cable path from the HL2's antenna port, matching whatever setup the TX
+flowgraphs' own safety section describes for bench testing.
+
+### Running it
+
+```bash
+gnuradio-companion rx_offair_capture_hackrf.grc
+```
+
+Set **Output wav** to something descriptive before running — it does *not*
+auto-timestamp, so successive captures will silently overwrite each other
+otherwise (e.g. `offair_tx_radev1_<date>.wav` vs `offair_tx_700e_<date>.wav`,
+matching this repo's existing `offair_14236000_RADEV1_20260808.wav` naming).
+
+### Checking the capture against a reference decoder
+
+This flowgraph only captures and demodulates — it does not attempt to decode
+FreeDV/RADE itself. Feed the resulting wav to a local `freedv-gui` checkout's
+own reference decoder (see `FreeDV-Plan.md`'s RADE V1 sections for the exact
+build steps if one isn't already set up):
+
+```bash
+freedv -ut rx -utmode 700E   -rxfile offair_tx_700e_<date>.wav   -rxoutfile decoded_700e.raw
+freedv -ut rx -utmode RADEV1 -rxfile offair_tx_radev1_<date>.wav -rxoutfile decoded_radev1.raw
+```
+
+A real decode (non-silent, intelligible `decoded_*.raw`, played back at
+8 kHz mono PCM16) is the actual off-air confirmation this repo has been
+missing for both TX features — mechanically-safe PTT and a decodable signal
+are different claims, and only this closes the second one.
+
+### Sideband inversion — unverified for this hardware pairing
+
+The TX flowgraphs needed a `blocks_conjugate_cc` to correct an extra spectral
+inversion specific to *their* hardware chain (HackRF TX → HL2 RX). This
+flowgraph's chain runs the other direction (HL2 TX → HackRF RX) — do **not**
+assume the same correction applies without checking: if the demodulated
+audio sounds inverted/garbled where the TX flowgraphs' own signal sounded
+clean, try swapping to LSB-style demod (negate the band-pass frequencies, or
+equivalently conjugate the input) before assuming Thetis's TX has a real
+sideband bug. This is a property of *this* TX/RX hardware pairing, not
+verified yet either way as of this writing.
