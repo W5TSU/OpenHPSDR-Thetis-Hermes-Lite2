@@ -1,10 +1,13 @@
 # FreeDV in Thetis HL2 — User Guide
 
-> **Status: prototype, `FreeDV` branch, RX-only.** Both modes below are decode-only —
-> there is no FreeDV/RADE transmit path yet. This is not part of a released Thetis
-> build; it's available on side-loaded `Thetis-Test` builds from the `FreeDV`
-> development branch. See `Documentation/FreeDV-Plan.md` for build/implementation
-> details and progress notes.
+> **Status: prototype, `FreeDV` branch, RX-only for operators.** Both modes below are
+> decode-only — there is no way to key real on-air FreeDV/RADE transmit from Thetis
+> yet. (As of 2026-08-17/18, a RADE V1 TX encoder exists internally and has been
+> proven end-to-end via a no-RF software loopback, but MOX/PTT keying isn't wired to
+> it, so it can't transmit anything for real — see "Known issues / recent changes"
+> below.) This is not part of a released Thetis build; it's available on side-loaded
+> `Thetis-Test` builds from the `FreeDV` development branch. See
+> `Documentation/FreeDV-Plan.md` for build/implementation details and progress notes.
 
 ## What is FreeDV?
 
@@ -120,8 +123,15 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
   was verified against one test signal, not yet broadly on-air across varying
   signal strengths — if 700E decode sounds unexpectedly loud or quiet on real
   traffic, that's worth reporting rather than assuming it's expected.
-- **RX-only.** Neither mode transmits. There is no FreeDV/RADE keying path in
-  this build yet.
+- **RX-only for real use.** Neither mode can key the transmitter — there is no
+  MOX/PTT wiring for FreeDV/RADE yet.
+- **RADE V1 TX encoder wired, loopback-confirmed (2026-08-17/18).** The encoder
+  (mic conditioning → LPCNet → `rade_tx`) is now hooked into Thetis's TX audio path
+  and, via a dedicated no-RF loopback test mode, has produced its first audible,
+  intelligible synthesized speech end-to-end. This is a development milestone, not
+  an operator feature yet: MOX/PTT keying and the transmit-hold/end-of-over logic
+  still aren't wired, so nothing can actually go out over RF. See `FreeDV-Plan.md`'s
+  2026-08-17/18 entry for the full trace.
 
 See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
 issues still open.
