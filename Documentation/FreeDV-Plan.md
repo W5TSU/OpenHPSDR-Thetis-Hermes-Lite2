@@ -819,8 +819,9 @@ open items for Phase 4, not blockers on Phase 3 itself.
 
 ## Stage B — Full FDV mode *(future, after the prototype proves out)*
 
-- ⬜ TX path: mirror block in `TXA.c` using `freedv_tx()` — mic audio → 8 kHz →
-  modem audio → SSB modulator
+- 🟡 TX path: mirror block in `TXA.c` using `freedv_tx()` — mic audio → 8 kHz →
+  modem audio → SSB modulator. **Encoder built and wired, 2026-08-18** — see the
+  dated entry below. Still open: console/CAT arming, MOX/PTT, and a test path.
 - ⬜ Mode selection: 1600 / 700D / 700E (`SetRXAFDVMode`), RX2/subRX support
 - ⬜ 700D/E text messages: callsign beacon TX + received-text display
 - ⬜ Real UI: console mode button or info-bar sync light; entering FDV auto-applies the
@@ -828,6 +829,51 @@ open items for Phase 4, not blockers on Phase 3 itself.
 - ⬜ Possible `DSPMode.FDV` enum member — the high-merge-cost step; only if Stage B
   ships for real
 - ⬜ CAT/TCI exposure of FDV state
+
+### 🟡 700E TX encoder built and wired — inert, no arming path yet (`2e295647`, 2026-08-18)
+
+Unlike RADE V1 TX (which had a fully-built encoder sitting unwired from the
+sv1eia port), 700E had **zero TX scaffolding** — this is genuinely new code,
+not plumbing existing pieces together. Lives in wdsp's `fdv.c`/`fdv.h`
+(alongside 700E RX decode, not in ChannelMaster where RADE V1 TX lives),
+mirroring `fdv.c`'s existing RX architecture in the opposite direction:
+
+- New `FDVTX` type: mic audio → `speech_rate` → accumulated into
+  `freedv_get_n_speech_samples()`-sized blocks → `freedv_tx()` →
+  `freedv_get_n_nom_modem_samples()` of modem audio → resampled to dsp rate →
+  drained into the output buffer, using the same ring-buffer-plus-smoothed-AGC
+  bridging pattern the RX side already uses for the dsp-block-size ↔
+  modem-fixed-block-size mismatch. **Silence (never raw mic) on underrun** —
+  the same never-leak-live-audio principle RADE V1 TX's own silence-on-underrun
+  already follows.
+- Wired into `TXA.c`'s full per-channel lifecycle (create/destroy/flush/
+  `setDSPSamplerate`/`setDSPBuffsize`) and hooked into `xtxa()` right after the
+  input resampler — before mic gain/panel/compressor/EQ/CESSB/ALC. When armed,
+  it replaces mic audio in place; the modem waveform then flows through the
+  rest of the normal TX chain unmodified.
+- `SetTXAFDVRun`/`GetTXAFDVRun` enable control, mirroring `SetRXAFDVRun`.
+  **Inert by default** (`run=0`) and nothing calls it yet.
+
+**Deliberately left open, same session-split precedent as RADE V1 TX**: no
+console/CAT wiring (no way for an operator to arm this), no MOX/PTT arbiter
+(700E has no EOO-style burst designed yet, so this may end up simpler than
+RADE V1's arbiter, or may not — undecided), and no test path — RADE V1 got a
+pre-existing loopback bridge for free from the sv1eia port; 700E has no
+equivalent, so testing this will need a different approach, probably a TCI
+TX-audio capture plus spectral/waveform sanity check rather than a loopback.
+
+**Open architectural question, shared with RADE V1 TX, not resolved either
+place**: both features now inject a digital modem waveform early in the TX
+chain and let it flow through the normal analog-voice processing
+(compressor/EQ/CESSB/ALC) on the way out. Whether that dynamics processing
+degrades a digital signal enough to matter is untested for either feature —
+worth a real check before either one is considered on-air-ready, not just a
+theoretical concern to note and move past.
+
+**Verified tonight**: clean first-pass compile (new code, could easily have
+had errors), deployed to `hl2winbox`, and a real PTT regression check (short
+silent key/unkey cycle) confirmed normal TX operation is unaffected by the
+new hook sitting inert in the hot path.
 
 ## Stage C — RADE neural mode *(external dependency)*
 
