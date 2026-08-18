@@ -7443,6 +7443,65 @@ namespace Thetis
 
             return sign + AddLeadingZeros(level, 3) + (clip ? "1" : "0");
         }
+        // Reads RADE V1 TX encoder-input (mic) level/clip status (get-only),
+        // same format/convention as ZZDT's RX-side equivalent -- lets you
+        // confirm mic audio is actually reaching the encoder at a sane level
+        // before chasing anything downstream. // W5TSU
+        public string ZZDI()
+        {
+            int level = WDSP.GetRadaeTxMicLevelDb();
+            bool clip = WDSP.GetRadaeTxMicClip() != 0;
+
+            string sign = level < 0 ? "-" : "+";
+            level = Math.Min(Math.Abs(level), 999);
+
+            return sign + AddLeadingZeros(level, 3) + (clip ? "1" : "0");
+        }
+        // Reads or sets the RADE V1 TX encoder (ChannelMaster/radae.c xradae_tx)
+        // enable state -- the encoder itself was fully built (mic conditioning,
+        // LPCNet, rade_tx, MOX gating, EOO burst) but never had a caller. This
+        // only arms the encoder; see ZZDL for the no-RF loopback test path and
+        // note MOX/PTT wiring (SetRadaeMoxState/SetRadaeTxRx) is still separate
+        // and not yet done, so this alone cannot key real audio onto the air. // W5TSU
+        public string ZZDK(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeTxEnabled((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeTxEnabled() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE V1 RX1 loopback bridge (ChannelMaster/radae.c
+        // SetRadaeLoopbackEnabled) -- when on, the TX encoder's modem output is
+        // routed directly into RX1's decoder input instead of mic_io, so the
+        // radio never actually transmits: talk into the mic with ZZDK and this
+        // both on and RX1's RADE decode (ZZDW) on to hear the full encode->
+        // decode round trip with zero RF risk, before any real on-air attempt. // W5TSU
+        public string ZZDL(string s)
+        {
+            const int rx = 0;
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeLoopbackEnabled(rx, (s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeLoopbackEnabled(rx) != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

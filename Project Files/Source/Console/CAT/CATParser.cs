@@ -1181,6 +1181,15 @@ namespace Thetis
                 case "ZZDT":
                     rtncmd = cmdlist.ZZDT();
                     break;
+                case "ZZDI":
+                    rtncmd = cmdlist.ZZDI();
+                    break;
+                case "ZZDK":
+                    rtncmd = cmdlist.ZZDK(suffix);
+                    break;
+                case "ZZDL":
+                    rtncmd = cmdlist.ZZDL(suffix);
+                    break;
                 case "ZZTC":
                     rtncmd = cmdlist.ZZTC(suffix);
                     break;

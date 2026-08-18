@@ -293,6 +293,32 @@ namespace Thetis
         public static extern int GetRadaeClip(int rx);
         //
 
+        // W5TSU: RADE V1 TX (ChannelMaster/radae.c xradae_tx) -- encoder was fully
+        // built (mic conditioning -> LPCNet -> rade_tx -> modem waveform, with MOX
+        // gating and an EOO/callsign burst already designed in) but had zero C#
+        // callers and was never hooked into pipe.c. This is step one: encoder
+        // enable + the RX1 loopback bridge (TX encoder output -> RX1 decoder input,
+        // radio never keys) for a safe, no-RF round-trip test before any MOX/PTT
+        // wiring is attempted. See ZZDK/ZZDL.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeTxEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeTxEnabled(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeTxEnabled();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeLoopbackEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeLoopbackEnabled(int rx, int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeLoopbackEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeLoopbackEnabled(int rx);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxMicLevelDb", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeTxMicLevelDb();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeTxMicClip", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeTxMicClip();
+        //
+
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
         [DllImport("wdsp.dll", EntryPoint = "ResetRXAFDVDebug", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ResetRXAFDVDebug();

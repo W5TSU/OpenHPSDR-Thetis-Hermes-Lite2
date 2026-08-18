@@ -242,6 +242,7 @@ void xpipe (int stream, int pos, double** buffs)
 				if (pip.xmtr[0].txvac == 0)  { xvacIN(0, buff, 0);  xvacIN(1, buff, 1); }
 				if (pip.xmtr[0].txvac == 1)  { xvacIN(1, buff, 0);  xvacIN(0, buff, 1); }
 			}
+			xradae_tx(buff);								// W5TSU: RADE V1 (experimental) -- encodes mic (or wav/VAC-sourced) audio in place, replacing it with the modem waveform before the normal SSB TX chain (fexchange0) runs on it; inert unless SetRadaeTxEnabled(1)
 			xrecordwave(0, 1, 0, buff);															// wav recorder 0 //[2.10.3.6]MW0LGE moved after vac
 			xrecordwave(1, 1, 0, buff);															// wav recorder 1
 			break;

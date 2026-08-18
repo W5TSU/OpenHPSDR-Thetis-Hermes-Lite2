@@ -42,7 +42,7 @@ warren@pratt.one
 #include "ilv.h"
 #include "ivac.h"
 #include "pipe.h"
-#include "radae.h"  // W5TSU: RADE V1 digital voice (experimental, RX-only so far)
+#include "radae.h"  // W5TSU: RADE V1 digital voice (experimental; TX encoder wired but no MOX/PTT yet -- loopback-test only)
 #include "tci.h"
 #include "ring.h"
 #include "router.h"

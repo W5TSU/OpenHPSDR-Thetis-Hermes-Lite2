@@ -1456,6 +1456,27 @@
     <ngetparms>0</ngetparms>
     <nansparms>5</nansparms>
   </catstruct>
+  <catstruct code="ZZDI">
+    <desc>RADE TX encoder-input (mic) level/clip status</desc>
+    <active>true</active>
+    <nsetparms>-1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>5</nansparms>
+  </catstruct>
+  <catstruct code="ZZDK">
+    <desc>RADE V1 TX encoder enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZDL">
+    <desc>RADE V1 RX1 loopback bridge enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
   <catstruct code="ZZTC">
     <desc>TCI server listening status</desc>
     <active>true</active>
