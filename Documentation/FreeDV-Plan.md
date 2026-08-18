@@ -1705,15 +1705,72 @@ P/Invoke + CAT wiring.
    CAT/TCI hook for it), still open from Phase 3 item 7.
 5. **Phase 4 wrap-up items** (installer identity revert, release notes)
    — deliberately deferred until the merge-to-master decision, not before.
-6. RADE V1 TX (`xradae_tx`) is still entirely unwired — out of scope until
-   RX is fully solid.
+6. ~~RADE V1 TX (`xradae_tx`) is still entirely unwired~~ — **superseded**,
+   see the loopback section below. TX encoder is now wired and proven via
+   software loopback; real on-air TX (MOX/PTT arbiter wiring) remains open.
 
-**Box state left at session end**: `hl2winbox` running the final cleaned-up
-build, `git:71f9b26e`, confirmed via `thetisctl cat version` — deployed and
-`ZZDT` re-verified working post-cleanup. RADE V1 decode on, power on, tuned
-14.236 MHz DIGU, VAC 1 enabled per the operator's normal setup. No TX in
-progress, nothing armed. Nothing left to deploy next session — start
-straight into the open-items list above.
+**Box state left at session end (2026-08-17)**: `hl2winbox` running the
+final cleaned-up build, `git:71f9b26e`, confirmed via `thetisctl cat
+version` — deployed and `ZZDT` re-verified working post-cleanup. RADE V1
+decode on, power on, tuned 14.236 MHz DIGU, VAC 1 enabled per the
+operator's normal setup. No TX in progress, nothing armed. Nothing left to
+deploy next session — start straight into the open-items list above.
+
+### 🟢 RADE V1 TX encoder wired + first loopback round-trip confirmed (2026-08-17/18)
+
+Started from "are we ready to work on RADE TX?" Investigation before writing
+any code found `xradae_tx()` was **not a stub** — a fully-built encoder
+(mic conditioning: RNNoise/AGC/EQ -> LPCNet -> `rade_tx` -> modem waveform,
+with MOX gating, an EOO/callsign end-of-over burst, and a PTT-hold-until-
+flush arbiter already designed in) inherited from the original sv1eia port,
+but with **zero callers anywhere** — never hooked into `pipe.c`, never
+exposed to C#. Also found a fully-built **RX1 loopback bridge**
+(`SetRadaeLoopbackEnabled`) already wired inside `radae.c`: routes the TX
+encoder's modem output directly into RX1's decoder input instead of
+`mic_io`, so the radio never keys — a safe, no-RF round-trip test path
+someone had clearly designed in from the start but never activated.
+
+**What shipped**: `xradae_tx(buff)` hooked into `pipe.c`'s TX mic-data hot
+path (same placement pattern as `xradae_rx` on the RX side — after
+wav-player/VAC mic-source mixing, before the wav recorder tap). New CAT
+commands: `ZZDK` (TX encoder enable), `ZZDL` (RX1 loopback bridge enable),
+`ZZDI` (TX mic-input level/clip meter, mirrors `ZZDT`'s RX-side format).
+MOX/PTT wiring (`SetRadaeMoxState`/`SetRadaeTxRx`, and the EOO-flush arbiter)
+deliberately **not** touched — this step alone cannot key real audio onto
+the air.
+
+**Bring-up bug and fix**: after deploying, `ZZDI` stayed frozen at the
+-120dBFS floor even with the encoder + loopback both enabled and the
+operator confirmed talking (native Thetis mic meter moving, audible to
+themselves — ruling out a device/config problem). Added a temporary debug
+tap (`ZZDJ`, call counter + last-gate-reached marker) to find which of
+`xradae_tx`'s five early-return gates was firing. Root cause turned out to
+be **operational, not a code bug**: the very first deploy attempt raced
+`msiexec /a`'s administrative extraction — checking the extracted files
+after only a 5s sleep caught the *previous* build's binaries still in
+place (confirmed by comparing file timestamps against the two CI runs'
+actual trigger times). Redone with `Start-Process -Wait`, the diagnostic
+build (`git:398266e6`) landed correctly, `ZZDJ` immediately showed
+`reason=9` ("reached step 1") with real varying mic-level readings, and
+loopback produced **audible, intelligible synthesized speech** — "Yes I
+hear my voice" — with `radae status` confirming `SYNC` and a real SNR
+reading. Since loopback mode deliberately zeroes `mic_io` after encoding
+(so live mic can't leak through the normal TX monitor path), hearing
+anything at all is only possible via the encode -> bridge -> RX1-decode
+chain actually working end-to-end — the first time this encoder has ever
+produced audible output through Thetis. Debug tap removed once resolved
+(commit reverting `ZZDJ`/`GetRadaeTxDebug`), same clean-up-after pattern
+as every other debugging arc in this log.
+
+**What's still open for real (on-air) TX**: MOX/PTT wiring
+(`SetRadaeMoxState`/`SetRadaeTxRx` need real callers at the MOX 0->1/1->0
+edge, matching the header comment's documented intent), and the PTT-hold-
+until-EOO-flush arbiter (`GetRadaeEooFlushed`/`SetRadaeTxSilenceHold`) needs
+to actually gate when Thetis drops PTT, not just exist as unused entry
+points. Both are meaningfully riskier than loopback (real keying, real RF)
+and deserve their own explicit go-ahead + `--confirm-tx` discipline before
+any attempt, same as every other TX-capable `thetisctl` operation in this
+project.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
