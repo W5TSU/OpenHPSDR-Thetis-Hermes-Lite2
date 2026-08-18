@@ -1774,8 +1774,6 @@ project.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
-## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
-
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
 FreeDV QSO in progress at exactly the moment we're recording — the
 [reporter](https://qso.freedv.org) shows who's currently active, but only if a human
