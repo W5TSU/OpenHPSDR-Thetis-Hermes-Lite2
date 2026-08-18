@@ -820,8 +820,10 @@ open items for Phase 4, not blockers on Phase 3 itself.
 ## Stage B — Full FDV mode *(future, after the prototype proves out)*
 
 - 🟡 TX path: mirror block in `TXA.c` using `freedv_tx()` — mic audio → 8 kHz →
-  modem audio → SSB modulator. **Encoder built and wired, 2026-08-18** — see the
-  dated entry below. Still open: console/CAT arming, MOX/PTT, and a test path.
+  modem audio → SSB modulator. **Encoder built, wired, and proven structurally
+  sound via a real PTT test, 2026-08-18** — see the dated entries below. Still
+  open: console/CAT arming beyond the test-only `ZZEF`, a MOX/PTT arbiter, and
+  off-air decode confirmation.
 - ⬜ Mode selection: 1600 / 700D / 700E (`SetRXAFDVMode`), RX2/subRX support
 - ⬜ 700D/E text messages: callsign beacon TX + received-text display
 - ⬜ Real UI: console mode button or info-bar sync light; entering FDV auto-applies the
@@ -874,6 +876,54 @@ theoretical concern to note and move past.
 had errors), deployed to `hl2winbox`, and a real PTT regression check (short
 silent key/unkey cycle) confirmed normal TX operation is unaffected by the
 new hook sitting inert in the hot path.
+
+### 🟢 700E TX encoder proven structurally sound via real PTT test (`8cb9e3b8`, 2026-08-18)
+
+Added CAT arming (**`ZZEF`**, mirrors `ZZDV`'s RX-side shape) plus a temporary
+raw-audio dump of the encoder's modem output, aimed at a safe, zero-PTT
+verification path — same idea as RADE V1 TX's loopback bridge.
+
+**Correction, same session**: the zero-PTT plan didn't work, and the reason
+is a real architectural difference from RADE V1 TX worth recording. The
+assumption was "`xtxa()` runs continuously regardless of MOX state, confirmed
+earlier via the mic capture path" — true for RADE V1 TX, which taps
+ChannelMaster's raw mic buffer *before* wdsp runs at all, so it sees audio
+whether or not the radio is keyed. **Not true for 700E TX**: it lives inside
+wdsp's own `TXA` chain, gated by `fexchange0()`'s `ch[channel].exchange`
+check, which `SetChannelState()` only flips on at a real MOX key-down
+(`console.cs`'s `chkMOX_CheckedChanged2` calls
+`WDSP.SetChannelState(WDSP.id(1,0), 1, 0)` on key-down / `(...,0,1)` on
+key-up). The wdsp TX chain simply doesn't execute while idle — no equivalent
+of RADE's loopback trick exists here.
+
+So: a real 4-second silent PTT hold (no mic audio, `ZZEF=1` armed, same
+`--confirm-tx` on-air-test protocol as every other test tonight), then the
+debug dump (`fdvtx_debug_modem.raw`) pulled and analyzed locally.
+
+**Result: genuinely confirms the encoder works.** 71,680 int16 samples, zero
+NaN/garbage, zero clipping. Peak exactly **-6.02dBFS** — matches the
+`FDV_TX_MODEM_GAIN=0.5` design constant's math precisely
+(20·log10(0.5) = -6.02dB), a nice independent cross-check that the gain
+staging does what the code comments claim. RMS -12.5dBFS, sane. Spectral
+analysis (FFT + 10-band energy split) shows energy sharply concentrated
+560–2450 Hz with essentially nothing outside that band — textbook
+audio-passband OFDM occupancy, not noise, a stuck tone, or silence.
+
+**One honest loose end, not a red flag**: at the confirmed 8000Hz modem rate
+(cross-checked against codec2's `ofdm_mode.c`: `config->fs = 8000.0f`
+default, 700E doesn't override it), 71,680 samples works out to ~8.96s of
+audio from a 4s PTT hold. No clipping/distortion/NaN anywhere in the extra
+content, so most likely a startup catch-up burst in the buffered DSP
+pipeline (`fexchange0`'s semaphore-driven worker thread) rather than
+anything wrong with the encoder — recorded here as unexplained-but-benign
+rather than either hidden or overclaimed as understood.
+
+`ZZEF` disarmed afterward, station back to idle. A good, real checkpoint:
+the encoder itself is proven structurally sound. **Still open, same shape as
+RADE V1 TX's remaining gaps**: a MOX/PTT arbiter for real end-to-end
+operation (RADE V1 TX's EOO-flush-before-drop design is the template), and
+eventually off-air decode confirmation — the same standing gap RADE V1 TX
+also still has.
 
 ## Stage C — RADE neural mode *(external dependency)*
 
