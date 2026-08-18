@@ -90,6 +90,7 @@ PORT void  SetRadaeTxSilenceHold(int on);
 
 /* TX-side outgoing EOO callsign (single -- one operator identity). */
 PORT void  SetRadaeEooCallsign(const char* callsign);
+PORT int   GetRadaeEooCallsign(char* dst, int max);
 
 /* Per-RX loopback toggle.  When ON, the TX-side encoder output is
  * routed into THIS RX's decoder input via a dedicated bridge ring;

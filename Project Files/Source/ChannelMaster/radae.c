@@ -1038,14 +1038,30 @@ PORT void SetRadaeBypassAll(int enable)           { _InterlockedExchange(&g_rada
 PORT void SetRadaeEooCallsign(const char* callsign)
 {
     if (callsign == NULL) return;
-    EnterCriticalSection(&g_radae_cs);
+    if (g_radae_cs_inited) EnterCriticalSection(&g_radae_cs); /* W5TSU: fix -- was unguarded; harmless while this had zero callers, real crash risk now it's CAT-reachable before power-on/create_radae() */
     {
         size_t n = strlen(callsign);
         if (n >= RADAE_OWN_CALL_CAP) n = RADAE_OWN_CALL_CAP - 1;
         memcpy(g_tx_own_callsign, callsign, n);
         g_tx_own_callsign[n] = '\0';
     }
-    LeaveCriticalSection(&g_radae_cs);
+    if (g_radae_cs_inited) LeaveCriticalSection(&g_radae_cs);
+}
+
+PORT int GetRadaeEooCallsign(char* dst, int max)
+{
+    int n = 0;
+    if (dst == NULL || max <= 0) return 0;
+    if (g_radae_cs_inited) EnterCriticalSection(&g_radae_cs);
+    {
+        int len = (int)strlen(g_tx_own_callsign);
+        if (len >= max) len = max - 1;
+        memcpy(dst, g_tx_own_callsign, (size_t)len);
+        dst[len] = '\0';
+        n = len;
+    }
+    if (g_radae_cs_inited) LeaveCriticalSection(&g_radae_cs);
+    return n;
 }
 
 /* ============================================================

@@ -7502,6 +7502,31 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets the RADE V1 outgoing EOO (end-of-over) callsign --
+        // the station ID sent in the end-of-over burst radae.c generates on
+        // every MOX 1->0 edge when RADE TX is armed. Fixed-width 15-char field
+        // (Kenwood-CAT convention, same shape as KY), space-padded on set,
+        // trimmed both directions. Until this is set the EOO burst still fires
+        // but carries no real station ID -- see ChannelMaster/radae.c's own
+        // g_tx_own_callsign default of "". // W5TSU
+        public string ZZDJ(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                WDSP.SetRadaeEooCallsign(s.Trim().ToUpper());
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                StringBuilder sb = new StringBuilder(16);
+                WDSP.GetRadaeEooCallsign(sb, 16);
+                return sb.ToString();
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

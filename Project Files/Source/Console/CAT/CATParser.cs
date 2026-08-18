@@ -559,7 +559,8 @@ namespace Thetis
 					prefix + extension != "ZZFX" && prefix+extension != "ZZFY" &&
 					prefix + extension != "ZZFV" && prefix+extension != "ZZFW" &&
                     prefix + extension != "ZZGA" && prefix + extension != "ZZGR" &&
-                    prefix + extension != "ZZJP" && prefix + extension != "ZZJQ" && prefix + extension != "ZZJR" && prefix + extension != "ZZJS")
+                    prefix + extension != "ZZJP" && prefix + extension != "ZZJQ" && prefix + extension != "ZZJR" && prefix + extension != "ZZJS" &&
+                    prefix + extension != "ZZDJ")   // W5TSU: RADE V1 EOO callsign (letters, not just digits)
 				{
 					Regex sfxpattern = new Regex("^[+-]?[Vv0-9]*$");
                     if (!sfxpattern.IsMatch(sfx))
@@ -1189,6 +1190,9 @@ namespace Thetis
                     break;
                 case "ZZDL":
                     rtncmd = cmdlist.ZZDL(suffix);
+                    break;
+                case "ZZDJ":
+                    rtncmd = cmdlist.ZZDJ(suffix);
                     break;
                 case "ZZTC":
                     rtncmd = cmdlist.ZZTC(suffix);

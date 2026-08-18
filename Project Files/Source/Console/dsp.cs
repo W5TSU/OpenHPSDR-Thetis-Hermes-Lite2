@@ -41,6 +41,7 @@ namespace Thetis
 {
     using System;
     using System.Runtime.InteropServices;
+    using System.Text;
 
     unsafe class WDSP
 	{
@@ -342,6 +343,13 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeTxSilenceHold", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetRadaeTxSilenceHold(int on);
+
+        // W5TSU: outgoing EOO callsign (single -- one operator identity). See ZZDJ.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeEooCallsign", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void SetRadaeEooCallsign(string callsign);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeEooCallsign", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int GetRadaeEooCallsign(StringBuilder dst, int max);
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.
