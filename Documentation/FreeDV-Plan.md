@@ -1780,6 +1780,63 @@ and available (`ZZDK`/`ZZDL`) but not enabled by default; no TX in progress,
 nothing armed, MOX/PTT still unwired so real keying isn't possible from this
 build regardless.
 
+### 🟢 MOX/PTT wired; first real over-the-air RADE V1 transmission (`d4486c84`, 2026-08-18)
+
+The piece explicitly deferred in the loopback milestone above — real keying —
+is now wired. Hooked into `console.cs`'s existing `MoxPreChangeHandlers`
+delegate (fires synchronously before the real hardware key transition in
+`chkMOX_CheckedChanged2`), not into the core PTT function itself:
+
+- **Key-down (RX→TX)**: unconditionally pushes `SetRadaeTxRx` /
+  `SetRadaeMoxState(1)` / `RadaeNotifyBeginOver()` — matches `radae.h`'s
+  documented "every MOX edge" intent; inert when `SetRadaeTxEnabled(0)`
+  since `radae.c`'s own gate no-ops them.
+- **Key-up (TX→RX)**: `RadaeNotifyEndOfOver()` fires unconditionally
+  (cheap), but only *blocks* — synchronously, on the same call stack the
+  real hardware key-up runs on right after — polling
+  `GetRadaeEooFlushed()` when `GetRadaeTxEnabled()` is true, holding real
+  PTT open long enough for the end-of-over burst to flush before the radio
+  actually unkeys. Hard-capped at 2000ms so a stuck flush can never hang
+  the transmitter keyed; normal SSB/CW/FM PTT release sees zero added
+  delay.
+
+**Test sequence, in order**: (1) loopback regression — SYNC, 30dB SNR, no
+change from the MOX wiring, as expected since loopback bypasses the MOX
+gate; (2) silent 3s PTT cycle via `thetisctl cat ptt on --hold 3s
+--confirm-tx=...`, RADE TX armed, no mic audio — proved the MOX mechanics
+alone: clean key/unkey, `TX: false` confirmed after, Thetis stayed
+responsive (same PID) throughout, so the up-to-2s blocking wait never
+hangs anything; (3) **a real 6-second over-the-air transmission with the
+operator's live voice** at 14.236 MHz DIGU — the first time this station
+has ever put an actual RADE V1 signal on the air (not loopback, not the
+HackRF positive control). Clean key/unkey again, operator reported nothing
+unusual on their end.
+
+**What this does *not* prove — two open items, stated plainly so this
+doesn't get read as more finished than it is:**
+
+- **No decode confirmation.** There's no second receiver at this station,
+  so nothing confirms the transmitted signal was actually decodable by
+  anyone. The MOX/PTT mechanics are proven safe (clean key/unkey, no
+  stuck-PTT, app stays responsive); whether the RF that went out is a
+  correctly-formed RADE V1 signal is still unverified. Closing this needs
+  either a second receiver/SDR listening to the transmission, or a
+  cooperating station.
+- **⚠️ The end-of-over callsign ID burst is not a real callsign.** The EOO
+  burst fired as designed (2 repeats per `xradae_tx`'s scheduling), but
+  `SetRadaeEooCallsign` has never been called from C# — the transmission
+  went out with whatever bit pattern happened to be sitting in the
+  never-initialized `g_rade_eoo_bits` buffer, not the operator's actual
+  callsign. Worth being explicit about: this means the on-air test above
+  did **not** include a valid station identification burst, which matters
+  for anyone treating this milestone as "ready for normal operation" —
+  it isn't yet. Wiring `SetRadaeEooCallsign` to a real callsign is an open
+  item, not a formality.
+
+TX encoder disarmed (`ZZDK=0`) after testing — station left in a safe
+default state (normal QSOs can't accidentally get RADE-encoded), still at
+14.236 MHz DIGU, power on, nothing armed.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

@@ -1,11 +1,15 @@
 # FreeDV in Thetis HL2 — User Guide
 
-> **Status: prototype, `FreeDV` branch, RX-only for operators.** Both modes below are
-> decode-only — there is no way to key real on-air FreeDV/RADE transmit from Thetis
-> yet. (As of 2026-08-17/18, a RADE V1 TX encoder exists internally and has been
-> proven end-to-end via a no-RF software loopback, but MOX/PTT keying isn't wired to
-> it, so it can't transmit anything for real — see "Known issues / recent changes"
-> below.) This is not part of a released Thetis build; it's available on side-loaded
+> **Status: prototype, `FreeDV` branch, decode is usable — transmit is not.** Both
+> modes' RX/decode side work as described below. RADE V1 TX exists and, as of
+> 2026-08-18, has been keyed once over real RF as a controlled mechanics test
+> (`thetisctl` + `--confirm-tx`, not through the normal UI) — but it is **not ready
+> for normal operation**: nothing confirms the transmitted signal actually decodes
+> anywhere (no second receiver at this station yet), and the end-of-over burst goes
+> out with an uninitialized bit pattern instead of a real callsign, so it is **not
+> station identification**. The TX encoder is disarmed by default. Treat TX as an
+> active development item, not a feature — see "Known issues / recent changes"
+> below. This is not part of a released Thetis build; it's available on side-loaded
 > `Thetis-Test` builds from the `FreeDV` development branch. See
 > `Documentation/FreeDV-Plan.md` for build/implementation details and progress notes.
 
@@ -123,15 +127,23 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
   was verified against one test signal, not yet broadly on-air across varying
   signal strengths — if 700E decode sounds unexpectedly loud or quiet on real
   traffic, that's worth reporting rather than assuming it's expected.
-- **RX-only for real use.** Neither mode can key the transmitter — there is no
-  MOX/PTT wiring for FreeDV/RADE yet.
 - **RADE V1 TX encoder wired, loopback-confirmed (2026-08-17/18).** The encoder
-  (mic conditioning → LPCNet → `rade_tx`) is now hooked into Thetis's TX audio path
-  and, via a dedicated no-RF loopback test mode, has produced its first audible,
-  intelligible synthesized speech end-to-end. This is a development milestone, not
-  an operator feature yet: MOX/PTT keying and the transmit-hold/end-of-over logic
-  still aren't wired, so nothing can actually go out over RF. See `FreeDV-Plan.md`'s
-  2026-08-17/18 entry for the full trace.
+  (mic conditioning → LPCNet → `rade_tx`) is hooked into Thetis's TX audio path
+  and, via a dedicated no-RF loopback test mode, produced its first audible,
+  intelligible synthesized speech end-to-end. See `FreeDV-Plan.md`'s 2026-08-17/18
+  entry for the full trace.
+- **MOX/PTT wired; first real over-the-air transmission (2026-08-18) — mechanics
+  only, not ready for use.** Real PTT keying is now wired (`d4486c84`): key-down
+  arms the encoder, key-up holds real PTT open up to 2s (hard-capped) so the
+  end-of-over burst can flush before the radio unkeys, normal SSB/CW/FM PTT release
+  is unaffected. Tested with a real 6-second over-the-air transmission — clean
+  key/unkey, no stuck PTT, Thetis stayed responsive. **Two things this did not
+  prove, both still open:** (1) no second receiver at this station confirms the
+  transmitted signal actually decodes anywhere; (2) the end-of-over burst went out
+  with an uninitialized bit pattern, not a real callsign — **it is not a valid
+  station identification**, `SetRadaeEooCallsign` has never been wired to a real
+  callsign yet. TX encoder is disarmed by default after testing. Don't treat this
+  as an operator-usable transmit mode — see `FreeDV-Plan.md`'s 2026-08-18 entry.
 
 See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
 issues still open.
