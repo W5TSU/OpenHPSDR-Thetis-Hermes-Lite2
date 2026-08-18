@@ -1772,6 +1772,14 @@ and deserve their own explicit go-ahead + `--confirm-tx` discipline before
 any attempt, same as every other TX-capable `thetisctl` operation in this
 project.
 
+**Box state after this section's cleanup (2026-08-17/18)**: `hl2winbox`
+running the debug-tap-removed build, `git:42f2dab8`, confirmed deployed via
+`thetisctl`. Supersedes the `git:71f9b26e` box-state note above, which
+predates this section's work. TX encoder + RX1 loopback bridge both wired
+and available (`ZZDK`/`ZZDL`) but not enabled by default; no TX in progress,
+nothing armed, MOX/PTT still unwired so real keying isn't possible from this
+build regardless.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
