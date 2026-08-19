@@ -16,6 +16,11 @@ with line number, signature, a short description, and how it is called — plus 
 summary of how the file is used (callers and callees). Regenerate those pages with
 `python code_documentation/tools/gen_file_docs.py` after rebuilding the graph.
 
+**Cross-cutting pathways:** some things (audio, in particular) cross several of the sections
+below in a single real signal chain. [`Documentation/Audio-Pathway.md`](../Documentation/Audio-Pathway.md)
+traces the actual RX and TX audio pathways end to end, sourced from the real call order in
+`RXA.c`/`TXA.c` and `ChannelMaster/cmaster.c`/`pipe.c`, not just the file-role tables below.
+
 ---
 
 ## Contents

@@ -18,6 +18,7 @@ of the program does, which source files implement it, and how the files relate t
 | [`Database.md`](Database.md) | Deep dive: the settings database — what "Export Database" (Database Manager) writes, the `database.xml` DataSet-XML format, every table's schema (Options, State, TXProfile, Memory, BandStack2…), and how import/restore works. |
 | [`Protocols.md`](Protocols.md) | Deep dive: openHPSDR network Protocols 1 & 2 — framing and port maps, how discovery picks the protocol, which boards run which protocol, the HL2's P1 extensions (I²C tunnelling, ACK), and how HL2 gateware is updated. |
 | [`hermes-lite2+.md`](hermes-lite2+.md) | Deep dive: hardware (H/W) selection — where the radio-model data lives (`HPSDRModel`/`HPSDRHW`, `clsHardwareSpecific.cs`), how a selection is applied and persisted, the checklist for adding a new radio, and exactly how the Hermes-Lite 2 is defined. |
+| [`../Documentation/Audio-Pathway.md`](../Documentation/Audio-Pathway.md) | Cross-cutting: the real RX and TX audio signal chains end to end (HL2 ↔ wdsp RXA/TXA ↔ ChannelMaster ↔ speaker/mic/VAC/TCI), sourced from the actual call order in `RXA.c`/`TXA.c`/`cmaster.c`/`pipe.c` — spans §6–§9 rather than living in one of them. |
 
 Documentation covers the six first-party subprojects under `Project Files/Source/` — Console,
 wdsp, ChannelMaster, cmASIO, Midi2Cat, and RawInput (~473 source files). Vendored third-party
