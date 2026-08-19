@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1080 272" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="17-threadsafe-ui-title 17-threadsafe-ui-desc">
+<title id="17-threadsafe-ui-title">Thread-safe UI plumbing and shared controls</title>
+<desc id="17-threadsafe-ui-desc">Architecture diagram showing DSP/audio/network threads marshaling through invoke.cs into thread-safe control subclasses, which back the console's shared widgets and utility windows.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<line x1="300" y1="92.0" x2="240" y2="92.0" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="92.0" x2="540" y2="92.0" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 820,54 H 758.0 Q 766.0,54 766.0,62 V 62 Q 766.0,70 774.0,70 H 740" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 740,114 H 786.0 Q 794.0,114 794.0,122 V 122 Q 794.0,130 802.0,130 H 820" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248.0" y="72.0" width="44" height="12" rx="2" fill="#f5f5f5"/>
+<text x="270.0" y="81.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UPDATE</text>
+<rect x="485.0" y="72.0" width="50" height="12" rx="2" fill="#f5f5f5"/>
+<text x="510.0" y="81.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MARSHAL</text>
+<rect x="761.0" y="70.0" width="38" height="12" rx="2" fill="#f5f5f5"/>
+<text x="780.0" y="79.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">BACKS</text>
+<rect x="761.0" y="130.0" width="38" height="12" rx="2" fill="#f5f5f5"/>
+<text x="780.0" y="139.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">BACKS</text>
+<rect x="40" y="60" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="40" y="60" width="200" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<rect x="48" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+<text x="62.0" y="77" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">THR</text>
+<text x="140.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">DSP/audio/network threads</text>
+<text x="140.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">background threads</text>
+<rect x="300" y="60" width="180" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="300" y="60" width="180" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="308" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="322.0" y="77" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+<text x="390.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">invoke.cs</text>
+<text x="390.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">UI-thread marshal · hub</text>
+<rect x="540" y="60" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="540" y="60" width="200" height="64" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<rect x="548" y="68" width="24" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.50)" stroke-width="0.8"/>
+<text x="560.0" y="77" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TS</text>
+<text x="640.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ts controls</text>
+<text x="640.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">buttonts · checkboxts · …</text>
+<rect x="820" y="0" width="220" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="820" y="0" width="220" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="828" y="8" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="840.0" y="17" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+<text x="930.0" y="30.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Custom &amp; shared widgets</text>
+<text x="930.0" y="46.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PrettyTrackBar · info bar</text>
+<rect x="820" y="120" width="220" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="820" y="120" width="220" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="828" y="128" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="840.0" y="137" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+<text x="930.0" y="150.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Utility windows</text>
+<text x="930.0" y="166.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ShutdownForm · RAForm</text>
+<line x1="40" y1="208" x2="960" y2="208" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+<text x="40" y="224" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="236" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="60" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal / hub</text>
+<rect x="139" y="236" width="14" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<text x="159" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Control subclasses</text>
+<rect x="273" y="236" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<text x="293" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Component</text>
+<rect x="362" y="236" width="14" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<text x="382" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Background threads</text>
+</svg>

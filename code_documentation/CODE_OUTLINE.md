@@ -20,24 +20,29 @@ summary of how the file is used (callers and callees). Regenerate those pages wi
 
 ## Contents
 
-1. [Application core and main window](#1-application-core-and-main-window)
-2. [Settings and configuration](#2-settings-and-configuration)
-3. [HPSDR network protocol and radio discovery](#3-hpsdr-network-protocol-and-radio-discovery)
-4. [Hermes-Lite 2 specific hardware control](#4-hermes-lite-2-specific-hardware-control)
-5. [Spectrum, waterfall, and panadapter display](#5-spectrum-waterfall-and-panadapter-display)
-6. [DSP control from the console](#6-dsp-control-from-the-console)
-7. [wdsp — the DSP engine](#7-wdsp--the-dsp-engine)
-8. [ChannelMaster — audio and network routing](#8-channelmaster--audio-and-network-routing)
-9. [Audio devices, VAC, and ASIO](#9-audio-devices-vac-and-asio)
-10. [CAT control and external program interfaces](#10-cat-control-and-external-program-interfaces)
-11. [CW keying](#11-cw-keying)
-12. [MIDI control (Midi2Cat)](#12-midi-control-midi2cat)
-13. [Andromeda control surface](#13-andromeda-control-surface)
-14. [Metering](#14-metering)
-15. [Memories, band stacks, and the database](#15-memories-band-stacks-and-the-database)
-16. [DX spots and cluster display](#16-dx-spots-and-cluster-display)
-17. [Thread-safe UI plumbing and shared controls](#17-thread-safe-ui-plumbing-and-shared-controls)
-18. [Raw keyboard/mouse input (RawInput)](#18-raw-keyboardmouse-input-rawinput)
+Each entry links to its section below, plus a component-relationship diagram (`diagrams/`)
+covering the files in that section — generated with the `diagram-design` plugin, architecture
+type. Diagrams are grouped/simplified views for orientation, not a substitute for the file-role
+tables or the knowledge graph.
+
+1. [Application core and main window](#1-application-core-and-main-window) — [diagram](diagrams/01-application-core.svg)
+2. [Settings and configuration](#2-settings-and-configuration) — [diagram](diagrams/02-settings-config.svg)
+3. [HPSDR network protocol and radio discovery](#3-hpsdr-network-protocol-and-radio-discovery) — [diagram](diagrams/03-hpsdr-network.svg)
+4. [Hermes-Lite 2 specific hardware control](#4-hermes-lite-2-specific-hardware-control) — [diagram](diagrams/04-hl2-hardware.svg)
+5. [Spectrum, waterfall, and panadapter display](#5-spectrum-waterfall-and-panadapter-display) — [diagram](diagrams/05-spectrum-display.svg)
+6. [DSP control from the console](#6-dsp-control-from-the-console) — [diagram](diagrams/06-dsp-control.svg)
+7. [wdsp — the DSP engine](#7-wdsp--the-dsp-engine) — [diagram](diagrams/07-wdsp-engine.svg)
+8. [ChannelMaster — audio and network routing](#8-channelmaster--audio-and-network-routing) — [diagram](diagrams/08-channelmaster.svg)
+9. [Audio devices, VAC, and ASIO](#9-audio-devices-vac-and-asio) — [diagram](diagrams/09-audio-vac-asio.svg)
+10. [CAT control and external program interfaces](#10-cat-control-and-external-program-interfaces) — [diagram](diagrams/10-cat-control.svg)
+11. [CW keying](#11-cw-keying) — [diagram](diagrams/11-cw-keying.svg)
+12. [MIDI control (Midi2Cat)](#12-midi-control-midi2cat) — [diagram](diagrams/12-midi-control.svg)
+13. [Andromeda control surface](#13-andromeda-control-surface) — [diagram](diagrams/13-andromeda.svg)
+14. [Metering](#14-metering) — [diagram](diagrams/14-metering.svg)
+15. [Memories, band stacks, and the database](#15-memories-band-stacks-and-the-database) — [diagram](diagrams/15-memories-bandstacks.svg)
+16. [DX spots and cluster display](#16-dx-spots-and-cluster-display) — [diagram](diagrams/16-dx-spots.svg)
+17. [Thread-safe UI plumbing and shared controls](#17-thread-safe-ui-plumbing-and-shared-controls) — [diagram](diagrams/17-threadsafe-ui.svg)
+18. [Raw keyboard/mouse input (RawInput)](#18-raw-keyboardmouse-input-rawinput) — [diagram](diagrams/18-rawinput.svg)
 
 ---
 

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1020 272" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="18-rawinput-title 18-rawinput-desc">
+<title id="18-rawinput-title">Raw keyboard/mouse input (RawInput)</title>
+<desc id="18-rawinput-desc">Architecture diagram showing RawInput.cs registering for Win32 raw input, decoding keyboard/mouse device events, and dispatching them to drive the console even when Thetis isn't focused.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<path d="M 240,92.0 H 262.0 Q 270.0,92.0 270.0,84.0 V 96.0 Q 270.0,88.0 278.0,88.0 H 300" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,70 H 488.0 Q 496.0,70 496.0,62 V 62 Q 496.0,54 504.0,54 H 540" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480,114 H 516.0 Q 524.0,114 524.0,122 V 122 Q 524.0,130 532.0,130 H 540" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 740,54 H 772.0 Q 780.0,54 780.0,62 V 62 Q 780.0,70 788.0,70 H 820" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="245.0" y="98.0" width="50" height="12" rx="2" fill="#f5f5f5"/>
+<text x="270.0" y="107.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INTEROP</text>
+<rect x="482.0" y="70.0" width="56" height="12" rx="2" fill="#f5f5f5"/>
+<text x="510.0" y="79.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISPATCH</text>
+<rect x="482.0" y="130.0" width="56" height="12" rx="2" fill="#f5f5f5"/>
+<text x="510.0" y="139.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISPATCH</text>
+<rect x="758.0" y="70.0" width="44" height="12" rx="2" fill="#f5f5f5"/>
+<text x="780.0" y="79.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DRIVES</text>
+<rect x="40" y="60" width="200" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="40" y="60" width="200" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="48" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="62.0" y="77" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">P/I</text>
+<text x="140.0" y="86.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Win32 interop</text>
+<text x="140.0" y="102.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">RegistryAccess · DataStructures</text>
+<rect x="300" y="60" width="180" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="300" y="60" width="180" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="308" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="322.0" y="77" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+<text x="390.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">RawInput.cs</text>
+<text x="390.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">entry point · hub</text>
+<rect x="540" y="0" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="540" y="0" width="200" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="548" y="8" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="562.0" y="17" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DEV</text>
+<text x="640.0" y="30.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">RawKeyboard · RawMouse</text>
+<text x="640.0" y="46.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-device decoding</text>
+<rect x="540" y="120" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="540" y="120" width="200" height="64" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<rect x="548" y="128" width="28" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.50)" stroke-width="0.8"/>
+<text x="562.0" y="137" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MAP</text>
+<text x="640.0" y="150.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">KeyMapper · event types</text>
+<text x="640.0" y="166.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">key mapping</text>
+<rect x="820" y="60" width="160" height="56" rx="6" fill="#f5f5f5"/>
+<rect x="820" y="60" width="160" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="828" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="842.0" y="77" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="900.0" y="86.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">console.cs (§1)</text>
+<text x="900.0" y="102.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">drives even unfocused</text>
+<line x1="40" y1="208" x2="960" y2="208" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+<text x="40" y="224" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="236" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="60" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal / hub</text>
+<rect x="139" y="236" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<text x="159" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Component</text>
+<rect x="228" y="236" width="14" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<text x="248" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Mapping data</text>
+<rect x="332" y="236" width="14" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="352" y="244" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">External / other section</text>
+</svg>

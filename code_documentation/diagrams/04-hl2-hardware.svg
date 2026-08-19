@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 880 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="04-hl2-hardware-title 04-hl2-hardware-desc">
+<title id="04-hl2-hardware-title">Hermes-Lite 2 specific hardware control</title>
+<desc id="04-hl2-hardware-desc">Architecture diagram showing IoBoardHl2.cs receiving Protocol-1 control words from NetworkIO, applying HL2 model quirks, and driving the HL2 I/O board's antenna tuner and TX registers over its i2c-style interface.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<line x1="260" y1="92.0" x2="340" y2="92.0" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<line x1="640" y1="92.0" x2="540" y2="92.0" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 440.0,124 V 200" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="266.0" y="72.0" width="68" height="12" rx="2" fill="#f5f5f5"/>
+<text x="300.0" y="81.0" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CTRL WORDS</text>
+<rect x="568.0" y="72.0" width="44" height="12" rx="2" fill="#f5f5f5"/>
+<text x="590.0" y="81.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUIRKS</text>
+<rect x="454.0" y="156.0" width="62" height="12" rx="2" fill="#f5f5f5"/>
+<text x="485.0" y="165.0" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">I2C-STYLE</text>
+<rect x="40" y="60" width="220" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="40" y="60" width="220" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="48" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="62.0" y="77" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NET</text>
+<text x="150.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">NetworkIO.cs (§3)</text>
+<text x="150.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Protocol-1 control words</text>
+<rect x="340" y="60" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="340" y="60" width="200" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="348" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="362.0" y="77" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+<text x="440.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">IoBoardHl2.cs</text>
+<text x="440.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HL2 I/O board control</text>
+<rect x="640" y="60" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="640" y="60" width="200" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="648" y="68" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="662.0" y="77" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CFG</text>
+<text x="740.0" y="90.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">clsHardwareSpecific.cs (§2)</text>
+<text x="740.0" y="106.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-model quirks/defaults</text>
+<rect x="340" y="200" width="200" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="340" y="200" width="200" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<rect x="348" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+<text x="362.0" y="217" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DEV</text>
+<text x="440.0" y="230.0" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">HL2 I/O board</text>
+<text x="440.0" y="246.0" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ATU · TX freq · fault regs</text>
+<line x1="40" y1="288" x2="960" y2="288" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+<text x="40" y="304" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="316" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="60" y="324" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal / hub</text>
+<rect x="139" y="316" width="14" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="159" y="324" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">External / other section</text>
+<rect x="303" y="316" width="14" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<text x="323" y="324" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Hardware device</text>
+</svg>
