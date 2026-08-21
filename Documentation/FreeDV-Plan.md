@@ -1009,6 +1009,28 @@ receiver, so still no independent off-air decode confirmation.
 - ⬜ Watch upstream: David Rowe's RADE V2 C port is in progress (classical DSP ported
   as of May 2026; C library distribution planned after their stored-file test campaign
   validates the algorithms — see freedv.org)
+
+  **Update, 2026-08-21** (checked a fresh local clone of upstream
+  [`drowe67/radae`](https://github.com/drowe67/radae) at `/home/w5tsu/Development/radae`,
+  history through 2026-07-16): moved on from "planned" —
+  - README now carries a dedicated **C port** pointer:
+    [`freedv/rade_c`](https://github.com/freedv/rade_c), "for deployment and distribution
+    of RADE" — a distinct repo from the one being watched originally.
+  - Separately, [`peterbmarks/radae_nopy`](https://github.com/peterbmarks/radae_nopy) is now
+    called out in-repo as **"our verified C port"** for the RADE V1 receiver specifically —
+    upstream's own bug-report policy requires reproducing against "our verified C port or
+    Python," i.e. it's not just a community reference anymore (compare the 2026-08-10
+    sv1eia-eval entry below, which treated `radae_nopy` as a third-party reference at the
+    time — that framing predates this).
+  - A **"⚠️ RADE V2 Status"** notice is now in the README: V2 is under active development,
+    **on-air use is explicitly not recommended yet**, known issues are under investigation,
+    and official status will be announced on the FreeDV blog — worth checking before this
+    project follows V2 any further, since it's a firmer "not yet" than "watch upstream" implied.
+  - Net effect on this item: still nothing to build against yet (V1 is what this fork uses;
+    V2 has no stable release), but the shape of "when it ships" has firmed up — two repos to
+    watch now (`rade_c` for deployment, `radae_nopy` for the verified reference C
+    implementation), not one, and V2 in particular has an explicit do-not-deploy notice from
+    upstream itself.
 - ⬜ When the C library ships: build it with a `build-codec2.yml`-style workflow and
   slot it into `fdv.c`'s mode handle — a dependency bump, not a research project
 - Re-coding RADE ourselves was evaluated and rejected: months of duplicated effort and
