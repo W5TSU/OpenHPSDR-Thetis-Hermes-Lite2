@@ -2087,6 +2087,70 @@ station ID — not that the signal is received/decoded elsewhere. That
 remains the one open item standing between this and calling RADE V1 TX
 genuinely finished.
 
+### ✅ First independent off-air decode of Thetis's own RADE V1 TX (2026-08-18)
+
+Closes the "no second receiver" gap above, using the HackRF RX capture tool
+built the same session (`rx_offair_capture_hackrf.grc`/`.py`, `f350fff0`,
+`Tools/FreeDV/README.md` "Testing Thetis's TX output"). RADE V1 TX armed
+(`ZZDK=1`, loopback off), real PTT keyed via `thetisctl` (6s hold, operator's
+live voice, 14.236 MHz DIGU), captured **simultaneously off-air** with the
+new tool → `offair_radev1_real.wav` (demodulated mono, 8kHz, ~14s window).
+Fed into freedv-gui's own reference decoder as the independent check:
+`freedv -ut rx -utmode RADEV1 -rxfile offair_radev1_real.wav -rxoutfile
+decoded_radev1_real.raw`.
+
+**Result**: genuine `Sync changed from 0 to 1` then `1 to 0` in the decoder
+log, ~6s stable lock — consistent with the PTT hold window, not a spurious
+flicker. Decoded output: 264,982 samples @ 16kHz (~16.6s), peak -0.6dBFS,
+RMS -24.3dBFS. RMS checked in 0.25s windows across the decode shows real,
+varying speech dynamics (quiet gaps ~-50dBFS, voiced segments -14 to
+-30dBFS) — genuinely speech-shaped, not flat noise or silence.
+
+**Precision on what this does and doesn't prove**: this is a confirmed real,
+intelligible-*shaped* speech decode — sync, timing, and audio dynamics all
+check out independently of Thetis's own self-reported status. It is **not**
+a content-verified result: no transcript/second-listener comparison was
+done to confirm the decoded *words* matched what was actually said into the
+mic. That distinction matters for how finished this gap should be considered
+— worth a listen-and-compare pass before calling RADE V1 TX fully closed,
+not just a numbers-check.
+
+**Provenance note**: the capture (`offair_radev1_real.wav`) and decode
+(`decoded_radev1_real.wav`) exist only in the session scratchpad that
+produced them, not committed or copied anywhere durable in this repo — the
+evidence above is what's citable; the files themselves aren't preserved.
+Not affected by the `enableLegacyModes` tooling bug below (RADEV1 was
+always the forced/default mode regardless of that flag).
+
+### ✅ freedv-gui test-tooling bug found and fixed: `enableLegacyModes=0` silently forces every test to RADEV1 (2026-08-18/21)
+
+While chasing 700E's still-open off-air decode confirmation, found that
+`enableLegacyModes=0` in `~/.freedv` (freedv-gui's own config) silently
+**forces every test run to RADEV1 regardless of `-utmode 700E`/`-utmode
+700D`/`-utmode 1600` on the command line or clicking a different mode in
+the GUI** — no error, no warning, and it hides the Mode selector UI
+entirely so there's no visual cue anything is wrong. This invalidated every
+700E test attempted in this line of investigation before it was found —
+worth considering whether it also explains why the 700E off-air gap was
+never closed in earlier sessions, though that's not confirmed, just a
+plausible read given how silent the failure mode is.
+
+**Fix**: `enableLegacyModes=1`. **Verified**: re-ran against a known-good
+700E reference signal after the fix — real sync, real intelligible decoded
+speech, confirmed by ear. Saved as a standing gotcha
+(`freedv-gui-enablelegacymodes-gotcha` project memory) so it doesn't cost a
+future session the same discovery process.
+
+**Checked against this doc's existing record**: none of the previously
+documented 700E claims in this log used the `-ut rx`/`-utmode` reference-
+decoder path this bug affects (the RADEV1 test-signal-generation mentions
+elsewhere in this doc use `-ut tx -utmode RADEV1`, a different flag and a
+different mode, unaffected) — so nothing already on record here needs a
+retroactive caveat. This bug only cost fresh 700E attempts made while it
+was undiagnosed; the 700E off-air decode-confirmation gap itself **remains
+open** — this entry is about the tooling bug and its fix, not a 700E
+decode-confirmation milestone.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
