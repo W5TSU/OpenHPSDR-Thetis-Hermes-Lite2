@@ -822,8 +822,9 @@ open items for Phase 4, not blockers on Phase 3 itself.
 - 🟡 TX path: mirror block in `TXA.c` using `freedv_tx()` — mic audio → 8 kHz →
   modem audio → SSB modulator. **Encoder built, wired, verified via real PTT
   tests, and a graceful-drain MOX/PTT arbiter added, 2026-08-18** — see the
-  dated entries below. Still open: console/CAT arming beyond the test-only
-  `ZZEF`, and off-air decode confirmation.
+  dated entries below. A no-RF loopback bridge (`ZZEG`) was built 2026-08-24
+  to test decode confirmation without RF, but is not yet deployed/verified
+  (`hl2winbox` offline) — still open until that runs for real.
 - ⬜ Mode selection: 1600 / 700D / 700E (`SetRXAFDVMode`), RX2/subRX support
 - ⬜ 700D/E text messages: callsign beacon TX + received-text display
 - ⬜ Real UI: console mode button or info-bar sync light; entering FDV auto-applies the
@@ -1003,6 +1004,42 @@ Disarmed afterward. Closes the "real speech, not just silence" testing gap
 for 700E TX — now exercised with real voice at least once, matching RADE V1
 TX's testing depth. **Still open, same for both TX features**: no second
 receiver, so still no independent off-air decode confirmation.
+
+### 🟡 700E RX1 loopback bridge — built, compiles clean, not yet deployed (`04927f76`, 2026-08-24)
+
+A no-RF alternative to the real-off-air-capture route, same purpose as RADE
+V1's own loopback (`radae.c`'s `SetRadaeLoopbackEnabled`/`g_loop_bridge`,
+proven 2026-08-17/18 above) — but a different mechanism, since 700E's
+encode/decode (`fdv.c`'s `FDVTX`/`FDV`) live inside wdsp with no shared file
+the way RADE's TX+RX share `radae.c`. Bridges one level up instead, at
+ChannelMaster's raw I/Q: `pipe.c`'s `xpipe()` already has both ends as
+directly-reachable buffers — TX's `xmtr[0].out[2]` (the same tap `xMixAudio`
+already uses for local monitor audio) into RX1's IQ-injection point (the
+same one Quick-Play's `xplaywave` uses).
+
+**A correction to the original design sketch, caught before implementing
+rather than after**: the proposal (this doc, same session) described the TX
+tap as "pre-hardware-domain." Checking the actual code first: wrong — wdsp's
+own TXA output resampler has already converted `xmtr[tx].out[2]` to hardware
+`ch_outrate` by that point; `xtxgain`/`xeer`/`xilv` (which run after) are
+gain/EER/interleave stages, not rate converters. Both the TX tap and RX1's
+injection point are already at their respective hardware `ch_outrate`s. Added
+a runtime check (`xmtr[0].ch_outrate == rcvr[0].ch_outrate`) rather than
+assuming equality — independently-configurable fields with no compile-time
+guarantee they match, even though normal single-DSP-rate operation makes
+them equal in practice. On a mismatch: silence to RX1, logged once — not
+corrupted data, and not real antenna content leaking through to read as a
+false "it worked" (the operator explicitly armed a loopback test).
+
+New CAT command **`ZZEG`** (mirrors RADE V1's `ZZDL` exactly): arm `ZZEF`
+(TX encode) and this both on, plus RX1's 700E decode, for the full round
+trip with zero RF risk.
+
+**Status: compiled clean via CI, not yet deployed or tested** — `hl2winbox`
+has been unreachable since ~2026-08-21. First-pass verification (does it
+actually sync/decode, matching RADE V1's own loopback proof) is next once
+the box is back; this entry is a build checkpoint, not a working-loopback
+claim.
 
 ## Stage C — RADE neural mode *(external dependency)*
 
