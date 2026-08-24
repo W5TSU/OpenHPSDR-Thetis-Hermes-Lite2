@@ -1041,6 +1041,39 @@ actually sync/decode, matching RADE V1's own loopback proof) is next once
 the box is back; this entry is a build checkpoint, not a working-loopback
 claim.
 
+### ⚠️ Safety finding: the loopback above did not actually stop real TX audio from reaching the antenna (`7098040a`, 2026-08-24)
+
+Found while first bringing the design above up on `hl2winbox` — a real gap
+in the design as proposed and first implemented, not just a build detail.
+**The original version tapped `xmtr[0].out[2]` into the bridge but never
+stopped that same TX chain from also reaching the real hardware output.**
+Since `xtxa()`/`fexchange0` only produce anything at all while genuinely
+keyed (the same `SetChannelState`-gated behavior found during the earlier
+"no zero-PTT test path" 700E TX work), exercising this loopback as
+originally written would have required a real, actually-transmitting MOX
+key-down — defeating the entire "no RF needed" premise the design above
+claims, the exact thing RADE V1's own loopback correctly avoids by
+silencing `mic_io` while armed.
+
+**No RF was radiated.** Caught during a passive `freedv status` check
+*before* ever keying real PTT with the loopback armed — everything
+disarmed immediately once found.
+
+**Fix**: also silence `buffs[0]`/`buffs[1]` (`out[0]`/`out[1]`, the real
+hardware-bound audio) in the same TX hook, confirmed correct by reading
+`ilv.c` directly — `xilv()`'s normal (non-EER) path only sends `data[0]`
+to `Outbound()`; the HL2 has no EER/dual-DAC hardware, so that path's
+`a->run` is never true for this radio. `buffs[2]` (the loopback tap/local
+monitor signal) is deliberately left alone — `xilv`'s real send path never
+reads it anyway.
+
+Worth being direct about: this gap traces back to the design proposed
+earlier in this same entry — it named the right tap points but missed that
+tapping isn't the same as silencing. Recorded here plainly rather than
+folded quietly into the earlier entry, matching this log's own convention
+for self-corrections. Still not yet deployed/tested for actual
+sync/decode — this closes the RF-safety gap, not the "does it work" one.
+
 ## Stage C — RADE neural mode *(external dependency)*
 
 - ⬜ Watch upstream: David Rowe's RADE V2 C port is in progress (classical DSP ported
