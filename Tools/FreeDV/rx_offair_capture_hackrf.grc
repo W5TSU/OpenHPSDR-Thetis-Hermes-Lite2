@@ -100,9 +100,11 @@ blocks:
 - name: rx_if_gain
   id: variable_qtgui_range
   parameters:
-    comment: HackRF IF (VGA) gain. Thetis's real TX is a very strong, very close signal compared to typical
-      off-air DX -- start LOW (this defaults to 8dB, well under the TX flowgraphs' 20dB) and raise only
-      if the spectrum/waveform sink shows the signal is too weak; watch for a flat-topped/clipped time-domain
+    comment: HackRF IF (VGA) gain. Thetis's real TX is a strong, close signal compared to typical off-air
+      DX, so this doesn't need the TX flowgraphs' full range -- but an initial live test found 8dB (this
+      flowgraph's original default) too conservative for FreeDV 700E's signal specifically (RADE V1 synced
+      fine at 8dB, 700E didn't sync at all until raised to 24dB) -- 20dB here is a revised starting point
+      from that finding, matching the TX flowgraphs' own default. Watch for a flat-topped/clipped time-domain
       trace as a sign this or rx_bb_gain is too high, which would corrupt the very thing being verified.
     gui_hint: 0,1,1,1
     label: RX IF/VGA Gain (dB)
@@ -112,7 +114,7 @@ blocks:
     start: '0'
     step: '1'
     stop: '40'
-    value: '8'
+    value: '20'
     widget: counter_slider
   states:
     bus_sink: false
@@ -135,7 +137,7 @@ blocks:
     start: '0'
     step: '1'
     stop: '40'
-    value: '8'
+    value: '20'
     widget: counter_slider
   states:
     bus_sink: false

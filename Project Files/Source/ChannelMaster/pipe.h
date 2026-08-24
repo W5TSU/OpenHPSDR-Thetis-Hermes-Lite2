@@ -66,4 +66,20 @@ void destroy_pipe();
 
 void xpipe (int stream, int pos, double** buff);
 
+// W5TSU: FreeDV 700E RX1 loopback bridge -- ChannelMaster-level equivalent of
+// RADE V1's own loopback (radae.c's SetRadaeLoopbackEnabled/g_loop_bridge).
+// 700E's encode/decode subsystem lives entirely in wdsp (fdv.c's FDVTX/FDV),
+// with no single shared file the way RADE's TX+RX share radae.c, so this
+// bridges at the raw I/Q level instead: TX's fully-processed output I/Q
+// (xmtr[tx].out[2], same tap xMixAudio already uses for monitor audio,
+// captured before xtxgain/xeer/xilv's hardware-domain gain/EER/interleave
+// staging -- NOT before rate conversion, that already happened inside
+// wdsp's own TXA output resampler) gets pushed into a small ring buffer;
+// when armed, RX1's raw antenna I/Q (the same buffer xplaywave's Quick-Play
+// already overwrites) is replaced by that buffer's contents instead. No RF,
+// no hardware, proves the TX encoder -> RX decoder round trip the same way
+// RADE V1's loopback did before any real on-air attempt.
+PORT void SetFDVLoopbackEnabled(int enable);
+PORT int  GetFDVLoopbackEnabled(void);
+
 #endif

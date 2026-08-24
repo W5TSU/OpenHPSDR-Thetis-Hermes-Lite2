@@ -29,6 +29,43 @@ warren@wpratt.com
 pipe pip  = {0};
 PIPE ppip = &pip;
 
+// W5TSU: FreeDV 700E RX1 loopback bridge (see pipe.h's comment on
+// SetFDVLoopbackEnabled). Raw complex I/Q ring buffer -- bridges TX's
+// processed output I/Q directly into RX1's raw antenna I/Q slot, both at
+// their respective ch_outrate (checked equal at the RX-side pop, not
+// assumed -- xmtr[tx].ch_outrate and rcvr[rx].ch_outrate are independently
+// configurable fields with no compile-time guarantee they match, even
+// though normal single-DSP-rate operation makes them equal in practice).
+// On a rate mismatch, RX1 gets silence rather than either corrupted data
+// or a misleadingly-normal antenna signal -- the operator explicitly armed
+// a loopback test, so real antenna content leaking through would be a
+// false "it worked."
+#define FDVLOOP_BRIDGE_CAP 96000   /* 2 s at 48 kHz, matches RADAE_LOOP_BRIDGE_CAP's sizing convention */
+static volatile long g_fdvloop_enabled = 0;
+static complex g_fdvloop_bridge[FDVLOOP_BRIDGE_CAP];
+static int     g_fdvloop_bridge_n = 0;
+static long    g_fdvloop_rate_mismatch_warned = 0;
+
+PORT void SetFDVLoopbackEnabled(int enable)
+{
+    long prev = _InterlockedExchange(&g_fdvloop_enabled, enable ? 1 : 0);
+    if (!prev && enable)
+    {
+        g_fdvloop_bridge_n = 0;                       /* start clean */
+        _InterlockedExchange(&g_fdvloop_rate_mismatch_warned, 0);
+        OutputDebugStringA("[FDVLOOP] 700E loopback START\n");
+    }
+    else if (prev && !enable)
+    {
+        OutputDebugStringA("[FDVLOOP] 700E loopback STOP\n");
+    }
+}
+
+PORT int GetFDVLoopbackEnabled(void)
+{
+    return (int)_InterlockedAnd(&g_fdvloop_enabled, 1);
+}
+
 void create_spc0()
 {
 	int i;
@@ -174,6 +211,29 @@ void xpipe (int stream, int pos, double** buffs)
 		switch (pos)
 		{
 		case 0:	// IQ data
+			if (_InterlockedAnd(&g_fdvloop_enabled, 1))										// W5TSU: FreeDV 700E loopback -- drain the bridge into RX1's raw antenna I/Q slot, ahead of xplaywave so an explicit Quick-Play action (if also armed) still wins
+			{
+				int need = pcm->xcm_insize[stream];
+				if (pcm->xmtr[0].ch_outrate != pcm->rcvr[rx].ch_outrate)
+				{
+					if (!_InterlockedExchange(&g_fdvloop_rate_mismatch_warned, 1))
+						OutputDebugStringA("[FDVLOOP] TX/RX1 ch_outrate mismatch -- feeding silence, not bridging\n");
+					memset(buff, 0, need * sizeof(complex));
+				}
+				else
+				{
+					int have = (g_fdvloop_bridge_n < need) ? g_fdvloop_bridge_n : need;
+					if (have > 0)
+					{
+						memcpy(buff, g_fdvloop_bridge, have * sizeof(complex));
+						g_fdvloop_bridge_n -= have;
+						if (g_fdvloop_bridge_n > 0)
+							memmove(g_fdvloop_bridge, g_fdvloop_bridge + have, g_fdvloop_bridge_n * sizeof(complex));
+					}
+					if (have < need)
+						memset(buff + 2 * have, 0, (need - have) * sizeof(complex));			// underrun -- pad with silence, never leak real antenna I/Q while armed
+				}
+			}
 			if (_InterlockedAnd (&pcm->tci_rx_out_run, 1) && pcm->OutboundTCIRxIQ)
 				(*pcm->OutboundTCIRxIQ)(rx, pcm->xcm_insize[stream], buff);						// to TCI
 			xplaywave(rx, 0, buff);																// wav player
@@ -254,6 +314,16 @@ void xpipe (int stream, int pos, double** buffs)
 				xtciOUT(i, 2, buffs[2]);														// tx monitor into each TCI rx audio stream
 			xrecordwave(0, 1, 1, buffs[2]);														// wav recorder 0
 			xrecordwave(1, 1, 1, buffs[2]);														// wav recorder 1
+			if (_InterlockedAnd(&g_fdvloop_enabled, 1))										// W5TSU: FreeDV 700E loopback -- push fully-processed TX I/Q into the bridge, RX1's IQ-data case (below) drains it
+			{
+				int n_tx = pcm->xmtr[0].ch_outsize;
+				int take = (n_tx < FDVLOOP_BRIDGE_CAP - g_fdvloop_bridge_n) ? n_tx : (FDVLOOP_BRIDGE_CAP - g_fdvloop_bridge_n);
+				if (take > 0)
+				{
+					memcpy(g_fdvloop_bridge[g_fdvloop_bridge_n], buffs[2], take * sizeof(complex));
+					g_fdvloop_bridge_n += take;
+				}
+			}
 			break;
 		}
 	}

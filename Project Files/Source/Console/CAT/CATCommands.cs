@@ -7353,6 +7353,29 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets the FreeDV 700E RX1 loopback bridge (ChannelMaster/
+        // pipe.c SetFDVLoopbackEnabled) -- when on, the TX encoder's processed
+        // I/Q is routed directly into RX1's antenna I/Q input instead of the
+        // real antenna, so the radio never actually transmits: arm ZZEF (TX
+        // encode) and this both on, plus RX1's 700E decode, to hear the full
+        // encode->decode round trip with zero RF risk, same purpose as RADE
+        // V1's ZZDL. // W5TSU
+        public string ZZEG(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetFDVLoopbackEnabled((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetFDVLoopbackEnabled() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         // Reads or sets the FreeDV RX decode (fdv.c) enable state. RX1/subrx0
         // only, matching the Setup DSP tab's current single-channel prototype
         // scope (console.radio.GetDSPRX(0, 0).RXAFDVRun). ZZFD/ZZFS were

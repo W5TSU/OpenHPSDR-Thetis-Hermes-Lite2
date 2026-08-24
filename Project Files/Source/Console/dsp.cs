@@ -289,6 +289,17 @@ namespace Thetis
         [DllImport("wdsp.dll", EntryPoint = "FlushTXAFDV", CallingConvention = CallingConvention.Cdecl)]
         public static extern void FlushTXAFDV(int channel);
 
+        // FreeDV 700E RX1 loopback bridge (ChannelMaster/pipe.c) -- ChannelMaster-level
+        // equivalent of RADE V1's own SetRadaeLoopbackEnabled below, since 700E's
+        // encode/decode subsystem lives in wdsp (no single shared file like radae.c
+        // to bridge inside of). Proves the TX encoder -> RX decoder round trip with
+        // no RF/hardware, same purpose as RADE's loopback. See ZZEG. // W5TSU
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetFDVLoopbackEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetFDVLoopbackEnabled(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetFDVLoopbackEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetFDVLoopbackEnabled();
+
         // RADE V1 RX decode (ChannelMaster/radae.c) -- experimental, RX-only so far.
         // Minimal hook: run flag + sync/SNR status, matching the FreeDV FDV pattern
         // above. rx: 0 = RX1, 1 = RX2. W5TSU
