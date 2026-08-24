@@ -40,6 +40,13 @@ PIPE ppip = &pip;
 // or a misleadingly-normal antenna signal -- the operator explicitly armed
 // a loopback test, so real antenna content leaking through would be a
 // false "it worked."
+//
+// While armed, the real hardware TX output (out[0]/out[1], see the TX
+// case-1 hook below) is also silenced -- matching RADE V1's own "mic_io
+// stays silent while any RX has loopback enabled" precedent. Without this,
+// exercising the loopback at all would still require a real MOX key-down
+// (xtxa()/fexchange0 only run while actually keyed), which would ALSO
+// genuinely transmit, defeating the entire point of an RF-free proof.
 #define FDVLOOP_BRIDGE_CAP 96000   /* 2 s at 48 kHz, matches RADAE_LOOP_BRIDGE_CAP's sizing convention */
 static volatile long g_fdvloop_enabled = 0;
 static complex g_fdvloop_bridge[FDVLOOP_BRIDGE_CAP];
@@ -314,7 +321,7 @@ void xpipe (int stream, int pos, double** buffs)
 				xtciOUT(i, 2, buffs[2]);														// tx monitor into each TCI rx audio stream
 			xrecordwave(0, 1, 1, buffs[2]);														// wav recorder 0
 			xrecordwave(1, 1, 1, buffs[2]);														// wav recorder 1
-			if (_InterlockedAnd(&g_fdvloop_enabled, 1))										// W5TSU: FreeDV 700E loopback -- push fully-processed TX I/Q into the bridge, RX1's IQ-data case (below) drains it
+			if (_InterlockedAnd(&g_fdvloop_enabled, 1))										// W5TSU: FreeDV 700E loopback -- push fully-processed TX I/Q into the bridge, RX1's IQ-data case (above) drains it
 			{
 				int n_tx = pcm->xmtr[0].ch_outsize;
 				int take = (n_tx < FDVLOOP_BRIDGE_CAP - g_fdvloop_bridge_n) ? n_tx : (FDVLOOP_BRIDGE_CAP - g_fdvloop_bridge_n);
@@ -323,6 +330,21 @@ void xpipe (int stream, int pos, double** buffs)
 					memcpy(g_fdvloop_bridge[g_fdvloop_bridge_n], buffs[2], take * sizeof(complex));
 					g_fdvloop_bridge_n += take;
 				}
+				// W5TSU: fix -- tapping buffs[2] alone doesn't stop the real transmit
+				// audio from reaching the antenna. buffs[0] (out[0]) is what actually
+				// gets sent: xilv()'s normal (non-EER) path Outbound()s data[0] only
+				// -- confirmed by reading ilv.c directly, HL2 has no EER/dual-DAC
+				// hardware so a->run is never true for this radio's ILV instance.
+				// buffs[1] silenced too, defensively. buffs[2] is deliberately left
+				// alone -- it's the loopback tap/local-monitor signal itself, not
+				// something xilv's real (non-EER) path ever reads. Matches RADE V1's
+				// own "mic_io stays silent while any RX has loopback enabled" --
+				// without this, testing the loopback at all would require a real,
+				// genuinely-transmitting MOX key-down, defeating the whole point of
+				// a no-RF proof. Caught before ever actually keying real PTT with this
+				// armed (2026-08-24).
+				memset(buffs[0], 0, pcm->xmtr[0].ch_outsize * sizeof(complex));
+				memset(buffs[1], 0, pcm->xmtr[0].ch_outsize * sizeof(complex));
 			}
 			break;
 		}
