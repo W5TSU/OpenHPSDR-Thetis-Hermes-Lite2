@@ -1107,6 +1107,22 @@ regardless of that decision: their native `FreeDVReporter*.cs` (vs. our external
 `thetisctl` CLI), RADE meters UI, and TX mic-conditioning chain are relevant
 references for Stage B/D UI work independent of whether RADE V1 itself gets adopted.
 
+> **Correction, 2026-08-24**: the "share real git history via `ramdor/Thetis`
+> (common ancestor `ed4c27c9`)... cherry-pick territory" claim above does not
+> hold up against a fresh check. `git merge-base HEAD sv1eia/main` returns
+> **nothing** — sv1eia's repo is a single squash-imported root commit
+> (`06c79f4f "Initial commit: Thetis-RADE fork from ramdor/Thetis
+> v2.10.3.15-g2e"`, dated 2026-05-06 — *before* this Aug 10 entry was
+> written), 36 commits total, no real ancestry with anything here. Either
+> the original check ran against the wrong ref, or conflated "same code at
+> one point in time" with "same git history." Practical effect: their RADE
+> work is **vendor-drop-only** (targeted file copy + manual patch-reading),
+> not cherry-pick territory — doesn't change anything about the actual file
+> pulls already done (verbatim copies work either way), but changes how any
+> *future* sv1eia sync should be approached. See the `thetis-fork-merge`
+> skill (`.claude/skills/thetis-fork-merge/SKILL.md`) for the full current
+> relationship-to-each-upstream picture, all four repos, not just this one.
+
 ### 🟢 `opus_dnn` build gap resolved, same session
 
 Picked up option (a)/(c) from `commit_pin.txt` (CMake + real MSVC, not a hand-authored
@@ -2150,6 +2166,87 @@ retroactive caveat. This bug only cost fresh 700E attempts made while it
 was undiagnosed; the 700E off-air decode-confirmation gap itself **remains
 open** — this entry is about the tooling bug and its fix, not a 700E
 decode-confirmation milestone.
+
+### 🟡 sv1eia revisited on `trial-merge-upstream`/`fork_merge_20260824` — full-solution build re-verified, Console-side feature comparison done (2026-08-24)
+
+Separate thread from the RX-only wiring above (which lives on `FreeDV`, merged
+2026-08-10). This one happened on a different lineage — `trial-merge-upstream`
+(the fork's pre-FreeDV-work merge-base) via a new
+[`thetis-fork-merge`](../.claude/skills/thetis-fork-merge/SKILL.md) skill built
+the same session to formalize merging against all four related Thetis repos, not
+just mi0bot/ramdor. Re-vendored sv1eia's RADE core engine fresh onto that lineage
+(`f26e4c75`), specifically to evaluate sv1eia's *full* feature set as a possible
+replacement candidate for this fork's own RADE work — not just the RX-only subset
+already merged.
+
+**Worth being upfront about**: most of the build-gap findings this pass hit
+(`opus_dnn`'s SIMD-directory `.gitignore` footgun, `WebRTC_AGC/agc.h`'s escaping
+`sanitizers.h` include, the `workflow_dispatch`-must-be-on-`master` requirement)
+were **re-discoveries**, not new — all three were already found and fixed on the
+`experiment/sv1eia-radae-eval` throwaway branch back on 2026-08-10 (above). Working
+from a different branch lineage meant redoing that archaeology rather than reusing
+it; noting this so it doesn't read as double the actual ground covered.
+
+**What *is* new this pass: full CI re-verification, and the Console-side feature
+comparison the Aug 10 entry only gestured at.**
+
+**Build**: `build-radae-c.yml`/`build-opus-dnn.yml` (already on `master`, satisfying
+the dispatch requirement) both green against `fork_merge_20260824`, artifacts
+downloaded and committed (`d5d6cd63`), full solution + installer build green
+end to end, ~8 minutes. First real confirmation that sv1eia's source, vendored
+completely fresh (not reusing any of the Aug 10 branch's fixes), builds clean.
+
+**Console-side comparison** — the real new work. Naive diffs against our tree were
+useless (sv1eia normalized several files, `console.cs` included, from LF to CRLF at
+some point, turning ~every line into a false "change" — same class of trap as the
+ON7OFF diffstat issue in the `thetis-fork-merge` skill, now confirmed a second
+time). Diffed with `--ignore-cr-at-eol` against **sv1eia's own root commit**
+instead: 40 files, +8,436/−574 real lines.
+
+*What sv1eia has that this fork doesn't*: independent dual RX1/RX2 RADE decode with
+per-RX V1/V2 selection; a fully native FreeDV Reporter client (`FreeDVReporter*.cs`,
+~1,200 lines, genuinely their own code — request-QSY button, row selection, error
+logging — well past this fork's Stage D scope-down to `thetisctl` auto-tune-only);
+a Direct2D panadapter RADE overlay (SNR/level bars, colour-coded); a real meter
+subsystem integration with per-RX/TX visibility gating; and a mature
+mic-conditioning DSP chain with its own Setup UI, iterated across ~30 of their own
+commits.
+
+*What this fork has that sv1eia doesn't — the important asymmetry*: sv1eia's RADE
+integration has **zero CAT surface**. Checked `CATCommands.cs`/`CATParser.cs`
+directly — every line they touched there is `VFO B` redirect plumbing for their
+dual-RX feature, not RADE. No equivalent of this fork's `ZZDW`/`ZZDZ` (status),
+`ZZDK` (arm), `ZZDJ` (callsign), `ZZEF` (700E) — all of which exist specifically
+*because* the Aug 10 work found sv1eia's version lacked them (see "CAT toggle for
+`RXRadaeEnabled`" above). Their RADE feature is GUI-only, matching what
+`listen_offair_in_freedv_gui.sh` already implied by needing a human to click Start.
+This fork's entire verification methodology — `thetisctl`, scripted PTT tests, the
+HackRF capture-and-decode loop that closed the RADE V1 off-air gap — depends on
+that CAT surface; a wholesale sv1eia swap would mean losing it, not gaining
+anything on that axis. Also: sv1eia has no 700E TX work at all (RADE-only).
+
+**A concrete risk, not yet resolved**: `HPSDR/IoBoardHl2.cs` — the file this fork
+exists for — differs in a way that isn't cosmetic. This fork's version masks the
+hardware-version byte (`hardwareVersion &= 0x0f`, with a comment noting the upper
+nibble can vary) before comparing against `Version_1 = 0x01`; sv1eia's has neither
+the mask nor the same constant (`0xf1`, compared unmasked). Both trace back to the
+same MI0BOT-authored file (sv1eia's copy carries mi0bot's original copyright header
+plus a light SV1EIA modification stamp — their HL2 support is a port of mi0bot's
+work into their ramdor-based tree, not an independent implementation), so this is
+most likely a version-timing difference between what each fork pulled from mi0bot
+at different points, not a bug SV1EIA introduced — but it's unverified either way
+and matters for real hardware. Don't trust sv1eia's HL2-adjacent files over this
+fork's own without resolving this first.
+
+**Net read**: sv1eia is well ahead on UI polish and capability (dual RX, V2,
+Reporter GUI, panadapter overlay). But the CAT-scriptability gap is fundamental to
+how this project operates and tests, not a nice-to-have — a full replacement would
+be a real regression there. Porting sv1eia's UI/feature richness onto this fork's
+existing CAT-first architecture looks like the higher-value path over a wholesale
+swap, but that's a judgment call for whoever picks up Stage B/D UI work next, not a
+decision made here. Branch `fork_merge_20260824` (off `trial-merge-upstream`) has
+the full vendor-drop + build fixes + committed artifacts if that work gets picked
+up; not merged anywhere yet.
 
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
