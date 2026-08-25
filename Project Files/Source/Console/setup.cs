@@ -2464,9 +2464,7 @@ namespace Thetis
             radANFPreAGC_CheckedChanged(this, e);
             radANF2PreAGC_CheckedChanged(this, e);
             chkNR3_RNNoiseFixedGain_CheckedChanged(this, e);
-            chkFreeDVDecode_CheckedChanged(this, e); // W5TSU: FreeDV RX decode
-            chkRadeRX1Enable_CheckedChanged(this, e); // W5TSU: RADE V1 RX decode
-            InitRadePanelFromBackend(); // W5TSU: RADE core Setup panel -- sync all other new controls to backend state
+            InitRadePanelFromBackend(); // W5TSU: Digital Voice Setup panel -- derives Mode + syncs every other control to backend state
             chkMNFAutoIncrease_CheckedChanged(this, e);
             udCWEdgeLength_ValueChanged(this, e);
             chkShowAGC_CheckedChanged(this, e);
@@ -36696,66 +36694,59 @@ namespace Thetis
             console.radio.GetDSPRX(1, 0).RXANR3FixedGain = fixed_gain;
         }
 
-        // W5TSU: FreeDV RX decode prototype (wdsp fdv.c)
-        private System.Windows.Forms.Timer _freedv_status_timer = null;
-        private void chkFreeDVDecode_CheckedChanged(object sender, EventArgs e)
-        {
-            console.radio.GetDSPRX(0, 0).RXAFDVRun = chkFreeDVDecode.Checked ? 1 : 0;
-
-            if (_freedv_status_timer == null)
-            {
-                _freedv_status_timer = new System.Windows.Forms.Timer();
-                _freedv_status_timer.Interval = 500;
-                _freedv_status_timer.Tick += freedvStatusTimer_Tick;
-            }
-            _freedv_status_timer.Enabled = chkFreeDVDecode.Checked;
-
-            if (!chkFreeDVDecode.Checked)
-            {
-                lblFreeDVStatus.Text = "off";
-                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
-            }
-        }
-
-        private void freedvStatusTimer_Tick(object sender, EventArgs e)
-        {
-            if (!console.PowerOn)
-            {
-                lblFreeDVStatus.Text = "radio off";
-                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
-                return;
-            }
-
-            bool sync = WDSP.GetRXAFDVSync(WDSP.id(0, 0)) != 0;
-            if (sync)
-            {
-                double snr = WDSP.GetRXAFDVSnr(WDSP.id(0, 0));
-                lblFreeDVStatus.Text = string.Format("SYNC   SNR {0:F1} dB", snr);
-                lblFreeDVStatus.ForeColor = System.Drawing.Color.Green;
-            }
-            else
-            {
-                lblFreeDVStatus.Text = "no sync";
-                lblFreeDVStatus.ForeColor = System.Drawing.SystemColors.ControlText;
-            }
-        }
-
-        // W5TSU: RADE V1 RX decode prototype (ChannelMaster/radae.c). Same shape as
-        // chkFreeDVDecode/freedvStatusTimer_Tick above, but RXRadaeEnabled isn't a
-        // wdsp channel setting -- WDSP.GetRadaeSync/GetRadaeSnrDb take ChannelMaster's
-        // plain rx index (0 = RX1), not WDSP.id(). No known-working decode confirmed
-        // yet (Documentation/FreeDV-Plan.md, Stage C) -- this is a control surface for
-        // testing it, not a claim it works.
+        // W5TSU: Digital Voice mode selector (sub-project 2 of 5, see
+        // docs/superpowers/specs/2026-08-25-digital-voice-mode-selector-design.md).
+        // Replaces chkRadeRX1Enable/chkFreeDVDecode (both removed) with one
+        // exclusive Mode combo covering Off/700E/RADE V1/RADE V2. Arming a
+        // subsystem's RX/TX here relies on the low-level interlock in
+        // radio.cs's RXAFDVRun/RXRadaeEnabled/TXAFDVRun setters to disarm
+        // whichever subsystem was previously active -- only "Off" needs to
+        // disarm everything itself.
         private System.Windows.Forms.Timer _rade_status_timer = null;
-        // W5TSU: RADE core Setup panel (sub-project 1 of 5, see
-        // docs/superpowers/specs/2026-08-24-rade-setup-panel-design.md).
-        // chkRADEDecode/lblRADEStatus (the old small grpRADE box on the
-        // FreeDV tab) are renamed chkRadeRX1Enable/lblRadeRX1Status and
-        // moved into the new dedicated "RADE" tab -- same backend
-        // (RXRadaeEnabled), same status-timer logic, just relocated.
-        private void chkRadeRX1Enable_CheckedChanged(object sender, EventArgs e)
+        private void cmbRadeMode_SelectedIndexChanged(object sender, EventArgs e)
         {
-            console.radio.GetDSPRX(0, 0).RXRadaeEnabled = chkRadeRX1Enable.Checked ? 1 : 0;
+            int mode = cmbRadeMode.SelectedIndex;
+
+            switch (mode)
+            {
+                case 0: // Off
+                    console.radio.GetDSPRX(0, 0).RXAFDVRun = 0;
+                    console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 0;
+                    console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                    WDSP.SetRadaeTxEnabled(0);
+                    break;
+                case 1: // 700E
+                    console.radio.GetDSPRX(0, 0).RXAFDVRun = 1;
+                    console.radio.GetDSPTX(0).TXAFDVRun = 1;
+                    break;
+                case 2: // RADE V1
+                    WDSP.SetRadaeProtocolV2(0, 0);
+                    console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 1;
+                    console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                    WDSP.SetRadaeTxEnabled(1);
+                    break;
+                case 3: // RADE V2
+                    WDSP.SetRadaeProtocolV2(0, 1);
+                    console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 1;
+                    console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                    WDSP.SetRadaeTxEnabled(1);
+                    break;
+            }
+
+            // RADE-only controls: gray out for Off/700E, enabled for RADE V1/V2.
+            bool radeActive = (mode == 2 || mode == 3);
+            udRadeRxLevel.Enabled = radeActive;
+            grpRadeMicCond.Enabled = radeActive;
+            grpRadeDiagnostics.Enabled = radeActive;
+
+            // Loopback Test is meaningful for 700E and RADE alike, just not for Off.
+            chkRadeRX1Loopback.Enabled = (mode != 0);
+            if (mode == 0 && chkRadeRX1Loopback.Checked)
+            {
+                chkRadeRX1Loopback.CheckedChanged -= chkRadeRX1Loopback_CheckedChanged;
+                chkRadeRX1Loopback.Checked = false;
+                chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
+            }
 
             if (_rade_status_timer == null)
             {
@@ -36763,15 +36754,20 @@ namespace Thetis
                 _rade_status_timer.Interval = 500;
                 _rade_status_timer.Tick += radeStatusTimer_Tick;
             }
-            _rade_status_timer.Enabled = chkRadeRX1Enable.Checked;
+            _rade_status_timer.Enabled = (mode != 0);
 
-            if (!chkRadeRX1Enable.Checked)
+            if (mode == 0)
             {
                 lblRadeRX1Status.Text = "off";
                 lblRadeRX1Status.ForeColor = System.Drawing.SystemColors.ControlText;
             }
         }
 
+        // W5TSU: unified status readout -- reads whichever backend matches
+        // the currently selected mode. Same "SYNC   SNR X.X dB" / "no sync"
+        // / "radio off" text and color convention chkFreeDVDecode's and
+        // chkRadeRX1Enable's separate timers each used before this
+        // sub-project merged them into one.
         private void radeStatusTimer_Tick(object sender, EventArgs e)
         {
             if (!console.PowerOn)
@@ -36781,11 +36777,24 @@ namespace Thetis
                 return;
             }
 
-            bool sync = WDSP.GetRadaeSync(0) != 0;
+            int mode = cmbRadeMode.SelectedIndex;
+            bool sync;
+            string snrText;
+
+            if (mode == 1) // 700E
+            {
+                sync = WDSP.GetRXAFDVSync(WDSP.id(0, 0)) != 0;
+                snrText = sync ? string.Format("{0:F1}", WDSP.GetRXAFDVSnr(WDSP.id(0, 0))) : "";
+            }
+            else // RADE V1/V2 (mode 2/3) -- the timer is disabled for mode 0, never reaches here then
+            {
+                sync = WDSP.GetRadaeSync(0) != 0;
+                snrText = sync ? string.Format("{0}", WDSP.GetRadaeSnrDb(0)) : "";
+            }
+
             if (sync)
             {
-                int snr = WDSP.GetRadaeSnrDb(0);
-                lblRadeRX1Status.Text = string.Format("SYNC   SNR {0} dB", snr);
+                lblRadeRX1Status.Text = string.Format("SYNC   SNR {0} dB", snrText);
                 lblRadeRX1Status.ForeColor = System.Drawing.Color.Green;
             }
             else
@@ -36795,12 +36804,24 @@ namespace Thetis
             }
         }
 
-        // W5TSU: RX1 RADE loopback bridge (ZZDL's UI equivalent, RX1-only
-        // matching this prototype's scope) -- see radae.c's
-        // SetRadaeLoopbackEnabled.
+        // W5TSU: RX1 loopback bridge -- mode-aware, calls whichever
+        // subsystem's loopback matches the current Mode selection
+        // (radae.c SetRadaeLoopbackEnabled for RADE V1/V2, ChannelMaster
+        // SetFDVLoopbackEnabled for 700E). Disabled entirely for Off, see
+        // cmbRadeMode_SelectedIndexChanged.
         private void chkRadeRX1Loopback_CheckedChanged(object sender, EventArgs e)
         {
-            WDSP.SetRadaeLoopbackEnabled(0, chkRadeRX1Loopback.Checked ? 1 : 0);
+            int mode = cmbRadeMode.SelectedIndex;
+            bool on = chkRadeRX1Loopback.Checked;
+
+            if (mode == 1) // 700E
+            {
+                WDSP.SetFDVLoopbackEnabled(on ? 1 : 0);
+            }
+            else if (mode == 2 || mode == 3) // RADE V1/V2
+            {
+                WDSP.SetRadaeLoopbackEnabled(0, on ? 1 : 0);
+            }
         }
 
         // W5TSU: RX decoder input gain. Wired to SetRadaeRxScale specifically
@@ -36893,12 +36914,6 @@ namespace Thetis
             WDSP.SetRadaeMicEQVol((double)udRadeEQVol.Value);
         }
 
-        // W5TSU: protocol version selector.
-        private void cmbRadeProtocol_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            WDSP.SetRadaeProtocolV2(0, cmbRadeProtocol.SelectedIndex == 1 ? 1 : 0);
-        }
-
         // W5TSU: diagnostics bypass ladder ("boots OFF", matching sv1eia's
         // own framing -- see docs/superpowers/specs/2026-08-24-rade-setup-panel-design.md).
         private void chkRadeBypassMicDsp_CheckedChanged(object sender, EventArgs e)
@@ -36933,8 +36948,48 @@ namespace Thetis
         // what's currently live in the running process.
         private void InitRadePanelFromBackend()
         {
+            // W5TSU: derive cmbRadeMode's initial selection from the
+            // interlocked backend state (sub-project 2 of 5) --
+            // RXRadaeEnabled and RXAFDVRun are mutually exclusive by
+            // construction (see radio.cs), so checking RXRadaeEnabled
+            // first is unambiguous.
+            cmbRadeMode.SelectedIndexChanged -= cmbRadeMode_SelectedIndexChanged;
+            int mode;
+            if (console.radio.GetDSPRX(0, 0).RXRadaeEnabled != 0)
+                mode = (WDSP.GetRadaeProtocolV2(0) != 0) ? 3 : 2;
+            else if (console.radio.GetDSPRX(0, 0).RXAFDVRun != 0)
+                mode = 1;
+            else
+                mode = 0;
+            cmbRadeMode.SelectedIndex = mode;
+            cmbRadeMode.SelectedIndexChanged += cmbRadeMode_SelectedIndexChanged;
+
+            bool radeActive = (mode == 2 || mode == 3);
+            udRadeRxLevel.Enabled = radeActive;
+            grpRadeMicCond.Enabled = radeActive;
+            grpRadeDiagnostics.Enabled = radeActive;
+            chkRadeRX1Loopback.Enabled = (mode != 0);
+
+            if (_rade_status_timer == null)
+            {
+                _rade_status_timer = new System.Windows.Forms.Timer();
+                _rade_status_timer.Interval = 500;
+                _rade_status_timer.Tick += radeStatusTimer_Tick;
+            }
+            _rade_status_timer.Enabled = (mode != 0);
+            if (mode == 0)
+            {
+                lblRadeRX1Status.Text = "off";
+                lblRadeRX1Status.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+
             chkRadeRX1Loopback.CheckedChanged -= chkRadeRX1Loopback_CheckedChanged;
-            chkRadeRX1Loopback.Checked = WDSP.GetRadaeLoopbackEnabled(0) != 0;
+            if (mode == 1)
+                chkRadeRX1Loopback.Checked = WDSP.GetFDVLoopbackEnabled() != 0;
+            else if (mode == 2 || mode == 3)
+                chkRadeRX1Loopback.Checked = WDSP.GetRadaeLoopbackEnabled(0) != 0;
+            else
+                chkRadeRX1Loopback.Checked = false;
             chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
 
             // W5TSU: linear -> dB, inverse of udRadeRxLevel_ValueChanged's
@@ -36997,10 +37052,6 @@ namespace Thetis
             udRadeEQVol.ValueChanged -= udRadeEQVol_ValueChanged;
             udRadeEQVol.Value = (decimal)WDSP.GetRadaeMicEQVol();
             udRadeEQVol.ValueChanged += udRadeEQVol_ValueChanged;
-
-            cmbRadeProtocol.SelectedIndexChanged -= cmbRadeProtocol_SelectedIndexChanged;
-            cmbRadeProtocol.SelectedIndex = WDSP.GetRadaeProtocolV2(0) != 0 ? 1 : 0;
-            cmbRadeProtocol.SelectedIndexChanged += cmbRadeProtocol_SelectedIndexChanged;
 
             chkRadeBypassMicDsp.CheckedChanged -= chkRadeBypassMicDsp_CheckedChanged;
             chkRadeBypassMicDsp.Checked = WDSP.GetRadaeBypassMicDsp() != 0;

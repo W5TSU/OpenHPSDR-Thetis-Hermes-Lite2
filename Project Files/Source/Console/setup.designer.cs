@@ -2492,7 +2492,6 @@
             this.radRX2LSB = new System.Windows.Forms.RadioButtonTS();
             this.radRX2LSBUSB = new System.Windows.Forms.RadioButtonTS();
             this.tpDSPFM = new System.Windows.Forms.TabPage();
-            this.tpDSPFreeDV = new System.Windows.Forms.TabPage();
             this.grpFMRX = new System.Windows.Forms.GroupBoxTS();
             this.btnResetFMAF_rx = new System.Windows.Forms.ButtonTS();
             this.labelTS187 = new System.Windows.Forms.LabelTS();
@@ -2641,9 +2640,6 @@
             this.labelTS446 = new System.Windows.Forms.LabelTS();
             this.nudNR4_red_rx1 = new System.Windows.Forms.NumericUpDownTS();
             this.grpRNnoise = new System.Windows.Forms.GroupBoxTS();
-            this.grpFreeDV = new System.Windows.Forms.GroupBoxTS();
-            this.chkFreeDVDecode = new System.Windows.Forms.CheckBoxTS();
-            this.lblFreeDVStatus = new System.Windows.Forms.LabelTS();
             this.tpDSPRADE = new System.Windows.Forms.TabPage();
             this.grpRadeMicCond = new System.Windows.Forms.GroupBoxTS();
             this.lblRadeMicLevel = new System.Windows.Forms.LabelTS();
@@ -2666,14 +2662,12 @@
             this.lblRadeEQVol = new System.Windows.Forms.LabelTS();
             this.udRadeEQVol = new System.Windows.Forms.NumericUpDownTS();
             this.grpRadeRX1Core = new System.Windows.Forms.GroupBoxTS();
-            this.chkRadeRX1Enable = new System.Windows.Forms.CheckBoxTS();
+            this.lblRadeMode = new System.Windows.Forms.LabelTS();
+            this.cmbRadeMode = new System.Windows.Forms.ComboBoxTS();
             this.chkRadeRX1Loopback = new System.Windows.Forms.CheckBoxTS();
             this.lblRadeRxLevel = new System.Windows.Forms.LabelTS();
             this.udRadeRxLevel = new System.Windows.Forms.NumericUpDownTS();
             this.lblRadeRX1Status = new System.Windows.Forms.LabelTS();
-            this.grpRadeProtocol = new System.Windows.Forms.GroupBoxTS();
-            this.lblRadeProtocol = new System.Windows.Forms.LabelTS();
-            this.cmbRadeProtocol = new System.Windows.Forms.ComboBoxTS();
             this.grpRadeDiagnostics = new System.Windows.Forms.GroupBoxTS();
             this.chkRadeBypassMicDsp = new System.Windows.Forms.CheckBoxTS();
             this.chkRadeBypassEncoderCore = new System.Windows.Forms.CheckBoxTS();
@@ -5116,7 +5110,6 @@
             this.panelTS9.SuspendLayout();
             this.grpRX2AMSBSEL.SuspendLayout();
             this.tpDSPFM.SuspendLayout();
-            this.tpDSPFreeDV.SuspendLayout();
             this.grpFMRX.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udFMHighCutRX)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udFMLowCutRX)).BeginInit();
@@ -5169,11 +5162,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_smo_rx1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).BeginInit();
             this.grpRNnoise.SuspendLayout();
-            this.grpFreeDV.SuspendLayout();
             this.tpDSPRADE.SuspendLayout();
             this.grpRadeMicCond.SuspendLayout();
             this.grpRadeRX1Core.SuspendLayout();
-            this.grpRadeProtocol.SuspendLayout();
             this.grpRadeDiagnostics.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicLevel)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicAGCTarget)).BeginInit();
@@ -37870,7 +37861,6 @@
             this.tcDSP.Controls.Add(this.tpDSPAGCALC);
             this.tcDSP.Controls.Add(this.tpDSPAMSAM);
             this.tcDSP.Controls.Add(this.tpDSPFM);
-            this.tcDSP.Controls.Add(this.tpDSPFreeDV);
             this.tcDSP.Controls.Add(this.tpDSPRADE);
             this.tcDSP.Controls.Add(this.tpDSPAudio);
             this.tcDSP.Controls.Add(this.tpDSPEER);
@@ -41242,17 +41232,6 @@
             this.chkEmphPos.UseVisualStyleBackColor = true;
             this.chkEmphPos.CheckedChanged += new System.EventHandler(this.chkEmphPos_CheckedChanged);
             //
-            // tpDSPFreeDV
-            //
-            this.tpDSPFreeDV.BackColor = System.Drawing.SystemColors.Control;
-            this.tpDSPFreeDV.Controls.Add(this.grpFreeDV);
-            this.tpDSPFreeDV.Location = new System.Drawing.Point(4, 22);
-            this.tpDSPFreeDV.Name = "tpDSPFreeDV";
-            this.tpDSPFreeDV.Padding = new System.Windows.Forms.Padding(3);
-            this.tpDSPFreeDV.Size = new System.Drawing.Size(724, 414);
-            this.tpDSPFreeDV.TabIndex = 12;
-            this.tpDSPFreeDV.Text = "FreeDV";
-            //
             // tpDSPAudio
             //
             this.tpDSPAudio.BackColor = System.Drawing.SystemColors.Control;
@@ -43222,40 +43201,6 @@
             this.grpRNnoise.TabStop = false;
             this.grpRNnoise.Text = "NR3";
             //
-            // grpFreeDV
-            //
-            this.grpFreeDV.Controls.Add(this.chkFreeDVDecode);
-            this.grpFreeDV.Controls.Add(this.lblFreeDVStatus);
-            this.grpFreeDV.Location = new System.Drawing.Point(16, 16);
-            this.grpFreeDV.Name = "grpFreeDV";
-            this.grpFreeDV.Size = new System.Drawing.Size(235, 76);
-            this.grpFreeDV.TabIndex = 44;
-            this.grpFreeDV.TabStop = false;
-            this.grpFreeDV.Text = "FreeDV (prototype)";
-            //
-            // chkFreeDVDecode
-            //
-            this.chkFreeDVDecode.AutoSize = true;
-            this.chkFreeDVDecode.Image = null;
-            this.chkFreeDVDecode.Location = new System.Drawing.Point(16, 22);
-            this.chkFreeDVDecode.Name = "chkFreeDVDecode";
-            this.chkFreeDVDecode.Size = new System.Drawing.Size(160, 17);
-            this.chkFreeDVDecode.TabIndex = 0;
-            this.chkFreeDVDecode.Text = "Decode FreeDV 700E (RX1)";
-            this.toolTip1.SetToolTip(this.chkFreeDVDecode, "Decode FreeDV 700E digital voice on RX1. Use USB/DIGU with a ~3kHz filter; modem audio passes through until sync.");
-            this.chkFreeDVDecode.UseVisualStyleBackColor = true;
-            this.chkFreeDVDecode.CheckedChanged += new System.EventHandler(this.chkFreeDVDecode_CheckedChanged);
-            //
-            // lblFreeDVStatus
-            //
-            this.lblFreeDVStatus.AutoSize = true;
-            this.lblFreeDVStatus.Image = null;
-            this.lblFreeDVStatus.Location = new System.Drawing.Point(16, 48);
-            this.lblFreeDVStatus.Name = "lblFreeDVStatus";
-            this.lblFreeDVStatus.Size = new System.Drawing.Size(21, 13);
-            this.lblFreeDVStatus.TabIndex = 1;
-            this.lblFreeDVStatus.Text = "off";
-            //
             // grpRadeMicCond
             //
             this.grpRadeMicCond.Controls.Add(this.lblRadeMicLevel);
@@ -43686,7 +43631,8 @@
             //
             // grpRadeRX1Core
             //
-            this.grpRadeRX1Core.Controls.Add(this.chkRadeRX1Enable);
+            this.grpRadeRX1Core.Controls.Add(this.lblRadeMode);
+            this.grpRadeRX1Core.Controls.Add(this.cmbRadeMode);
             this.grpRadeRX1Core.Controls.Add(this.chkRadeRX1Loopback);
             this.grpRadeRX1Core.Controls.Add(this.lblRadeRxLevel);
             this.grpRadeRX1Core.Controls.Add(this.udRadeRxLevel);
@@ -43698,18 +43644,27 @@
             this.grpRadeRX1Core.TabStop = false;
             this.grpRadeRX1Core.Text = "RX1 Core";
             //
-            // chkRadeRX1Enable
+            // lblRadeMode
             //
-            this.chkRadeRX1Enable.AutoSize = true;
-            this.chkRadeRX1Enable.Image = null;
-            this.chkRadeRX1Enable.Location = new System.Drawing.Point(16, 22);
-            this.chkRadeRX1Enable.Name = "chkRadeRX1Enable";
-            this.chkRadeRX1Enable.Size = new System.Drawing.Size(90, 17);
-            this.chkRadeRX1Enable.TabIndex = 0;
-            this.chkRadeRX1Enable.Text = "RX1 RADE Enable";
-            this.toolTip1.SetToolTip(this.chkRadeRX1Enable, "RX audio fed to the RADE decoder before it reaches the speakers; mic audio fed to the RADE encoder after WDSP audio enhancements (TXEQ/Compander/CFC/Phase/Leveler). Mode/filter selection is not changed automatically.");
-            this.chkRadeRX1Enable.UseVisualStyleBackColor = true;
-            this.chkRadeRX1Enable.CheckedChanged += new System.EventHandler(this.chkRadeRX1Enable_CheckedChanged);
+            this.lblRadeMode.AutoSize = true;
+            this.lblRadeMode.Image = null;
+            this.lblRadeMode.Location = new System.Drawing.Point(16, 25);
+            this.lblRadeMode.Name = "lblRadeMode";
+            this.lblRadeMode.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeMode.TabIndex = 0;
+            this.lblRadeMode.Text = "Mode:";
+            //
+            // cmbRadeMode
+            //
+            this.cmbRadeMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRadeMode.Items.AddRange(new object[] {
+            "Off", "700E", "RADE V1", "RADE V2"});
+            this.cmbRadeMode.Location = new System.Drawing.Point(140, 21);
+            this.cmbRadeMode.Name = "cmbRadeMode";
+            this.cmbRadeMode.Size = new System.Drawing.Size(140, 21);
+            this.cmbRadeMode.TabIndex = 0;
+            this.toolTip1.SetToolTip(this.cmbRadeMode, "Select the RX1 digital voice mode: Off, FreeDV 700E, or RADE V1/V2. Arming a mode starts its RX decode and TX encode together; picking a different mode disarms the previous one automatically.");
+            this.cmbRadeMode.SelectedIndexChanged += new System.EventHandler(this.cmbRadeMode_SelectedIndexChanged);
             //
             // chkRadeRX1Loopback
             //
@@ -43773,39 +43728,6 @@
             this.lblRadeRX1Status.Size = new System.Drawing.Size(21, 13);
             this.lblRadeRX1Status.TabIndex = 0;
             this.lblRadeRX1Status.Text = "off";
-            //
-            // grpRadeProtocol
-            //
-            this.grpRadeProtocol.Controls.Add(this.lblRadeProtocol);
-            this.grpRadeProtocol.Controls.Add(this.cmbRadeProtocol);
-            this.grpRadeProtocol.Location = new System.Drawing.Point(352, 160);
-            this.grpRadeProtocol.Name = "grpRadeProtocol";
-            this.grpRadeProtocol.Size = new System.Drawing.Size(340, 60);
-            this.grpRadeProtocol.TabIndex = 48;
-            this.grpRadeProtocol.TabStop = false;
-            this.grpRadeProtocol.Text = "Protocol";
-            //
-            // lblRadeProtocol
-            //
-            this.lblRadeProtocol.AutoSize = true;
-            this.lblRadeProtocol.Image = null;
-            this.lblRadeProtocol.Location = new System.Drawing.Point(16, 25);
-            this.lblRadeProtocol.Name = "lblRadeProtocol";
-            this.lblRadeProtocol.Size = new System.Drawing.Size(84, 13);
-            this.lblRadeProtocol.TabIndex = 0;
-            this.lblRadeProtocol.Text = "RADE Protocol:";
-            //
-            // cmbRadeProtocol
-            //
-            this.cmbRadeProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbRadeProtocol.Items.AddRange(new object[] {
-            "V1", "V2"});
-            this.cmbRadeProtocol.Location = new System.Drawing.Point(140, 21);
-            this.cmbRadeProtocol.Name = "cmbRadeProtocol";
-            this.cmbRadeProtocol.Size = new System.Drawing.Size(80, 21);
-            this.cmbRadeProtocol.TabIndex = 0;
-            this.toolTip1.SetToolTip(this.cmbRadeProtocol, "Select the RADE protocol version this RX's decoder uses. Live-recycles only this RX's modem handle.");
-            this.cmbRadeProtocol.SelectedIndexChanged += new System.EventHandler(this.cmbRadeProtocol_SelectedIndexChanged);
             //
             // grpRadeDiagnostics
             //
@@ -43890,14 +43812,13 @@
             //
             this.tpDSPRADE.Controls.Add(this.grpRadeMicCond);
             this.tpDSPRADE.Controls.Add(this.grpRadeRX1Core);
-            this.tpDSPRADE.Controls.Add(this.grpRadeProtocol);
             this.tpDSPRADE.Controls.Add(this.grpRadeDiagnostics);
             this.tpDSPRADE.Location = new System.Drawing.Point(4, 22);
             this.tpDSPRADE.Name = "tpDSPRADE";
             this.tpDSPRADE.Padding = new System.Windows.Forms.Padding(3);
             this.tpDSPRADE.Size = new System.Drawing.Size(724, 414);
             this.tpDSPRADE.TabIndex = 13;
-            this.tpDSPRADE.Text = "RADE";
+            this.tpDSPRADE.Text = "Digital Voice";
 
             //
             // chkNR3_RNNoiseFixedGain
@@ -73409,7 +73330,6 @@
             this.grpRX2AMSBSEL.ResumeLayout(false);
             this.grpRX2AMSBSEL.PerformLayout();
             this.tpDSPFM.ResumeLayout(false);
-            this.tpDSPFreeDV.ResumeLayout(false);
             this.grpFMRX.ResumeLayout(false);
             this.grpFMRX.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udFMHighCutRX)).EndInit();
@@ -73475,14 +73395,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_smo_rx1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).EndInit();
             this.grpRNnoise.ResumeLayout(false);
-            this.grpFreeDV.ResumeLayout(false);
-            this.grpFreeDV.PerformLayout();
             this.grpRadeMicCond.ResumeLayout(false);
             this.grpRadeMicCond.PerformLayout();
             this.grpRadeRX1Core.ResumeLayout(false);
             this.grpRadeRX1Core.PerformLayout();
-            this.grpRadeProtocol.ResumeLayout(false);
-            this.grpRadeProtocol.PerformLayout();
             this.grpRadeDiagnostics.ResumeLayout(false);
             this.grpRadeDiagnostics.PerformLayout();
             this.tpDSPRADE.ResumeLayout(false);
@@ -75731,7 +75647,6 @@
         private System.Windows.Forms.NumericUpDownTS udTXGenPulseTransition;
         private System.Windows.Forms.LabelTS labelTS317;
         private System.Windows.Forms.TabPage tpDSPFM;
-        private System.Windows.Forms.TabPage tpDSPFreeDV;
         private System.Windows.Forms.GroupBoxTS grpFMTX;
         private System.Windows.Forms.CheckBoxTS chkEmphPos;
         private System.Windows.Forms.GroupBoxTS grpFMRX;
@@ -78409,9 +78324,6 @@
         private CheckBoxTS chkOverrideSpotFlashColour;
         private ColorButton clrbtnSpotFlashColour;
         private GroupBoxTS grpRNnoise;
-        private GroupBoxTS grpFreeDV;
-        private CheckBoxTS chkFreeDVDecode;
-        private LabelTS lblFreeDVStatus;
         private System.Windows.Forms.TabPage tpDSPRADE;
         private GroupBoxTS grpRadeMicCond;
         private LabelTS lblRadeMicLevel;
@@ -78434,14 +78346,12 @@
         private LabelTS lblRadeEQVol;
         private NumericUpDownTS udRadeEQVol;
         private GroupBoxTS grpRadeRX1Core;
-        private CheckBoxTS chkRadeRX1Enable;
+        private LabelTS lblRadeMode;
+        private ComboBoxTS cmbRadeMode;
         private CheckBoxTS chkRadeRX1Loopback;
         private LabelTS lblRadeRxLevel;
         private NumericUpDownTS udRadeRxLevel;
         private LabelTS lblRadeRX1Status;
-        private GroupBoxTS grpRadeProtocol;
-        private LabelTS lblRadeProtocol;
-        private ComboBoxTS cmbRadeProtocol;
         private GroupBoxTS grpRadeDiagnostics;
         private CheckBoxTS chkRadeBypassMicDsp;
         private CheckBoxTS chkRadeBypassEncoderCore;
