@@ -1,7 +1,9 @@
 # RADE Core Setup Panel — Design Spec
 
 **Date**: 2026-08-24
-**Status**: Approved, ready for implementation planning
+**Status**: Implemented — UI, CAT, and backend wiring all built, deployed, and
+verified live on `hl2winbox` (`git:510d90d9`). See "Testing" (As executed) and
+"Bug found during implementation" below.
 **Sub-project**: 1 of 5 (see "Larger context" below)
 
 ## Goal
@@ -63,13 +65,13 @@ not assumed):
 | RX sync/SNR | `GetRadaeSync`/`GetRadaeSnrDb` | ✅ | `ZZDZ` | crude "off" label only |
 | RX level/clip meter | `GetRadaeRxLevelDb`/`GetRadaeClip` | ✅ | `ZZDT` | ❌ |
 | EOO callsign | `SetRadaeEooCallsign`/`Get...` | ✅ | `ZZDJ` | ❌ |
-| RX level gain | `SetRadaeRxScale`/`SetRadaeRxDialScale` | ❌ | ❌ | ❌ (dead code, zero callers today) |
-| Mic level gain | `SetRadaeMicScale` | ❌ | ❌ | ❌ |
-| Mic RNNoise enable | `SetRadaeMicRNNoiseEnabled` | ❌ | ❌ | ❌ |
-| Mic AGC enable + target | `SetRadaeMicAGCEnabled`/`...AGCTargetLufs` | ❌ | ❌ | ❌ |
-| Mic EQ enable + 3-band + vol | `SetRadaeMicEQEnabled`/`...Bass`/`...Mid`/`...Treble`/`...Vol` | ❌ | ❌ | ❌ |
-| Protocol V1/V2 | `SetRadaeProtocolV2`/`Get...` | ❌ | ❌ | ❌ |
-| Diagnostics bypass ×5 | `SetRadaeBypassMicDsp`/`...EncoderCore`/`...Rmatch`/`...Encoder`/`...All` | ❌ | ❌ | ❌ |
+| RX level gain | `SetRadaeRxScale`/`SetRadaeRxDialScale` | ✅ | `ZZEO` | ✅ `udRadeRxLevel` |
+| Mic level gain | `SetRadaeMicScale` | ✅ | `ZZEC` | ✅ `udRadeMicLevel` |
+| Mic RNNoise enable | `SetRadaeMicRNNoiseEnabled` | ✅ | `ZZED` | ✅ `chkRadeMicRNNoise` |
+| Mic AGC enable + target | `SetRadaeMicAGCEnabled`/`...AGCTargetLufs` | ✅ | `ZZEE`/`ZZEH` | ✅ `chkRadeMicAGC`/`udRadeMicAGCTarget` |
+| Mic EQ enable + 3-band + vol | `SetRadaeMicEQEnabled`/`...Bass`/`...Mid`/`...Treble`/`...Vol` | ✅ | `ZZEI`/`ZZEJ`/`ZZEK`/`ZZEL`/`ZZEN` | ✅ `chkRadeMicEQ` + 8 band spinners |
+| Protocol V1/V2 | `SetRadaeProtocolV2`/`Get...` | ✅ | `ZZEP` | ✅ `cmbRadeProtocol` |
+| Diagnostics bypass ×5 | `SetRadaeBypassMicDsp`/`...EncoderCore`/`...Rmatch`/`...Encoder`/`...All` | ✅ | `ZZEQ`/`ZZES`/`ZZEU`/`ZZEV`/`ZZEW` | ✅ 5 bypass checkboxes |
 
 Everything in the bottom seven rows has real, already-working DSP logic behind
 it (RNNoise/AGC/EQ/protocol-version code runs today, just has no way to be
@@ -123,11 +125,36 @@ project-wide persistence fix, if wanted, is its own separate, well-scoped task.
 
 ### CAT commands
 
-~16 new commands (RX-level gain, mic-level gain, RNNoise enable, AGC enable,
-AGC LUFS target, EQ enable, EQ bass, EQ mid, EQ treble, EQ vol, protocol V1/V2,
-+5 diagnostics bypass flags), using the established `ZZDx`/`ZZEx` free-code
-convention (same family as tonight's `ZZDJ`/`ZZDK`/`ZZDL`/`ZZEF`/`ZZEG`). Exact
-code letters get picked during implementation.
+16 new commands, all in the `ZZEx` family (next free codes after `ZZEA`/`ZZEB`/
+`ZZEF`/`ZZEG`/`ZZEM`/`ZZER`/`ZZET`, which were already taken). Boolean commands
+follow the existing `ZZDW`/`ZZDK`-style 1-char `"0"`/`"1"` convention; signed
+numeric commands use a 3-char `<sign><2-digit>` field; the three EQ-band
+commands pack freq(+gain[+Q]) into one combined field since the backend takes
+them as a single call (`SetRadaeMicEQBass(freq, gain)` etc.) — `ZZEJ`/`ZZEK`/
+`ZZEL` carry the gain sign mid-suffix (not leading), so they were added to
+`CATParser`'s `FindSuffix` regex-exception list alongside the existing `ZZDJ`.
+
+| Code | Setting | Format | nSet |
+|---|---|---|---|
+| `ZZEC` | Mic level (dB) | `<sign><2-digit>`, e.g. `-15` | 3 |
+| `ZZED` | Mic RNNoise enable | `0`/`1` | 1 |
+| `ZZEE` | Mic AGC enable | `0`/`1` | 1 |
+| `ZZEH` | Mic AGC target (LUFS) | `<sign><2-digit>` | 3 |
+| `ZZEI` | Mic EQ enable | `0`/`1` | 1 |
+| `ZZEJ` | Mic EQ bass (freq+gain) | `<freq 4-digit><sign><gain 2-digit>` | 7 |
+| `ZZEK` | Mic EQ mid (freq+gain+Q) | `<freq 4-digit><sign><gain 2-digit><Q×100 3-digit>` | 10 |
+| `ZZEL` | Mic EQ treble (freq+gain) | `<freq 5-digit><sign><gain 2-digit>` | 8 |
+| `ZZEN` | Mic EQ output/makeup gain (dB) | `<sign><2-digit>` | 3 |
+| `ZZEO` | RX1 decoder-input level (dB) | `<sign><2-digit>` | 3 |
+| `ZZEP` | Protocol (0=V1, 1=V2) | `0`/`1` | 1 |
+| `ZZEQ` | Diagnostics: bypass Mic DSP | `0`/`1` | 1 |
+| `ZZES` | Diagnostics: bypass Encoder Core | `0`/`1` | 1 |
+| `ZZEU` | Diagnostics: bypass Rate Match | `0`/`1` | 1 |
+| `ZZEV` | Diagnostics: bypass Entire Encoder | `0`/`1` | 1 |
+| `ZZEW` | Diagnostics: bypass ALL | `0`/`1` | 1 |
+
+RX1 enable/loopback already had CAT commands from the earlier prototype work
+(`ZZDW`/`ZZDL`) and were left as-is — no new codes needed for those two.
 
 ### Testing
 
@@ -140,6 +167,37 @@ logic is being written, so no signal-quality testing is needed — the
 RNNoise/AGC/EQ/protocol-version code already runs in production, it has simply
 never had a switch.
 
+**As executed**: a real screenshot of the deployed panel (via a scheduled-task/
+interactive-session capture, since a plain SSH-invoked script can't touch the
+real desktop session) confirmed all four groups render correctly with no
+overlapping controls and no exceptions. All 16 CAT commands were then
+round-trip tested live via a raw socket script mirroring `thetisctl`'s wire
+protocol (`thetisctl` itself only exposes get-only `query`, not arbitrary
+sets) — every GET matched the UI's on-screen values exactly, and every SET
+followed by GET reflected the change, including the mid-string-sign combined
+EQ-band fields. One real bug surfaced during this pass — see below — found,
+fixed, redeployed, and reverified before values were restored to baseline.
+
+## Bug found during implementation: Mic/RX Level was linear scale, not dB
+
+`SetRadaeMicScale`/`SetRadaeRxScale` (`radae.c`) take a *linear* gain factor,
+clamped there to `(0, 100]` and defaulting to unity (`1.0`) for any value
+`<= 0`. The `udRadeMicLevel`/`udRadeRxLevel` spinners and their `ZZEC`/`ZZEO`
+CAT commands were built passing the raw `-40..+40` spinner value straight
+through as if it *were* the linear scale — so any negative value silently
+collapsed to 0dB (unity gain), killing the entire bottom half of each
+control's range.
+
+Found live during the CAT round-trip pass: `ZZEO` set to `-20` read back `+01`
+unchanged, while the same test on `ZZEC` with a positive value passed first,
+masking the bug until the negative case was tried. The `-40..+40dB` range
+maps exactly onto the `0.01..100.0` linear clamp (`20·log₁₀`), confirming dB
+was the intended design all along — the log/exp conversion at the boundary
+was just never written. Fixed in both directions: `udRadeMicLevel_ValueChanged`
+/`udRadeRxLevel_ValueChanged` and `InitRadePanelFromBackend`'s reverse sync
+(`setup.cs`), and `ZZEC`/`ZZEO` (`CATCommands.cs`) to match. Redeployed and
+reverified live — `-40`, `-20`, `0`, and `+40` all round-trip exactly now.
+
 ## Explicitly out of scope
 
 - 700E integration into this menu (sub-project #2)
@@ -147,7 +205,9 @@ never had a switch.
 - FreeDV Reporter network integration (sub-project #4)
 - Panadapter overlays (sub-project #5)
 - Settings persistence across restart
-- Exact `RxScale` vs `RxDialScale` semantic mapping for the single "RX level"
-  spinner sv1eia shows — both C functions exist under related names; which one
-  (or both) the UI control should drive gets resolved during implementation by
-  reading `radae.c`'s own use of each, not guessed here.
+
+**Resolved during implementation** (was listed as out of scope, deferred a
+decision rather than left undone): the RX level spinner drives `RxScale`
+only. `RxDialScale` remains unwired — confirmed zero callers anywhere in the
+codebase before leaving it untouched, same as the original design note
+anticipated.
