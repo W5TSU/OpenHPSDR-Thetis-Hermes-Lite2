@@ -7511,6 +7511,13 @@ namespace Thetis
         {
             if (s.Length == parser.nSet && (s == "0" || s == "1"))
             {
+                if (s == "1")
+                {
+                    // W5TSU: Digital Voice mode interlock -- arming RADE TX
+                    // always disarms 700E TX (see radio.cs TXAFDVRun's own
+                    // interlock for the reverse direction).
+                    console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                }
                 WDSP.SetRadaeTxEnabled((s == "1") ? 1 : 0);
                 return "";
             }
@@ -7949,6 +7956,62 @@ namespace Thetis
             else if (s.Length == parser.nGet)
             {
                 return (WDSP.GetRadaeBypassAll() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the unified Digital Voice mode index (sub-project 2 of
+        // 5, see docs/superpowers/specs/2026-08-25-digital-voice-mode-selector-design.md)
+        // -- Setup DSP/Digital Voice panel's Mode combo (cmbRadeMode). 0=Off,
+        // 1=700E, 2=RADE V1, 3=RADE V2. Arms the selected subsystem's RX1
+        // decode + TX encode together; arming one side always clears the
+        // other via the low-level interlock in radio.cs's RXAFDVRun/
+        // RXRadaeEnabled/TXAFDVRun setters, so this only needs to arm the
+        // target (or explicitly disarm everything for Off) -- same
+        // simplification cmbRadeMode_SelectedIndexChanged uses. The existing
+        // per-subsystem commands (ZZDV/ZZEF/ZZEG/ZZDW/ZZDK/ZZDL/ZZEP) are
+        // untouched and still work directly. // W5TSU
+        public string ZZEX(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1" || s == "2" || s == "3"))
+            {
+                switch (s)
+                {
+                    case "0": // Off
+                        console.radio.GetDSPRX(0, 0).RXAFDVRun = 0;
+                        console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 0;
+                        console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                        WDSP.SetRadaeTxEnabled(0);
+                        break;
+                    case "1": // 700E
+                        console.radio.GetDSPRX(0, 0).RXAFDVRun = 1;
+                        console.radio.GetDSPTX(0).TXAFDVRun = 1;
+                        break;
+                    case "2": // RADE V1
+                        WDSP.SetRadaeProtocolV2(0, 0);
+                        console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 1;
+                        console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                        WDSP.SetRadaeTxEnabled(1);
+                        break;
+                    case "3": // RADE V2
+                        WDSP.SetRadaeProtocolV2(0, 1);
+                        console.radio.GetDSPRX(0, 0).RXRadaeEnabled = 1;
+                        console.radio.GetDSPTX(0).TXAFDVRun = 0;
+                        WDSP.SetRadaeTxEnabled(1);
+                        break;
+                }
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                if (console.radio.GetDSPRX(0, 0).RXRadaeEnabled != 0)
+                    return (WDSP.GetRadaeProtocolV2(0) != 0) ? "3" : "2";
+                else if (console.radio.GetDSPRX(0, 0).RXAFDVRun != 0)
+                    return "1";
+                else
+                    return "0";
             }
             else
             {

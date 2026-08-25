@@ -1249,6 +1249,9 @@ namespace Thetis
                 case "ZZEW":
                     rtncmd = cmdlist.ZZEW(suffix);
                     break;
+                case "ZZEX":
+                    rtncmd = cmdlist.ZZEX(suffix);
+                    break;
                 case "ZZTC":
                     rtncmd = cmdlist.ZZTC(suffix);
                     break;
