@@ -1498,6 +1498,118 @@
     <ngetparms>0</ngetparms>
     <nansparms>15</nansparms>
   </catstruct>
+  <catstruct code="ZZEC">
+    <desc>RADE mic conditioning input level (dB)</desc>
+    <active>true</active>
+    <nsetparms>3</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>3</nansparms>
+  </catstruct>
+  <catstruct code="ZZED">
+    <desc>RADE mic RNNoise enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEE">
+    <desc>RADE mic AGC enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEH">
+    <desc>RADE mic AGC target level (LUFS)</desc>
+    <active>true</active>
+    <nsetparms>3</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>3</nansparms>
+  </catstruct>
+  <catstruct code="ZZEI">
+    <desc>RADE mic EQ enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEJ">
+    <desc>RADE mic EQ bass band, freq(4)+gain(3) combined</desc>
+    <active>true</active>
+    <nsetparms>7</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>7</nansparms>
+  </catstruct>
+  <catstruct code="ZZEK">
+    <desc>RADE mic EQ mid band, freq(4)+gain(3)+Q(3) combined</desc>
+    <active>true</active>
+    <nsetparms>10</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>10</nansparms>
+  </catstruct>
+  <catstruct code="ZZEL">
+    <desc>RADE mic EQ treble band, freq(5)+gain(3) combined</desc>
+    <active>true</active>
+    <nsetparms>8</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>8</nansparms>
+  </catstruct>
+  <catstruct code="ZZEN">
+    <desc>RADE mic EQ output/makeup gain (dB)</desc>
+    <active>true</active>
+    <nsetparms>3</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>3</nansparms>
+  </catstruct>
+  <catstruct code="ZZEO">
+    <desc>RADE RX1 decoder-input level (dB)</desc>
+    <active>true</active>
+    <nsetparms>3</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>3</nansparms>
+  </catstruct>
+  <catstruct code="ZZEP">
+    <desc>RADE protocol version, 0=V1 1=V2</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEQ">
+    <desc>RADE diagnostics bypass Mic DSP status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZES">
+    <desc>RADE diagnostics bypass Encoder Core status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEU">
+    <desc>RADE diagnostics bypass Rate Match status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEV">
+    <desc>RADE diagnostics bypass Entire Encoder status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZEW">
+    <desc>RADE diagnostics bypass ALL status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
   <catstruct code="ZZTC">
     <desc>TCI server listening status</desc>
     <active>true</active>

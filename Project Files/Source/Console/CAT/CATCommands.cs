@@ -7575,6 +7575,377 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets the RADE mic-conditioning input level (ChannelMaster/
+        // radae.c SetRadaeMicScale/GetRadaeMicScale) -- Setup DSP/RADE panel's
+        // "Mic Level (dB)" field. Signed 2-digit field ("+05"/"-05"), clamped to
+        // the same -40..+40 range as the udRadeMicLevel spinner. // W5TSU
+        public string ZZEC(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int n = Convert.ToInt32(s);
+                n = Math.Max(-40, Math.Min(40, n));
+                WDSP.SetRadaeMicScale(n);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                int n = (int)Math.Round(WDSP.GetRadaeMicScale());
+                string sign = n < 0 ? "-" : "+";
+                return sign + AddLeadingZeros(Math.Abs(n), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic RNNoise enable (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicRNNoiseEnabled/GetRadaeMicRNNoiseEnabled) -- Setup DSP/RADE
+        // panel's "Mic RNNoise Enable" checkbox. // W5TSU
+        public string ZZED(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeMicRNNoiseEnabled((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeMicRNNoiseEnabled() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic AGC enable (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicAGCEnabled/GetRadaeMicAGCEnabled) -- Setup DSP/RADE panel's
+        // "Mic AGC Enable" checkbox. // W5TSU
+        public string ZZEE(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeMicAGCEnabled((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeMicAGCEnabled() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic AGC target level in LUFS (ChannelMaster/
+        // radae_micdsp.c SetRadaeMicAGCTargetLufs/GetRadaeMicAGCTargetLufs) --
+        // Setup DSP/RADE panel's "Target (LUFS)" field. Signed 2-digit field,
+        // clamped to the same -30..0 range as udRadeMicAGCTarget. // W5TSU
+        public string ZZEH(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int n = Convert.ToInt32(s);
+                n = Math.Max(-30, Math.Min(0, n));
+                WDSP.SetRadaeMicAGCTargetLufs(n);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                int n = (int)Math.Round(WDSP.GetRadaeMicAGCTargetLufs());
+                string sign = n < 0 ? "-" : "+";
+                return sign + AddLeadingZeros(Math.Abs(n), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic EQ enable (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicEQEnabled/GetRadaeMicEQEnabled) -- Setup DSP/RADE panel's
+        // "Mic EQ Enable" checkbox. // W5TSU
+        public string ZZEI(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeMicEQEnabled((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeMicEQEnabled() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic EQ bass band (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicEQBass/GetRadaeMicEQBass) -- Setup DSP/RADE panel's Bass
+        // freq/gain fields. Combined field, freq first (20-1000Hz, 4 unsigned
+        // digits) then gain (-20..+20dB, sign + 2 digits): "<ffff><s><gg>", 7
+        // chars total. Sets both at once (the backend takes them as a pair),
+        // matching how udRadeEQBassFreq/Gain's ValueChanged handlers both call
+        // SetRadaeMicEQBass with the sibling control's current value. ZZEJ is
+        // in FindSuffix's regex-exception list since the gain sign isn't at the
+        // start of the suffix. // W5TSU
+        public string ZZEJ(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int freq = Convert.ToInt32(s.Substring(0, 4));
+                int gain = Convert.ToInt32(s.Substring(4, 3));
+                freq = Math.Max(20, Math.Min(1000, freq));
+                gain = Math.Max(-20, Math.Min(20, gain));
+                WDSP.SetRadaeMicEQBass(freq, gain);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                double freq, gain;
+                WDSP.GetRadaeMicEQBass(out freq, out gain);
+                int f = (int)Math.Round(freq);
+                int g = (int)Math.Round(gain);
+                string sign = g < 0 ? "-" : "+";
+                return AddLeadingZeros(f, 4) + sign + AddLeadingZeros(Math.Abs(g), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic EQ mid band (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicEQMid/GetRadaeMicEQMid) -- Setup DSP/RADE panel's Mid
+        // freq/gain/Q fields. Combined field: freq (200-5000Hz, 4 unsigned
+        // digits), gain (-20..+20dB, sign + 2 digits), Q (0.10-5.00, unsigned
+        // 3 digits = Q*100): "<ffff><s><gg><qqq>", 10 chars total. ZZEK is in
+        // FindSuffix's regex-exception list, same reason as ZZEJ. // W5TSU
+        public string ZZEK(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int freq = Convert.ToInt32(s.Substring(0, 4));
+                int gain = Convert.ToInt32(s.Substring(4, 3));
+                int qx100 = Convert.ToInt32(s.Substring(7, 3));
+                freq = Math.Max(200, Math.Min(5000, freq));
+                gain = Math.Max(-20, Math.Min(20, gain));
+                qx100 = Math.Max(10, Math.Min(500, qx100));
+                WDSP.SetRadaeMicEQMid(freq, gain, qx100 / 100.0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                double freq, gain, q;
+                WDSP.GetRadaeMicEQMid(out freq, out gain, out q);
+                int f = (int)Math.Round(freq);
+                int g = (int)Math.Round(gain);
+                int qx100 = (int)Math.Round(q * 100.0);
+                string sign = g < 0 ? "-" : "+";
+                return AddLeadingZeros(f, 4) + sign + AddLeadingZeros(Math.Abs(g), 2) + AddLeadingZeros(qx100, 3);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic EQ treble band (ChannelMaster/radae_micdsp.c
+        // SetRadaeMicEQTreble/GetRadaeMicEQTreble) -- Setup DSP/RADE panel's
+        // Treble freq/gain fields. Combined field: freq (1000-10000Hz, 5
+        // unsigned digits -- wider than Bass/Mid since the range reaches
+        // 10000) then gain (-20..+20dB, sign + 2 digits): "<fffff><s><gg>", 8
+        // chars total. ZZEL is in FindSuffix's regex-exception list, same
+        // reason as ZZEJ/ZZEK. // W5TSU
+        public string ZZEL(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int freq = Convert.ToInt32(s.Substring(0, 5));
+                int gain = Convert.ToInt32(s.Substring(5, 3));
+                freq = Math.Max(1000, Math.Min(10000, freq));
+                gain = Math.Max(-20, Math.Min(20, gain));
+                WDSP.SetRadaeMicEQTreble(freq, gain);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                double freq, gain;
+                WDSP.GetRadaeMicEQTreble(out freq, out gain);
+                int f = (int)Math.Round(freq);
+                int g = (int)Math.Round(gain);
+                string sign = g < 0 ? "-" : "+";
+                return AddLeadingZeros(f, 5) + sign + AddLeadingZeros(Math.Abs(g), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE mic EQ output/makeup gain (ChannelMaster/
+        // radae_micdsp.c SetRadaeMicEQVol/GetRadaeMicEQVol) -- Setup DSP/RADE
+        // panel's "Vol (dB)" field. Signed 2-digit field, clamped to the same
+        // -20..+20 range as udRadeEQVol. // W5TSU
+        public string ZZEN(string s)
+        {
+            if (s.Length == parser.nSet)
+            {
+                int n = Convert.ToInt32(s);
+                n = Math.Max(-20, Math.Min(20, n));
+                WDSP.SetRadaeMicEQVol(n);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                int n = (int)Math.Round(WDSP.GetRadaeMicEQVol());
+                string sign = n < 0 ? "-" : "+";
+                return sign + AddLeadingZeros(Math.Abs(n), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE RX1 decoder-input level (ChannelMaster/
+        // radae.c SetRadaeRxScale/GetRadaeRxScale) -- Setup DSP/RADE panel's
+        // RX1 Core "RX Level (dB)" field. RX1 only, matching the panel's
+        // current single-channel scope (rx index 0). Signed 2-digit field,
+        // clamped to the same -40..+40 range as udRadeRxLevel. // W5TSU
+        public string ZZEO(string s)
+        {
+            const int rx = 0;
+            if (s.Length == parser.nSet)
+            {
+                int n = Convert.ToInt32(s);
+                n = Math.Max(-40, Math.Min(40, n));
+                WDSP.SetRadaeRxScale(rx, n);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                int n = (int)Math.Round(WDSP.GetRadaeRxScale(rx));
+                string sign = n < 0 ? "-" : "+";
+                return sign + AddLeadingZeros(Math.Abs(n), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE protocol version (ChannelMaster/radae.c
+        // SetRadaeProtocolV2/GetRadaeProtocolV2) -- Setup DSP/RADE panel's
+        // Protocol dropdown (0 = V1, 1 = V2). RX1 only (rx index 0), matching
+        // cmbRadeProtocol_SelectedIndexChanged's own scope. // W5TSU
+        public string ZZEP(string s)
+        {
+            const int rx = 0;
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeProtocolV2(rx, (s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeProtocolV2(rx) != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE diagnostics "Bypass Mic DSP" stage (ChannelMaster/
+        // radae.c SetRadaeBypassMicDsp/GetRadaeBypassMicDsp) -- part of the Setup
+        // DSP/RADE panel's bisection-ladder diagnostics group (boots OFF). // W5TSU
+        public string ZZEQ(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeBypassMicDsp((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeBypassMicDsp() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE diagnostics "Bypass Encoder Core" stage
+        // (ChannelMaster/radae.c SetRadaeBypassEncoderCore/GetRadaeBypassEncoderCore)
+        // -- same bisection-ladder group as ZZEQ. // W5TSU
+        public string ZZES(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeBypassEncoderCore((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeBypassEncoderCore() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE diagnostics "Bypass Rate Match" stage
+        // (ChannelMaster/radae.c SetRadaeBypassRmatch/GetRadaeBypassRmatch) --
+        // same bisection-ladder group as ZZEQ. // W5TSU
+        public string ZZEU(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeBypassRmatch((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeBypassRmatch() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE diagnostics "Bypass Entire Encoder" stage
+        // (ChannelMaster/radae.c SetRadaeBypassEncoder/GetRadaeBypassEncoder) --
+        // same bisection-ladder group as ZZEQ. // W5TSU
+        public string ZZEV(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeBypassEncoder((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeBypassEncoder() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets the RADE diagnostics "Bypass ALL" stage (ChannelMaster/
+        // radae.c SetRadaeBypassAll/GetRadaeBypassAll) -- last rung of the same
+        // bisection-ladder group as ZZEQ. // W5TSU
+        public string ZZEW(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeBypassAll((s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeBypassAll() != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

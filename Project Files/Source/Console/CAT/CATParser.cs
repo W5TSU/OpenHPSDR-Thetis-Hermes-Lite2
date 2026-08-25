@@ -560,7 +560,8 @@ namespace Thetis
 					prefix + extension != "ZZFV" && prefix+extension != "ZZFW" &&
                     prefix + extension != "ZZGA" && prefix + extension != "ZZGR" &&
                     prefix + extension != "ZZJP" && prefix + extension != "ZZJQ" && prefix + extension != "ZZJR" && prefix + extension != "ZZJS" &&
-                    prefix + extension != "ZZDJ")   // W5TSU: RADE V1 EOO callsign (letters, not just digits)
+                    prefix + extension != "ZZDJ" &&  // W5TSU: RADE V1 EOO callsign (letters, not just digits)
+                    prefix + extension != "ZZEJ" && prefix + extension != "ZZEK" && prefix + extension != "ZZEL")   // W5TSU: RADE mic EQ band combined fields (gain sign mid-string, not leading)
 				{
 					Regex sfxpattern = new Regex("^[+-]?[Vv0-9]*$");
                     if (!sfxpattern.IsMatch(sfx))
@@ -1199,6 +1200,54 @@ namespace Thetis
                     break;
                 case "ZZDJ":
                     rtncmd = cmdlist.ZZDJ(suffix);
+                    break;
+                case "ZZEC":
+                    rtncmd = cmdlist.ZZEC(suffix);
+                    break;
+                case "ZZED":
+                    rtncmd = cmdlist.ZZED(suffix);
+                    break;
+                case "ZZEE":
+                    rtncmd = cmdlist.ZZEE(suffix);
+                    break;
+                case "ZZEH":
+                    rtncmd = cmdlist.ZZEH(suffix);
+                    break;
+                case "ZZEI":
+                    rtncmd = cmdlist.ZZEI(suffix);
+                    break;
+                case "ZZEJ":
+                    rtncmd = cmdlist.ZZEJ(suffix);
+                    break;
+                case "ZZEK":
+                    rtncmd = cmdlist.ZZEK(suffix);
+                    break;
+                case "ZZEL":
+                    rtncmd = cmdlist.ZZEL(suffix);
+                    break;
+                case "ZZEN":
+                    rtncmd = cmdlist.ZZEN(suffix);
+                    break;
+                case "ZZEO":
+                    rtncmd = cmdlist.ZZEO(suffix);
+                    break;
+                case "ZZEP":
+                    rtncmd = cmdlist.ZZEP(suffix);
+                    break;
+                case "ZZEQ":
+                    rtncmd = cmdlist.ZZEQ(suffix);
+                    break;
+                case "ZZES":
+                    rtncmd = cmdlist.ZZES(suffix);
+                    break;
+                case "ZZEU":
+                    rtncmd = cmdlist.ZZEU(suffix);
+                    break;
+                case "ZZEV":
+                    rtncmd = cmdlist.ZZEV(suffix);
+                    break;
+                case "ZZEW":
+                    rtncmd = cmdlist.ZZEW(suffix);
                     break;
                 case "ZZTC":
                     rtncmd = cmdlist.ZZTC(suffix);
