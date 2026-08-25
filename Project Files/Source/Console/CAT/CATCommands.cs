@@ -8018,6 +8018,125 @@ namespace Thetis
                 return parser.Error1;
             }
         }
+        // Reads or sets RX2's unified Digital Voice mode index (sub-project 3
+        // of 5, see docs/superpowers/specs/2026-08-25-rx2-digital-voice-design.md)
+        // -- Setup DSP/Digital Voice panel's RX2 Core Mode combo
+        // (cmbRadeRX2Mode). 0=Off, 1=700E, 2=RADE V1, 3=RADE V2. Mirrors
+        // ZZEX exactly except it never touches TX -- TX encode is a single
+        // shared resource controlled only via RX1's Mode selector (ZZEX). // W5TSU
+        public string ZZFC(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1" || s == "2" || s == "3"))
+            {
+                switch (s)
+                {
+                    case "0": // Off
+                        console.radio.GetDSPRX(1, 0).RXAFDVRun = 0;
+                        console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 0;
+                        break;
+                    case "1": // 700E
+                        console.radio.GetDSPRX(1, 0).RXAFDVRun = 1;
+                        break;
+                    case "2": // RADE V1
+                        WDSP.SetRadaeProtocolV2(1, 0);
+                        console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 1;
+                        break;
+                    case "3": // RADE V2
+                        WDSP.SetRadaeProtocolV2(1, 1);
+                        console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 1;
+                        break;
+                }
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                if (console.radio.GetDSPRX(1, 0).RXRadaeEnabled != 0)
+                    return (WDSP.GetRadaeProtocolV2(1) != 0) ? "3" : "2";
+                else if (console.radio.GetDSPRX(1, 0).RXAFDVRun != 0)
+                    return "1";
+                else
+                    return "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads or sets RX2's RADE loopback bridge (ChannelMaster/radae.c
+        // SetRadaeLoopbackEnabled(1, ...)) -- mirrors ZZDL exactly for
+        // rx=1. RADE V1/V2 only; 700E has no RX2 loopback path (see
+        // cmbRadeRX2Mode_SelectedIndexChanged's comment in setup.cs). // W5TSU
+        public string ZZFE(string s)
+        {
+            if (s.Length == parser.nSet && (s == "0" || s == "1"))
+            {
+                WDSP.SetRadaeLoopbackEnabled(1, (s == "1") ? 1 : 0);
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                return (WDSP.GetRadaeLoopbackEnabled(1) != 0) ? "1" : "0";
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
+        // Reads RX2 RADE decode sync/SNR status (get-only): mirrors ZZDZ
+        // exactly for rx=1. "<sync 0|1><sign><snr dB, 3 digits>". // W5TSU
+        public string ZZFG()
+        {
+            const int rx = 1;
+            bool sync = WDSP.GetRadaeSync(rx) != 0;
+            int snr = sync ? WDSP.GetRadaeSnrDb(rx) : 0;
+
+            string sign = snr < 0 ? "-" : "+";
+            snr = Math.Min(Math.Abs(snr), 999);
+
+            return (sync ? "1" : "0") + sign + AddLeadingZeros(snr, 3);
+        }
+        // Reads RX2 700E decode sync/SNR status (get-only): mirrors ZZDS
+        // exactly for WDSP.id(1, 0). "<sync 0|1><sign><snr*10, 3 digits>". // W5TSU
+        public string ZZFN()
+        {
+            int ch = WDSP.id(1, 0);
+            bool sync = WDSP.GetRXAFDVSync(ch) != 0;
+            double snr = sync ? WDSP.GetRXAFDVSnr(ch) : 0.0;
+
+            int snrTenths = (int)Math.Round(snr * 10.0);
+            string sign = snrTenths < 0 ? "-" : "+";
+            snrTenths = Math.Abs(snrTenths);
+            snrTenths = Math.Min(snrTenths, 999);
+
+            return (sync ? "1" : "0") + sign + AddLeadingZeros(snrTenths, 3);
+        }
+        // Reads or sets RX2's decoder-input level (ChannelMaster/radae.c
+        // SetRadaeRxScale/GetRadaeRxScale(1, ...)) -- mirrors ZZEO exactly
+        // for rx=1, same dB<->linear conversion (radae.c takes a linear
+        // gain factor, not dB -- see ZZEO/ZZEC's own comments for the full
+        // story). Signed 2-digit field, clamped to -40..+40. // W5TSU
+        public string ZZFK(string s)
+        {
+            const int rx = 1;
+            if (s.Length == parser.nSet)
+            {
+                int n = Convert.ToInt32(s);
+                n = Math.Max(-40, Math.Min(40, n));
+                WDSP.SetRadaeRxScale(rx, Math.Pow(10.0, n / 20.0));
+                return "";
+            }
+            else if (s.Length == parser.nGet)
+            {
+                double db = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeRxScale(rx)));
+                int n = (int)Math.Round(Math.Max(-40.0, Math.Min(40.0, db)));
+                string sign = n < 0 ? "-" : "+";
+                return sign + AddLeadingZeros(Math.Abs(n), 2);
+            }
+            else
+            {
+                return parser.Error1;
+            }
+        }
         /// <summary>
         /// Sets or reads the VAC Stereo checkbox
         /// </summary>

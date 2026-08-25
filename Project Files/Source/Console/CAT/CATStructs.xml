@@ -1617,6 +1617,41 @@
     <ngetparms>0</ngetparms>
     <nansparms>1</nansparms>
   </catstruct>
+  <catstruct code="ZZFC">
+    <desc>RX2 unified mode index: 0=Off 1=700E 2=RADE V1 3=RADE V2</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZFE">
+    <desc>RX2 RADE loopback bridge enable status</desc>
+    <active>true</active>
+    <nsetparms>1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>1</nansparms>
+  </catstruct>
+  <catstruct code="ZZFG">
+    <desc>RX2 RADE decode sync/SNR status</desc>
+    <active>true</active>
+    <nsetparms>-1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>5</nansparms>
+  </catstruct>
+  <catstruct code="ZZFN">
+    <desc>RX2 700E decode sync/SNR status</desc>
+    <active>true</active>
+    <nsetparms>-1</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>5</nansparms>
+  </catstruct>
+  <catstruct code="ZZFK">
+    <desc>RX2 decoder-input level (dB)</desc>
+    <active>true</active>
+    <nsetparms>3</nsetparms>
+    <ngetparms>0</ngetparms>
+    <nansparms>3</nansparms>
+  </catstruct>
   <catstruct code="ZZTC">
     <desc>TCI server listening status</desc>
     <active>true</active>
