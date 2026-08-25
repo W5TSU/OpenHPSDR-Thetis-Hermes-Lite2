@@ -2291,6 +2291,17 @@ namespace Thetis
                         rx_fdv_run_dsp = value;
                     }
                 }
+                // W5TSU: Digital Voice mode interlock (sub-project 2 of 5, see
+                // docs/superpowers/specs/2026-08-25-digital-voice-mode-selector-design.md).
+                // Arming 700E RX decode always disarms RADE RX decode on the
+                // same receiver -- both tap the same RX1 antenna feed, only
+                // one digital voice codec can meaningfully run at a time.
+                // Guarded on value==1 so disarming (value=0) never recurses
+                // into RXRadaeEnabled's own mirror-image check below.
+                if (value == 1 && RXRadaeEnabled != 0)
+                {
+                    RXRadaeEnabled = 0;
+                }
             }
         }
         // W5TSU: RADE V1 RX decode (ChannelMaster/radae.c), experimental. Unlike
@@ -2315,6 +2326,12 @@ namespace Thetis
                         WDSP.SetRadaeRxEnabled((int)thread, value);
                         rx_radae_enabled_dsp = value;
                     }
+                }
+                // W5TSU: Digital Voice mode interlock -- mirror image of
+                // RXAFDVRun's own check above. See that property's comment.
+                if (value == 1 && RXAFDVRun != 0)
+                {
+                    RXAFDVRun = 0;
                 }
             }
         }
@@ -3163,6 +3180,18 @@ namespace Thetis
                         WDSP.SetTXAFDVRun(WDSP.id(thread, 0), value);
                         tx_fdv_run_dsp = value;
                     }
+                }
+                // W5TSU: Digital Voice mode interlock -- arming 700E TX
+                // encode always disarms RADE TX encode. RADE TX has no
+                // radio.cs-cached property (direct WDSP global, per
+                // sub-project #1's wiring pattern), so this is a
+                // one-directional call -- the matching disarm-the-other-way
+                // call lives at RADE TX's own arm sites
+                // (cmbRadeMode_SelectedIndexChanged in setup.cs, and CAT
+                // ZZDK in CATCommands.cs), not here.
+                if (value == 1)
+                {
+                    WDSP.SetRadaeTxEnabled(0);
                 }
             }
         }
