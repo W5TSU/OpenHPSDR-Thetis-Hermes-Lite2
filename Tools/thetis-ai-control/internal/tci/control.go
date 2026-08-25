@@ -215,6 +215,24 @@ func (c *Client) SetPower(on bool) error {
 	return c.SendBareCmd("stop")
 }
 
+// Spot pushes a live activity marker onto Thetis's panadapter, dispatched
+// by TCIServer.cs::handleSpot into Console/SpotManager2.cs's AddSpot. mode
+// is TCI's lowercase demod name (see SetModulation) — this tool always
+// passes "digu" for FreeDV activity, since DSPMode has no per-codec FreeDV
+// variant; any richer description (e.g. "RADEV1", "700D") belongs in text
+// instead. argb is an UNSIGNED 32-bit color packed as 0xAARRGGBB and sent
+// as a decimal string — confirmed against TCIServer.cs:4375
+// (uint.TryParse(args[3], out argb)), NOT a signed int32. text is free-form
+// and may be empty; no escaping is needed before calling this — handleSpot's
+// non-JSON path rejoins every argument from index 4 onward with ","
+// (TCIServer.cs:4351-4356), so any comma already present in text round-trips
+// unchanged.
+// Wire: "spot:<callsign>,<mode>,<freqHz>,<argb>,<text>;" (handleSpot,
+// TCIServer.cs:4339-4408).
+func (c *Client) Spot(callsign, mode string, freqHz int64, argb uint32, text string) error {
+	return c.SendCmd("spot", callsign, mode, strconv.FormatInt(freqHz, 10), strconv.FormatUint(uint64(argb), 10), text)
+}
+
 // encodeCWText escapes the wire protocol's own delimiter characters out of
 // free-text CW message content, matching decodeTciText's inverse mapping
 // (TCIServer.cs:8647-8651): ':' -> '^', ',' -> '~', ';' -> '*'. Without this,
