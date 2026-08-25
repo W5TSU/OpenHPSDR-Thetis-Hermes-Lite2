@@ -8096,10 +8096,11 @@ namespace Thetis
             return (sync ? "1" : "0") + sign + AddLeadingZeros(snr, 3);
         }
         // Reads RX2 700E decode sync/SNR status (get-only): mirrors ZZDS
-        // exactly for WDSP.id(1, 0). "<sync 0|1><sign><snr*10, 3 digits>". // W5TSU
+        // exactly for WDSP.id(2, 0). "<sync 0|1><sign><snr*10, 3 digits>". // W5TSU
         public string ZZFN()
         {
-            int ch = WDSP.id(1, 0);
+            // RX2 is WDSP.id(2, 0), not id(1, 0): id()'s thread arg uses the doubled convention (channel = 2*thread + subrx, dsp.cs:1161), so id(1, 0) resolves to the TX channel, which has no RXA/FDV struct. // W5TSU
+            int ch = WDSP.id(2, 0);
             bool sync = WDSP.GetRXAFDVSync(ch) != 0;
             double snr = sync ? WDSP.GetRXAFDVSnr(ch) : 0.0;
 

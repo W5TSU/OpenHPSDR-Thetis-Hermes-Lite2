@@ -2323,7 +2323,17 @@ namespace Thetis
                 {
                     if (value != rx_radae_enabled_dsp || force)
                     {
-                        WDSP.SetRadaeRxEnabled((int)thread, value);
+                        // W5TSU: bridge two different "which receiver" index conventions.
+                        // This instance's `thread` field uses WDSP.id()'s doubled
+                        // convention (Radio() builds dsp_rx[i][j] with thread = i*2, so
+                        // RX1 = 0, RX2 = 2), but radae.c's SetRadaeRxEnabled takes a plain
+                        // rx index and radae_rx_valid() rejects anything >= RADAE_NRX (2),
+                        // so passing thread=2 for RX2 silently no-ops and RX2 RADE decode
+                        // is never armed natively. thread is always even, so thread/2
+                        // recovers the plain index. Found via sub-project 3's RX2 hardware
+                        // testing; the bug is symmetric with RX1, which merely never
+                        // exposed it because 0/2 == 0 either way.
+                        WDSP.SetRadaeRxEnabled((int)thread / 2, value);
                         rx_radae_enabled_dsp = value;
                     }
                 }

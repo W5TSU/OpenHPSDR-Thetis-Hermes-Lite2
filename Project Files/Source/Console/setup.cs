@@ -36943,8 +36943,9 @@ namespace Thetis
 
             if (mode == 1) // 700E
             {
-                sync = WDSP.GetRXAFDVSync(WDSP.id(1, 0)) != 0;
-                snrText = sync ? string.Format("{0:F1}", WDSP.GetRXAFDVSnr(WDSP.id(1, 0))) : "";
+                // RX2 is WDSP.id(2, 0), not id(1, 0): id()'s thread arg uses the doubled convention (channel = 2*thread + subrx, dsp.cs:1161), so id(1, 0) resolves to the TX channel, which has no RXA/FDV struct. // W5TSU
+                sync = WDSP.GetRXAFDVSync(WDSP.id(2, 0)) != 0;
+                snrText = sync ? string.Format("{0:F1}", WDSP.GetRXAFDVSnr(WDSP.id(2, 0))) : "";
             }
             else // RADE V1/V2 (mode 2/3) -- the timer is disabled for mode 0, never reaches here then
             {
@@ -36969,6 +36970,8 @@ namespace Thetis
         // no RX2 loopback path.
         private void chkRadeRX2Loopback_CheckedChanged(object sender, EventArgs e)
         {
+            if (initializing) return;
+
             int mode = cmbRadeRX2Mode.SelectedIndex;
             if (mode == 2 || mode == 3)
             {
@@ -36981,6 +36984,8 @@ namespace Thetis
         // comment for why).
         private void udRadeRX2Level_ValueChanged(object sender, EventArgs e)
         {
+            if (initializing) return;
+
             double linear = Math.Pow(10.0, (double)udRadeRX2Level.Value / 20.0);
             WDSP.SetRadaeRxScale(1, linear);
         }
