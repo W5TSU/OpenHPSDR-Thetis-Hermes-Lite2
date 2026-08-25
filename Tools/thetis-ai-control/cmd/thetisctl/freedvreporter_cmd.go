@@ -178,7 +178,7 @@ func freedvReporterWatch(a parsedArgs) error {
 					continue
 				}
 				if !ensureTCI() {
-					continue
+					break // TCI is down for this whole pass; the next reporter event will retry once
 				}
 
 				color := spotColorIdle

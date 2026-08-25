@@ -222,16 +222,36 @@ func (c *Client) SetPower(on bool) error {
 // variant; any richer description (e.g. "RADEV1", "700D") belongs in text
 // instead. argb is an UNSIGNED 32-bit color packed as 0xAARRGGBB and sent
 // as a decimal string — confirmed against TCIServer.cs:4375
-// (uint.TryParse(args[3], out argb)), NOT a signed int32. text is free-form
-// and may be empty; no escaping is needed before calling this — handleSpot's
+// (uint.TryParse(args[3], out argb)), NOT a signed int32. callsign and text
+// both derive from caller-supplied/reporter-sourced data in this tool's
+// callers, so this method sanitizes both itself before they ever reach the
+// wire — callers do not need to pre-sanitize. text is free-form and may be
+// empty; its wire delimiters are neutralized (see spotFieldSanitizer) but
+// any comma already present round-trips unchanged, since handleSpot's
 // non-JSON path rejoins every argument from index 4 onward with ","
-// (TCIServer.cs:4351-4356), so any comma already present in text round-trips
-// unchanged.
+// (TCIServer.cs:4351-4356). callsign additionally has commas stripped
+// outright, since a comma there would shift every subsequent positional
+// argument instead of round-tripping.
 // Wire: "spot:<callsign>,<mode>,<freqHz>,<argb>,<text>;" (handleSpot,
 // TCIServer.cs:4339-4408).
 func (c *Client) Spot(callsign, mode string, freqHz int64, argb uint32, text string) error {
+	callsign = strings.ReplaceAll(spotFieldSanitizer.Replace(callsign), ",", "")
+	text = spotFieldSanitizer.Replace(text)
 	return c.SendCmd("spot", callsign, mode, strconv.FormatInt(freqHz, 10), strconv.FormatUint(uint64(argb), 10), text)
 }
+
+// spotFieldSanitizer neutralizes the wire delimiters that would otherwise let
+// caller-supplied text (e.g. a callsign or mode string sourced from a public
+// reporter feed) break out of this command — Thetis's frame parser splits a
+// single text frame on ';' and dispatches each resulting command
+// independently (TCIServer.cs's parseTextFrame/splitTextCommands), and a
+// literal "[json]{" prefix would flip handleSpot into its JSON-parsing
+// branch on non-JSON input. Unlike encodeCWText (used for cw_macros text),
+// this is lossy replacement rather than a reversible escape — handleSpot has
+// no corresponding decode step, so a reversible escape would render its
+// escape characters literally in the panadapter marker label instead of
+// being unescaped.
+var spotFieldSanitizer = strings.NewReplacer(";", " ", "\r", " ", "\n", " ", "[json]{", "(json){")
 
 // encodeCWText escapes the wire protocol's own delimiter characters out of
 // free-text CW message content, matching decodeTciText's inverse mapping
