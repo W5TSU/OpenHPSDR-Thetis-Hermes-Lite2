@@ -36705,6 +36705,13 @@ namespace Thetis
         private System.Windows.Forms.Timer _rade_status_timer = null;
         private void cmbRadeMode_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // W5TSU: cmbRadeMode IS persisted -- getOptions() restores every
+            // ComboBoxTS by Name -> .Text, which fires this handler during
+            // construction. Same guard every other handler in this file uses;
+            // the real sync happens afterwards via ForceAllEvents() ->
+            // InitRadePanelFromBackend(), once initializing is false again.
+            if (initializing) return;
+
             int mode = cmbRadeMode.SelectedIndex;
 
             switch (mode)
@@ -36746,6 +36753,28 @@ namespace Thetis
                 chkRadeRX1Loopback.CheckedChanged -= chkRadeRX1Loopback_CheckedChanged;
                 chkRadeRX1Loopback.Checked = false;
                 chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
+            }
+
+            // W5TSU: the loopback bridge has two independent backends (700E's
+            // SetFDVLoopbackEnabled and RADE's SetRadaeLoopbackEnabled) and
+            // chkRadeRX1Loopback_CheckedChanged only ever touches the one
+            // matching the mode that was selected at the time it fired. So a
+            // mode change has to re-point it: disarm BOTH unconditionally,
+            // then re-arm only the one the new mode uses, and only if the box
+            // is actually checked. This guarantees at most one backend is ever
+            // armed, that it always matches what the checkbox shows, and that
+            // Off leaves both disarmed (the force-uncheck above clears the box
+            // with the handler detached, so it can't disarm anything itself).
+            // For a control whose whole point is "verify with zero RF", a
+            // stale armed bridge is the wrong way to fail.
+            WDSP.SetFDVLoopbackEnabled(0);
+            WDSP.SetRadaeLoopbackEnabled(0, 0);
+            if (chkRadeRX1Loopback.Checked)
+            {
+                if (mode == 1) // 700E
+                    WDSP.SetFDVLoopbackEnabled(1);
+                else if (mode == 2 || mode == 3) // RADE V1/V2
+                    WDSP.SetRadaeLoopbackEnabled(0, 1);
             }
 
             if (_rade_status_timer == null)
