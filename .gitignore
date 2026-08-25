@@ -426,3 +426,7 @@ node_modules/
 
 # doxygen output (regenerate with: doxygen Doxyfile)
 dox/
+
+# superpowers subagent-driven-development workspace (ledgers, briefs, review
+# packages) -- scratch state per in-progress plan, not part of the source tree
+.superpowers/
