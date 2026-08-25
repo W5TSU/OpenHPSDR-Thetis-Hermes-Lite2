@@ -103,10 +103,16 @@ spot:<callsign>,digu,<freqHz>,<argb_color>,<text>;
   `DSPMode` can represent.
 - **`<freqHz>`**: `Station.FreqHz` directly (TCI's spot command takes Hz;
   `Tracker` already stores Hz).
-- **`<argb_color>`**: two fixed colors, chosen by `Station.Transmitting`:
-  - Transmitting: a bright, attention-getting red — `Color.FromArgb(255, 220, 40, 30)`.
-  - Not transmitting (idle or RX-only monitor connection): a calmer blue —
-    `Color.FromArgb(255, 60, 120, 200)`.
+- **`<argb_color>`**: two fixed colors, chosen by `Station.Transmitting`. The
+  wire value is an **unsigned** 32-bit decimal string — confirmed by
+  reading `TCIServer.cs:4375` directly (`uint.TryParse(args[3], out argb)`),
+  correcting an earlier "signed" paraphrase in this project's own prior
+  notes (`Documentation/FreeDV-Plan.md`'s Stage D section) that didn't
+  match the actual parse call:
+  - Transmitting: a bright, attention-getting red, ARGB `(255,220,40,30)` =
+    `4292618270` (`0xFFDC281E`).
+  - Not transmitting (idle or RX-only monitor connection): a calmer blue,
+    ARGB `(255,60,120,200)` = `4282153160` (`0xFF3C78C8`).
   `Station.RXOnly` gets no special treatment beyond this — an RX-only
   connection is real, relevant situational-awareness data (someone is
   listening on that frequency), it just can't ever go into the
