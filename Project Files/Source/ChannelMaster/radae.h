@@ -120,6 +120,10 @@ PORT void  SetRadaeMoxState(int mox);
 PORT void  SetRadaeMicScale(double scale);
 PORT void  SetRadaeRxScale(int rx, double scale);
 PORT void  SetRadaeRxDialScale(int rx, double scale);
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT double GetRadaeMicScale(void);
+PORT double GetRadaeRxScale(int rx);
+PORT double GetRadaeRxDialScale(int rx);
 
 /* Per-RX AF post-decode multiplier, captured at the C# side and
  * applied in pipe.c after xradae_rx returns. */
@@ -135,6 +139,15 @@ PORT void  SetRadaeMicEQBass(double freq_hz, double gain_db);
 PORT void  SetRadaeMicEQMid (double freq_hz, double gain_db, double q);
 PORT void  SetRadaeMicEQTreble(double freq_hz, double gain_db);
 PORT void  SetRadaeMicEQVol(double gain_db);
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT int    GetRadaeMicRNNoiseEnabled(void);
+PORT int    GetRadaeMicAGCEnabled(void);
+PORT double GetRadaeMicAGCTargetLufs(void);
+PORT int    GetRadaeMicEQEnabled(void);
+PORT void   GetRadaeMicEQBass(double* freq_hz, double* gain_db);
+PORT void   GetRadaeMicEQMid (double* freq_hz, double* gain_db, double* q);
+PORT void   GetRadaeMicEQTreble(double* freq_hz, double* gain_db);
+PORT double GetRadaeMicEQVol(void);
 
 /* Diagnostic bypass flags (TX-side, single). */
 PORT void  SetRadaeBypassMicDsp(int enable);
@@ -142,6 +155,12 @@ PORT void  SetRadaeBypassEncoderCore(int enable);
 PORT void  SetRadaeBypassRmatch(int enable);
 PORT void  SetRadaeBypassEncoder(int enable);
 PORT void  SetRadaeBypassAll(int enable);
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT int   GetRadaeBypassMicDsp(void);
+PORT int   GetRadaeBypassEncoderCore(void);
+PORT int   GetRadaeBypassRmatch(void);
+PORT int   GetRadaeBypassEncoder(void);
+PORT int   GetRadaeBypassAll(void);
 
 /* ============================================================
  * Hot-path entry points called from xpipe() in pipe.c.  xradae_rx

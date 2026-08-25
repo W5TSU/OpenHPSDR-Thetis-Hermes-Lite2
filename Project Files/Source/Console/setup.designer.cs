@@ -2644,9 +2644,43 @@
             this.grpFreeDV = new System.Windows.Forms.GroupBoxTS();
             this.chkFreeDVDecode = new System.Windows.Forms.CheckBoxTS();
             this.lblFreeDVStatus = new System.Windows.Forms.LabelTS();
-            this.grpRADE = new System.Windows.Forms.GroupBoxTS(); // W5TSU: RADE V1 RX decode prototype
-            this.chkRADEDecode = new System.Windows.Forms.CheckBoxTS();
-            this.lblRADEStatus = new System.Windows.Forms.LabelTS();
+            this.tpDSPRADE = new System.Windows.Forms.TabPage();
+            this.grpRadeMicCond = new System.Windows.Forms.GroupBoxTS();
+            this.lblRadeMicLevel = new System.Windows.Forms.LabelTS();
+            this.udRadeMicLevel = new System.Windows.Forms.NumericUpDownTS();
+            this.chkRadeMicRNNoise = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeMicAGC = new System.Windows.Forms.CheckBoxTS();
+            this.lblRadeMicAGCTarget = new System.Windows.Forms.LabelTS();
+            this.udRadeMicAGCTarget = new System.Windows.Forms.NumericUpDownTS();
+            this.chkRadeMicEQ = new System.Windows.Forms.CheckBoxTS();
+            this.lblRadeEQBass = new System.Windows.Forms.LabelTS();
+            this.udRadeEQBassFreq = new System.Windows.Forms.NumericUpDownTS();
+            this.udRadeEQBassGain = new System.Windows.Forms.NumericUpDownTS();
+            this.lblRadeEQMid = new System.Windows.Forms.LabelTS();
+            this.udRadeEQMidFreq = new System.Windows.Forms.NumericUpDownTS();
+            this.udRadeEQMidGain = new System.Windows.Forms.NumericUpDownTS();
+            this.udRadeEQMidQ = new System.Windows.Forms.NumericUpDownTS();
+            this.lblRadeEQTreble = new System.Windows.Forms.LabelTS();
+            this.udRadeEQTrebleFreq = new System.Windows.Forms.NumericUpDownTS();
+            this.udRadeEQTrebleGain = new System.Windows.Forms.NumericUpDownTS();
+            this.lblRadeEQVol = new System.Windows.Forms.LabelTS();
+            this.udRadeEQVol = new System.Windows.Forms.NumericUpDownTS();
+            this.grpRadeRX1Core = new System.Windows.Forms.GroupBoxTS();
+            this.chkRadeRX1Enable = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeRX1Loopback = new System.Windows.Forms.CheckBoxTS();
+            this.lblRadeRxLevel = new System.Windows.Forms.LabelTS();
+            this.udRadeRxLevel = new System.Windows.Forms.NumericUpDownTS();
+            this.lblRadeRX1Status = new System.Windows.Forms.LabelTS();
+            this.grpRadeProtocol = new System.Windows.Forms.GroupBoxTS();
+            this.lblRadeProtocol = new System.Windows.Forms.LabelTS();
+            this.cmbRadeProtocol = new System.Windows.Forms.ComboBoxTS();
+            this.grpRadeDiagnostics = new System.Windows.Forms.GroupBoxTS();
+            this.chkRadeBypassMicDsp = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeBypassEncoderCore = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeBypassRmatch = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeBypassEncoder = new System.Windows.Forms.CheckBoxTS();
+            this.chkRadeBypassAll = new System.Windows.Forms.CheckBoxTS();
+
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
             this.btnNR3_model_load = new System.Windows.Forms.ButtonTS();
@@ -5136,7 +5170,22 @@
             ((System.ComponentModel.ISupportInitialize)(this.nudNR4_red_rx1)).BeginInit();
             this.grpRNnoise.SuspendLayout();
             this.grpFreeDV.SuspendLayout();
-            this.grpRADE.SuspendLayout();
+            this.tpDSPRADE.SuspendLayout();
+            this.grpRadeMicCond.SuspendLayout();
+            this.grpRadeRX1Core.SuspendLayout();
+            this.grpRadeProtocol.SuspendLayout();
+            this.grpRadeDiagnostics.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeMicLevel)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeMicAGCTarget)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQBassFreq)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQBassGain)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidFreq)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidGain)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidQ)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleFreq)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleGain)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQVol)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeRxLevel)).BeginInit();
             this.grpDSPNR2RX2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_factor_rx2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_level_rx2)).BeginInit();
@@ -37822,6 +37871,7 @@
             this.tcDSP.Controls.Add(this.tpDSPAMSAM);
             this.tcDSP.Controls.Add(this.tpDSPFM);
             this.tcDSP.Controls.Add(this.tpDSPFreeDV);
+            this.tcDSP.Controls.Add(this.tpDSPRADE);
             this.tcDSP.Controls.Add(this.tpDSPAudio);
             this.tcDSP.Controls.Add(this.tpDSPEER);
             this.tcDSP.Controls.Add(this.tpDSPNR);
@@ -41196,7 +41246,6 @@
             //
             this.tpDSPFreeDV.BackColor = System.Drawing.SystemColors.Control;
             this.tpDSPFreeDV.Controls.Add(this.grpFreeDV);
-            this.tpDSPFreeDV.Controls.Add(this.grpRADE); // W5TSU: RADE V1 RX decode prototype
             this.tpDSPFreeDV.Location = new System.Drawing.Point(4, 22);
             this.tpDSPFreeDV.Name = "tpDSPFreeDV";
             this.tpDSPFreeDV.Padding = new System.Windows.Forms.Padding(3);
@@ -43207,39 +43256,649 @@
             this.lblFreeDVStatus.TabIndex = 1;
             this.lblFreeDVStatus.Text = "off";
             //
-            // grpRADE -- W5TSU: RADE V1 RX decode prototype, same shape as grpFreeDV above
+            // grpRadeMicCond
             //
-            this.grpRADE.Controls.Add(this.chkRADEDecode);
-            this.grpRADE.Controls.Add(this.lblRADEStatus);
-            this.grpRADE.Location = new System.Drawing.Point(264, 16);
-            this.grpRADE.Name = "grpRADE";
-            this.grpRADE.Size = new System.Drawing.Size(235, 76);
-            this.grpRADE.TabIndex = 45;
-            this.grpRADE.TabStop = false;
-            this.grpRADE.Text = "RADE V1 (prototype)";
+            this.grpRadeMicCond.Controls.Add(this.lblRadeMicLevel);
+            this.grpRadeMicCond.Controls.Add(this.udRadeMicLevel);
+            this.grpRadeMicCond.Controls.Add(this.chkRadeMicRNNoise);
+            this.grpRadeMicCond.Controls.Add(this.chkRadeMicAGC);
+            this.grpRadeMicCond.Controls.Add(this.lblRadeMicAGCTarget);
+            this.grpRadeMicCond.Controls.Add(this.udRadeMicAGCTarget);
+            this.grpRadeMicCond.Controls.Add(this.chkRadeMicEQ);
+            this.grpRadeMicCond.Controls.Add(this.lblRadeEQBass);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQBassFreq);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQBassGain);
+            this.grpRadeMicCond.Controls.Add(this.lblRadeEQMid);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQMidFreq);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQMidGain);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQMidQ);
+            this.grpRadeMicCond.Controls.Add(this.lblRadeEQTreble);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQTrebleFreq);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQTrebleGain);
+            this.grpRadeMicCond.Controls.Add(this.lblRadeEQVol);
+            this.grpRadeMicCond.Controls.Add(this.udRadeEQVol);
+            this.grpRadeMicCond.Location = new System.Drawing.Point(16, 16);
+            this.grpRadeMicCond.Name = "grpRadeMicCond";
+            this.grpRadeMicCond.Size = new System.Drawing.Size(320, 300);
+            this.grpRadeMicCond.TabIndex = 46;
+            this.grpRadeMicCond.TabStop = false;
+            this.grpRadeMicCond.Text = "Mic/TX Conditioning";
             //
-            // chkRADEDecode
+            // lblRadeMicLevel
             //
-            this.chkRADEDecode.AutoSize = true;
-            this.chkRADEDecode.Image = null;
-            this.chkRADEDecode.Location = new System.Drawing.Point(16, 22);
-            this.chkRADEDecode.Name = "chkRADEDecode";
-            this.chkRADEDecode.Size = new System.Drawing.Size(160, 17);
-            this.chkRADEDecode.TabIndex = 0;
-            this.chkRADEDecode.Text = "Decode RADE V1 (RX1)";
-            this.toolTip1.SetToolTip(this.chkRADEDecode, "Decode FreeDV RADE V1 neural digital voice on RX1. Use USB/DIGU with a wide enough filter. Experimental -- no confirmed-working decode yet, see Documentation/FreeDV-Plan.md Stage C.");
-            this.chkRADEDecode.UseVisualStyleBackColor = true;
-            this.chkRADEDecode.CheckedChanged += new System.EventHandler(this.chkRADEDecode_CheckedChanged);
+            this.lblRadeMicLevel.AutoSize = true;
+            this.lblRadeMicLevel.Image = null;
+            this.lblRadeMicLevel.Location = new System.Drawing.Point(16, 24);
+            this.lblRadeMicLevel.Name = "lblRadeMicLevel";
+            this.lblRadeMicLevel.Size = new System.Drawing.Size(90, 13);
+            this.lblRadeMicLevel.TabIndex = 0;
+            this.lblRadeMicLevel.Text = "Mic Level (dB):";
             //
-            // lblRADEStatus
+            // udRadeMicLevel
             //
-            this.lblRADEStatus.AutoSize = true;
-            this.lblRADEStatus.Image = null;
-            this.lblRADEStatus.Location = new System.Drawing.Point(16, 48);
-            this.lblRADEStatus.Name = "lblRADEStatus";
-            this.lblRADEStatus.Size = new System.Drawing.Size(21, 13);
-            this.lblRADEStatus.TabIndex = 1;
-            this.lblRADEStatus.Text = "off";
+            this.udRadeMicLevel.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeMicLevel.Location = new System.Drawing.Point(140, 22);
+            this.udRadeMicLevel.Maximum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            0});
+            this.udRadeMicLevel.Minimum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            -2147483648});
+            this.udRadeMicLevel.Name = "udRadeMicLevel";
+            this.udRadeMicLevel.Size = new System.Drawing.Size(50, 20);
+            this.udRadeMicLevel.TabIndex = 0;
+            this.udRadeMicLevel.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeMicLevel, "Encoder input gain, applied before RNNoise/AGC/EQ. Default 0 dB.");
+            this.udRadeMicLevel.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeMicLevel.ValueChanged += new System.EventHandler(this.udRadeMicLevel_ValueChanged);
+            //
+            // chkRadeMicRNNoise
+            //
+            this.chkRadeMicRNNoise.AutoSize = true;
+            this.chkRadeMicRNNoise.Image = null;
+            this.chkRadeMicRNNoise.Location = new System.Drawing.Point(16, 50);
+            this.chkRadeMicRNNoise.Name = "chkRadeMicRNNoise";
+            this.chkRadeMicRNNoise.Size = new System.Drawing.Size(108, 17);
+            this.chkRadeMicRNNoise.TabIndex = 1;
+            this.chkRadeMicRNNoise.Text = "Mic RNNoise Enable";
+            this.toolTip1.SetToolTip(this.chkRadeMicRNNoise, "RNNoise-based noise suppression on the mic path before AGC/EQ. ~10ms added TX latency.");
+            this.chkRadeMicRNNoise.UseVisualStyleBackColor = true;
+            this.chkRadeMicRNNoise.CheckedChanged += new System.EventHandler(this.chkRadeMicRNNoise_CheckedChanged);
+            //
+            // chkRadeMicAGC
+            //
+            this.chkRadeMicAGC.AutoSize = true;
+            this.chkRadeMicAGC.Image = null;
+            this.chkRadeMicAGC.Location = new System.Drawing.Point(16, 76);
+            this.chkRadeMicAGC.Name = "chkRadeMicAGC";
+            this.chkRadeMicAGC.Size = new System.Drawing.Size(84, 17);
+            this.chkRadeMicAGC.TabIndex = 2;
+            this.chkRadeMicAGC.Text = "Mic AGC Enable";
+            this.toolTip1.SetToolTip(this.chkRadeMicAGC, "ITU-R BS.1770 K-weighted loudness AGC with a soft limiter at -1 dBFS.");
+            this.chkRadeMicAGC.UseVisualStyleBackColor = true;
+            this.chkRadeMicAGC.CheckedChanged += new System.EventHandler(this.chkRadeMicAGC_CheckedChanged);
+            //
+            // lblRadeMicAGCTarget
+            //
+            this.lblRadeMicAGCTarget.AutoSize = true;
+            this.lblRadeMicAGCTarget.Image = null;
+            this.lblRadeMicAGCTarget.Location = new System.Drawing.Point(36, 102);
+            this.lblRadeMicAGCTarget.Name = "lblRadeMicAGCTarget";
+            this.lblRadeMicAGCTarget.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeMicAGCTarget.TabIndex = 0;
+            this.lblRadeMicAGCTarget.Text = "Target (LUFS):";
+            //
+            // udRadeMicAGCTarget
+            //
+            this.udRadeMicAGCTarget.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeMicAGCTarget.Location = new System.Drawing.Point(140, 100);
+            this.udRadeMicAGCTarget.Maximum = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeMicAGCTarget.Minimum = new decimal(new int[] {
+            30,
+            0,
+            0,
+            -2147483648});
+            this.udRadeMicAGCTarget.Name = "udRadeMicAGCTarget";
+            this.udRadeMicAGCTarget.Size = new System.Drawing.Size(50, 20);
+            this.udRadeMicAGCTarget.TabIndex = 3;
+            this.udRadeMicAGCTarget.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeMicAGCTarget, "AGC loudness target in LUFS. Default -23, matching freedv-gui's own default.");
+            this.udRadeMicAGCTarget.Value = new decimal(new int[] {
+            23,
+            0,
+            0,
+            -2147483648});
+            this.udRadeMicAGCTarget.ValueChanged += new System.EventHandler(this.udRadeMicAGCTarget_ValueChanged);
+            //
+            // chkRadeMicEQ
+            //
+            this.chkRadeMicEQ.AutoSize = true;
+            this.chkRadeMicEQ.Image = null;
+            this.chkRadeMicEQ.Location = new System.Drawing.Point(16, 128);
+            this.chkRadeMicEQ.Name = "chkRadeMicEQ";
+            this.chkRadeMicEQ.Size = new System.Drawing.Size(80, 17);
+            this.chkRadeMicEQ.TabIndex = 4;
+            this.chkRadeMicEQ.Text = "Mic EQ Enable";
+            this.toolTip1.SetToolTip(this.chkRadeMicEQ, "3-band biquad EQ (bass/mid/treble) on the mic path. Vol stage below runs independently of this checkbox whenever its dB is nonzero.");
+            this.chkRadeMicEQ.UseVisualStyleBackColor = true;
+            this.chkRadeMicEQ.CheckedChanged += new System.EventHandler(this.chkRadeMicEQ_CheckedChanged);
+            //
+            // lblRadeEQBass
+            //
+            this.lblRadeEQBass.AutoSize = true;
+            this.lblRadeEQBass.Image = null;
+            this.lblRadeEQBass.Location = new System.Drawing.Point(36, 154);
+            this.lblRadeEQBass.Name = "lblRadeEQBass";
+            this.lblRadeEQBass.Size = new System.Drawing.Size(90, 13);
+            this.lblRadeEQBass.TabIndex = 0;
+            this.lblRadeEQBass.Text = "Bass (Hz / dB):";
+            //
+            // udRadeEQBassFreq
+            //
+            this.udRadeEQBassFreq.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQBassFreq.Location = new System.Drawing.Point(140, 152);
+            this.udRadeEQBassFreq.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.udRadeEQBassFreq.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udRadeEQBassFreq.Name = "udRadeEQBassFreq";
+            this.udRadeEQBassFreq.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQBassFreq.TabIndex = 5;
+            this.udRadeEQBassFreq.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQBassFreq, "Bass shelf frequency, Hz.");
+            this.udRadeEQBassFreq.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.udRadeEQBassFreq.ValueChanged += new System.EventHandler(this.udRadeEQBassFreq_ValueChanged);
+            //
+            // udRadeEQBassGain
+            //
+            this.udRadeEQBassGain.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQBassGain.Location = new System.Drawing.Point(196, 152);
+            this.udRadeEQBassGain.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udRadeEQBassGain.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            -2147483648});
+            this.udRadeEQBassGain.Name = "udRadeEQBassGain";
+            this.udRadeEQBassGain.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQBassGain.TabIndex = 6;
+            this.udRadeEQBassGain.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQBassGain, "Bass shelf gain, dB.");
+            this.udRadeEQBassGain.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeEQBassGain.ValueChanged += new System.EventHandler(this.udRadeEQBassGain_ValueChanged);
+            //
+            // lblRadeEQMid
+            //
+            this.lblRadeEQMid.AutoSize = true;
+            this.lblRadeEQMid.Image = null;
+            this.lblRadeEQMid.Location = new System.Drawing.Point(36, 180);
+            this.lblRadeEQMid.Name = "lblRadeEQMid";
+            this.lblRadeEQMid.Size = new System.Drawing.Size(108, 13);
+            this.lblRadeEQMid.TabIndex = 0;
+            this.lblRadeEQMid.Text = "Mid (Hz / dB / Q):";
+            //
+            // udRadeEQMidFreq
+            //
+            this.udRadeEQMidFreq.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQMidFreq.Location = new System.Drawing.Point(140, 178);
+            this.udRadeEQMidFreq.Maximum = new decimal(new int[] {
+            5000,
+            0,
+            0,
+            0});
+            this.udRadeEQMidFreq.Minimum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.udRadeEQMidFreq.Name = "udRadeEQMidFreq";
+            this.udRadeEQMidFreq.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQMidFreq.TabIndex = 7;
+            this.udRadeEQMidFreq.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQMidFreq, "Mid peaking-band centre frequency, Hz.");
+            this.udRadeEQMidFreq.Value = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.udRadeEQMidFreq.ValueChanged += new System.EventHandler(this.udRadeEQMidFreq_ValueChanged);
+            //
+            // udRadeEQMidGain
+            //
+            this.udRadeEQMidGain.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQMidGain.Location = new System.Drawing.Point(196, 178);
+            this.udRadeEQMidGain.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udRadeEQMidGain.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            -2147483648});
+            this.udRadeEQMidGain.Name = "udRadeEQMidGain";
+            this.udRadeEQMidGain.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQMidGain.TabIndex = 8;
+            this.udRadeEQMidGain.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQMidGain, "Mid peaking-band gain, dB.");
+            this.udRadeEQMidGain.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeEQMidGain.ValueChanged += new System.EventHandler(this.udRadeEQMidGain_ValueChanged);
+            //
+            // udRadeEQMidQ
+            //
+            this.udRadeEQMidQ.DecimalPlaces = 2;
+            this.udRadeEQMidQ.Increment = new decimal(new int[] {
+            100,
+            0,
+            0,
+            131072});
+            this.udRadeEQMidQ.Location = new System.Drawing.Point(252, 178);
+            this.udRadeEQMidQ.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            131072});
+            this.udRadeEQMidQ.Minimum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            131072});
+            this.udRadeEQMidQ.Name = "udRadeEQMidQ";
+            this.udRadeEQMidQ.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQMidQ.TabIndex = 9;
+            this.udRadeEQMidQ.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQMidQ, "Mid peaking-band Q. Default 0.71 (Butterworth-ish).");
+            this.udRadeEQMidQ.Value = new decimal(new int[] {
+            71,
+            0,
+            0,
+            131072});
+            this.udRadeEQMidQ.ValueChanged += new System.EventHandler(this.udRadeEQMidQ_ValueChanged);
+            //
+            // lblRadeEQTreble
+            //
+            this.lblRadeEQTreble.AutoSize = true;
+            this.lblRadeEQTreble.Image = null;
+            this.lblRadeEQTreble.Location = new System.Drawing.Point(36, 206);
+            this.lblRadeEQTreble.Name = "lblRadeEQTreble";
+            this.lblRadeEQTreble.Size = new System.Drawing.Size(102, 13);
+            this.lblRadeEQTreble.TabIndex = 0;
+            this.lblRadeEQTreble.Text = "Treble (Hz / dB):";
+            //
+            // udRadeEQTrebleFreq
+            //
+            this.udRadeEQTrebleFreq.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleFreq.Location = new System.Drawing.Point(140, 204);
+            this.udRadeEQTrebleFreq.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleFreq.Minimum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleFreq.Name = "udRadeEQTrebleFreq";
+            this.udRadeEQTrebleFreq.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQTrebleFreq.TabIndex = 10;
+            this.udRadeEQTrebleFreq.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQTrebleFreq, "Treble shelf frequency, Hz.");
+            this.udRadeEQTrebleFreq.Value = new decimal(new int[] {
+            5000,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleFreq.ValueChanged += new System.EventHandler(this.udRadeEQTrebleFreq_ValueChanged);
+            //
+            // udRadeEQTrebleGain
+            //
+            this.udRadeEQTrebleGain.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleGain.Location = new System.Drawing.Point(196, 204);
+            this.udRadeEQTrebleGain.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleGain.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            -2147483648});
+            this.udRadeEQTrebleGain.Name = "udRadeEQTrebleGain";
+            this.udRadeEQTrebleGain.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQTrebleGain.TabIndex = 11;
+            this.udRadeEQTrebleGain.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQTrebleGain, "Treble shelf gain, dB.");
+            this.udRadeEQTrebleGain.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeEQTrebleGain.ValueChanged += new System.EventHandler(this.udRadeEQTrebleGain_ValueChanged);
+            //
+            // lblRadeEQVol
+            //
+            this.lblRadeEQVol.AutoSize = true;
+            this.lblRadeEQVol.Image = null;
+            this.lblRadeEQVol.Location = new System.Drawing.Point(36, 232);
+            this.lblRadeEQVol.Name = "lblRadeEQVol";
+            this.lblRadeEQVol.Size = new System.Drawing.Size(54, 13);
+            this.lblRadeEQVol.TabIndex = 0;
+            this.lblRadeEQVol.Text = "Vol (dB):";
+            //
+            // udRadeEQVol
+            //
+            this.udRadeEQVol.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeEQVol.Location = new System.Drawing.Point(140, 230);
+            this.udRadeEQVol.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udRadeEQVol.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            -2147483648});
+            this.udRadeEQVol.Name = "udRadeEQVol";
+            this.udRadeEQVol.Size = new System.Drawing.Size(50, 20);
+            this.udRadeEQVol.TabIndex = 12;
+            this.udRadeEQVol.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeEQVol, "Master post-EQ gain. Always active when nonzero, independent of the EQ enable checkbox above.");
+            this.udRadeEQVol.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeEQVol.ValueChanged += new System.EventHandler(this.udRadeEQVol_ValueChanged);
+            //
+            // grpRadeRX1Core
+            //
+            this.grpRadeRX1Core.Controls.Add(this.chkRadeRX1Enable);
+            this.grpRadeRX1Core.Controls.Add(this.chkRadeRX1Loopback);
+            this.grpRadeRX1Core.Controls.Add(this.lblRadeRxLevel);
+            this.grpRadeRX1Core.Controls.Add(this.udRadeRxLevel);
+            this.grpRadeRX1Core.Controls.Add(this.lblRadeRX1Status);
+            this.grpRadeRX1Core.Location = new System.Drawing.Point(352, 16);
+            this.grpRadeRX1Core.Name = "grpRadeRX1Core";
+            this.grpRadeRX1Core.Size = new System.Drawing.Size(340, 136);
+            this.grpRadeRX1Core.TabIndex = 47;
+            this.grpRadeRX1Core.TabStop = false;
+            this.grpRadeRX1Core.Text = "RX1 Core";
+            //
+            // chkRadeRX1Enable
+            //
+            this.chkRadeRX1Enable.AutoSize = true;
+            this.chkRadeRX1Enable.Image = null;
+            this.chkRadeRX1Enable.Location = new System.Drawing.Point(16, 22);
+            this.chkRadeRX1Enable.Name = "chkRadeRX1Enable";
+            this.chkRadeRX1Enable.Size = new System.Drawing.Size(90, 17);
+            this.chkRadeRX1Enable.TabIndex = 0;
+            this.chkRadeRX1Enable.Text = "RX1 RADE Enable";
+            this.toolTip1.SetToolTip(this.chkRadeRX1Enable, "RX audio fed to the RADE decoder before it reaches the speakers; mic audio fed to the RADE encoder after WDSP audio enhancements (TXEQ/Compander/CFC/Phase/Leveler). Mode/filter selection is not changed automatically.");
+            this.chkRadeRX1Enable.UseVisualStyleBackColor = true;
+            this.chkRadeRX1Enable.CheckedChanged += new System.EventHandler(this.chkRadeRX1Enable_CheckedChanged);
+            //
+            // chkRadeRX1Loopback
+            //
+            this.chkRadeRX1Loopback.AutoSize = true;
+            this.chkRadeRX1Loopback.Image = null;
+            this.chkRadeRX1Loopback.Location = new System.Drawing.Point(16, 48);
+            this.chkRadeRX1Loopback.Name = "chkRadeRX1Loopback";
+            this.chkRadeRX1Loopback.Size = new System.Drawing.Size(132, 17);
+            this.chkRadeRX1Loopback.TabIndex = 1;
+            this.chkRadeRX1Loopback.Text = "RX1 RADE Loopback Test";
+            this.toolTip1.SetToolTip(this.chkRadeRX1Loopback, "TX encoder's modem output is bridged directly into RX1's decoder input -- no RF, radio never keys. For verifying the encode/decode round trip before any real on-air attempt.");
+            this.chkRadeRX1Loopback.UseVisualStyleBackColor = true;
+            this.chkRadeRX1Loopback.CheckedChanged += new System.EventHandler(this.chkRadeRX1Loopback_CheckedChanged);
+            //
+            // lblRadeRxLevel
+            //
+            this.lblRadeRxLevel.AutoSize = true;
+            this.lblRadeRxLevel.Image = null;
+            this.lblRadeRxLevel.Location = new System.Drawing.Point(16, 76);
+            this.lblRadeRxLevel.Name = "lblRadeRxLevel";
+            this.lblRadeRxLevel.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeRxLevel.TabIndex = 0;
+            this.lblRadeRxLevel.Text = "RX Level (dB):";
+            //
+            // udRadeRxLevel
+            //
+            this.udRadeRxLevel.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeRxLevel.Location = new System.Drawing.Point(140, 74);
+            this.udRadeRxLevel.Maximum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            0});
+            this.udRadeRxLevel.Minimum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            -2147483648});
+            this.udRadeRxLevel.Name = "udRadeRxLevel";
+            this.udRadeRxLevel.Size = new System.Drawing.Size(50, 20);
+            this.udRadeRxLevel.TabIndex = 2;
+            this.udRadeRxLevel.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeRxLevel, "Decoder input gain. Default 0 dB.");
+            this.udRadeRxLevel.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeRxLevel.ValueChanged += new System.EventHandler(this.udRadeRxLevel_ValueChanged);
+            //
+            // lblRadeRX1Status
+            //
+            this.lblRadeRX1Status.AutoSize = true;
+            this.lblRadeRX1Status.Image = null;
+            this.lblRadeRX1Status.Location = new System.Drawing.Point(16, 104);
+            this.lblRadeRX1Status.Name = "lblRadeRX1Status";
+            this.lblRadeRX1Status.Size = new System.Drawing.Size(21, 13);
+            this.lblRadeRX1Status.TabIndex = 0;
+            this.lblRadeRX1Status.Text = "off";
+            //
+            // grpRadeProtocol
+            //
+            this.grpRadeProtocol.Controls.Add(this.lblRadeProtocol);
+            this.grpRadeProtocol.Controls.Add(this.cmbRadeProtocol);
+            this.grpRadeProtocol.Location = new System.Drawing.Point(352, 160);
+            this.grpRadeProtocol.Name = "grpRadeProtocol";
+            this.grpRadeProtocol.Size = new System.Drawing.Size(340, 60);
+            this.grpRadeProtocol.TabIndex = 48;
+            this.grpRadeProtocol.TabStop = false;
+            this.grpRadeProtocol.Text = "Protocol";
+            //
+            // lblRadeProtocol
+            //
+            this.lblRadeProtocol.AutoSize = true;
+            this.lblRadeProtocol.Image = null;
+            this.lblRadeProtocol.Location = new System.Drawing.Point(16, 25);
+            this.lblRadeProtocol.Name = "lblRadeProtocol";
+            this.lblRadeProtocol.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeProtocol.TabIndex = 0;
+            this.lblRadeProtocol.Text = "RADE Protocol:";
+            //
+            // cmbRadeProtocol
+            //
+            this.cmbRadeProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRadeProtocol.Items.AddRange(new object[] {
+            "V1", "V2"});
+            this.cmbRadeProtocol.Location = new System.Drawing.Point(140, 21);
+            this.cmbRadeProtocol.Name = "cmbRadeProtocol";
+            this.cmbRadeProtocol.Size = new System.Drawing.Size(80, 21);
+            this.cmbRadeProtocol.TabIndex = 0;
+            this.toolTip1.SetToolTip(this.cmbRadeProtocol, "Select the RADE protocol version this RX's decoder uses. Live-recycles only this RX's modem handle.");
+            this.cmbRadeProtocol.SelectedIndexChanged += new System.EventHandler(this.cmbRadeProtocol_SelectedIndexChanged);
+            //
+            // grpRadeDiagnostics
+            //
+            this.grpRadeDiagnostics.Controls.Add(this.chkRadeBypassMicDsp);
+            this.grpRadeDiagnostics.Controls.Add(this.chkRadeBypassEncoderCore);
+            this.grpRadeDiagnostics.Controls.Add(this.chkRadeBypassRmatch);
+            this.grpRadeDiagnostics.Controls.Add(this.chkRadeBypassEncoder);
+            this.grpRadeDiagnostics.Controls.Add(this.chkRadeBypassAll);
+            this.grpRadeDiagnostics.Location = new System.Drawing.Point(352, 228);
+            this.grpRadeDiagnostics.Name = "grpRadeDiagnostics";
+            this.grpRadeDiagnostics.Size = new System.Drawing.Size(340, 160);
+            this.grpRadeDiagnostics.TabIndex = 49;
+            this.grpRadeDiagnostics.TabStop = false;
+            this.grpRadeDiagnostics.Text = "Diagnostics -- pipeline bypass (boots OFF)";
+            //
+            // chkRadeBypassMicDsp
+            //
+            this.chkRadeBypassMicDsp.AutoSize = true;
+            this.chkRadeBypassMicDsp.Image = null;
+            this.chkRadeBypassMicDsp.Location = new System.Drawing.Point(16, 22);
+            this.chkRadeBypassMicDsp.Name = "chkRadeBypassMicDsp";
+            this.chkRadeBypassMicDsp.Size = new System.Drawing.Size(84, 17);
+            this.chkRadeBypassMicDsp.TabIndex = 0;
+            this.chkRadeBypassMicDsp.Text = "Bypass Mic DSP";
+            this.toolTip1.SetToolTip(this.chkRadeBypassMicDsp, "Skip RNNoise/AGC/EQ, feed raw mic audio straight to rate-matching. Diagnostic only.");
+            this.chkRadeBypassMicDsp.UseVisualStyleBackColor = true;
+            this.chkRadeBypassMicDsp.CheckedChanged += new System.EventHandler(this.chkRadeBypassMicDsp_CheckedChanged);
+            //
+            // chkRadeBypassEncoderCore
+            //
+            this.chkRadeBypassEncoderCore.AutoSize = true;
+            this.chkRadeBypassEncoderCore.Image = null;
+            this.chkRadeBypassEncoderCore.Location = new System.Drawing.Point(16, 48);
+            this.chkRadeBypassEncoderCore.Name = "chkRadeBypassEncoderCore";
+            this.chkRadeBypassEncoderCore.Size = new System.Drawing.Size(114, 17);
+            this.chkRadeBypassEncoderCore.TabIndex = 1;
+            this.chkRadeBypassEncoderCore.Text = "Bypass Encoder Core";
+            this.toolTip1.SetToolTip(this.chkRadeBypassEncoderCore, "Skip rade_tx's neural encoder core specifically. Diagnostic only.");
+            this.chkRadeBypassEncoderCore.UseVisualStyleBackColor = true;
+            this.chkRadeBypassEncoderCore.CheckedChanged += new System.EventHandler(this.chkRadeBypassEncoderCore_CheckedChanged);
+            //
+            // chkRadeBypassRmatch
+            //
+            this.chkRadeBypassRmatch.AutoSize = true;
+            this.chkRadeBypassRmatch.Image = null;
+            this.chkRadeBypassRmatch.Location = new System.Drawing.Point(16, 74);
+            this.chkRadeBypassRmatch.Name = "chkRadeBypassRmatch";
+            this.chkRadeBypassRmatch.Size = new System.Drawing.Size(102, 17);
+            this.chkRadeBypassRmatch.TabIndex = 2;
+            this.chkRadeBypassRmatch.Text = "Bypass Rate Match";
+            this.toolTip1.SetToolTip(this.chkRadeBypassRmatch, "Skip the rate-matching stage between the encoder core and the modem. Diagnostic only.");
+            this.chkRadeBypassRmatch.UseVisualStyleBackColor = true;
+            this.chkRadeBypassRmatch.CheckedChanged += new System.EventHandler(this.chkRadeBypassRmatch_CheckedChanged);
+            //
+            // chkRadeBypassEncoder
+            //
+            this.chkRadeBypassEncoder.AutoSize = true;
+            this.chkRadeBypassEncoder.Image = null;
+            this.chkRadeBypassEncoder.Location = new System.Drawing.Point(16, 100);
+            this.chkRadeBypassEncoder.Name = "chkRadeBypassEncoder";
+            this.chkRadeBypassEncoder.Size = new System.Drawing.Size(126, 17);
+            this.chkRadeBypassEncoder.TabIndex = 3;
+            this.chkRadeBypassEncoder.Text = "Bypass Entire Encoder";
+            this.toolTip1.SetToolTip(this.chkRadeBypassEncoder, "Skip the whole encoder chain -- mic DSP output goes straight to mic_io. Diagnostic only.");
+            this.chkRadeBypassEncoder.UseVisualStyleBackColor = true;
+            this.chkRadeBypassEncoder.CheckedChanged += new System.EventHandler(this.chkRadeBypassEncoder_CheckedChanged);
+            //
+            // chkRadeBypassAll
+            //
+            this.chkRadeBypassAll.AutoSize = true;
+            this.chkRadeBypassAll.Image = null;
+            this.chkRadeBypassAll.Location = new System.Drawing.Point(16, 126);
+            this.chkRadeBypassAll.Name = "chkRadeBypassAll";
+            this.chkRadeBypassAll.Size = new System.Drawing.Size(80, 17);
+            this.chkRadeBypassAll.TabIndex = 4;
+            this.chkRadeBypassAll.Text = "Bypass ALL";
+            this.toolTip1.SetToolTip(this.chkRadeBypassAll, "Full bypass -- TX path becomes a transparent passthrough. Diagnostic only.");
+            this.chkRadeBypassAll.UseVisualStyleBackColor = true;
+            this.chkRadeBypassAll.CheckedChanged += new System.EventHandler(this.chkRadeBypassAll_CheckedChanged);
+            //
+            // tpDSPRADE
+            //
+            this.tpDSPRADE.Controls.Add(this.grpRadeMicCond);
+            this.tpDSPRADE.Controls.Add(this.grpRadeRX1Core);
+            this.tpDSPRADE.Controls.Add(this.grpRadeProtocol);
+            this.tpDSPRADE.Controls.Add(this.grpRadeDiagnostics);
+            this.tpDSPRADE.Location = new System.Drawing.Point(4, 22);
+            this.tpDSPRADE.Name = "tpDSPRADE";
+            this.tpDSPRADE.Padding = new System.Windows.Forms.Padding(3);
+            this.tpDSPRADE.Size = new System.Drawing.Size(724, 414);
+            this.tpDSPRADE.TabIndex = 13;
+            this.tpDSPRADE.Text = "RADE";
+
             //
             // chkNR3_RNNoiseFixedGain
             //
@@ -72818,8 +73477,26 @@
             this.grpRNnoise.ResumeLayout(false);
             this.grpFreeDV.ResumeLayout(false);
             this.grpFreeDV.PerformLayout();
-            this.grpRADE.ResumeLayout(false);
-            this.grpRADE.PerformLayout();
+            this.grpRadeMicCond.ResumeLayout(false);
+            this.grpRadeMicCond.PerformLayout();
+            this.grpRadeRX1Core.ResumeLayout(false);
+            this.grpRadeRX1Core.PerformLayout();
+            this.grpRadeProtocol.ResumeLayout(false);
+            this.grpRadeProtocol.PerformLayout();
+            this.grpRadeDiagnostics.ResumeLayout(false);
+            this.grpRadeDiagnostics.PerformLayout();
+            this.tpDSPRADE.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeMicLevel)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeMicAGCTarget)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQBassFreq)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQBassGain)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidFreq)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidGain)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQMidQ)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleFreq)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleGain)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeEQVol)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeRxLevel)).EndInit();
             this.grpRNnoise.PerformLayout();
             this.grpDSPNR2RX2.ResumeLayout(false);
             this.grpDSPNR2RX2.PerformLayout();
@@ -77735,9 +78412,43 @@
         private GroupBoxTS grpFreeDV;
         private CheckBoxTS chkFreeDVDecode;
         private LabelTS lblFreeDVStatus;
-        private GroupBoxTS grpRADE; // W5TSU: RADE V1 RX decode prototype
-        private CheckBoxTS chkRADEDecode;
-        private LabelTS lblRADEStatus;
+        private System.Windows.Forms.TabPage tpDSPRADE;
+        private GroupBoxTS grpRadeMicCond;
+        private LabelTS lblRadeMicLevel;
+        private NumericUpDownTS udRadeMicLevel;
+        private CheckBoxTS chkRadeMicRNNoise;
+        private CheckBoxTS chkRadeMicAGC;
+        private LabelTS lblRadeMicAGCTarget;
+        private NumericUpDownTS udRadeMicAGCTarget;
+        private CheckBoxTS chkRadeMicEQ;
+        private LabelTS lblRadeEQBass;
+        private NumericUpDownTS udRadeEQBassFreq;
+        private NumericUpDownTS udRadeEQBassGain;
+        private LabelTS lblRadeEQMid;
+        private NumericUpDownTS udRadeEQMidFreq;
+        private NumericUpDownTS udRadeEQMidGain;
+        private NumericUpDownTS udRadeEQMidQ;
+        private LabelTS lblRadeEQTreble;
+        private NumericUpDownTS udRadeEQTrebleFreq;
+        private NumericUpDownTS udRadeEQTrebleGain;
+        private LabelTS lblRadeEQVol;
+        private NumericUpDownTS udRadeEQVol;
+        private GroupBoxTS grpRadeRX1Core;
+        private CheckBoxTS chkRadeRX1Enable;
+        private CheckBoxTS chkRadeRX1Loopback;
+        private LabelTS lblRadeRxLevel;
+        private NumericUpDownTS udRadeRxLevel;
+        private LabelTS lblRadeRX1Status;
+        private GroupBoxTS grpRadeProtocol;
+        private LabelTS lblRadeProtocol;
+        private ComboBoxTS cmbRadeProtocol;
+        private GroupBoxTS grpRadeDiagnostics;
+        private CheckBoxTS chkRadeBypassMicDsp;
+        private CheckBoxTS chkRadeBypassEncoderCore;
+        private CheckBoxTS chkRadeBypassRmatch;
+        private CheckBoxTS chkRadeBypassEncoder;
+        private CheckBoxTS chkRadeBypassAll;
+
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;
         private LabelTS labelTS446;

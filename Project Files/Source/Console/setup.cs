@@ -2465,7 +2465,8 @@ namespace Thetis
             radANF2PreAGC_CheckedChanged(this, e);
             chkNR3_RNNoiseFixedGain_CheckedChanged(this, e);
             chkFreeDVDecode_CheckedChanged(this, e); // W5TSU: FreeDV RX decode
-            chkRADEDecode_CheckedChanged(this, e); // W5TSU: RADE V1 RX decode
+            chkRadeRX1Enable_CheckedChanged(this, e); // W5TSU: RADE V1 RX decode
+            InitRadePanelFromBackend(); // W5TSU: RADE core Setup panel -- sync all other new controls to backend state
             chkMNFAutoIncrease_CheckedChanged(this, e);
             udCWEdgeLength_ValueChanged(this, e);
             chkShowAGC_CheckedChanged(this, e);
@@ -36746,9 +36747,15 @@ namespace Thetis
         // yet (Documentation/FreeDV-Plan.md, Stage C) -- this is a control surface for
         // testing it, not a claim it works.
         private System.Windows.Forms.Timer _rade_status_timer = null;
-        private void chkRADEDecode_CheckedChanged(object sender, EventArgs e)
+        // W5TSU: RADE core Setup panel (sub-project 1 of 5, see
+        // docs/superpowers/specs/2026-08-24-rade-setup-panel-design.md).
+        // chkRADEDecode/lblRADEStatus (the old small grpRADE box on the
+        // FreeDV tab) are renamed chkRadeRX1Enable/lblRadeRX1Status and
+        // moved into the new dedicated "RADE" tab -- same backend
+        // (RXRadaeEnabled), same status-timer logic, just relocated.
+        private void chkRadeRX1Enable_CheckedChanged(object sender, EventArgs e)
         {
-            console.radio.GetDSPRX(0, 0).RXRadaeEnabled = chkRADEDecode.Checked ? 1 : 0;
+            console.radio.GetDSPRX(0, 0).RXRadaeEnabled = chkRadeRX1Enable.Checked ? 1 : 0;
 
             if (_rade_status_timer == null)
             {
@@ -36756,12 +36763,12 @@ namespace Thetis
                 _rade_status_timer.Interval = 500;
                 _rade_status_timer.Tick += radeStatusTimer_Tick;
             }
-            _rade_status_timer.Enabled = chkRADEDecode.Checked;
+            _rade_status_timer.Enabled = chkRadeRX1Enable.Checked;
 
-            if (!chkRADEDecode.Checked)
+            if (!chkRadeRX1Enable.Checked)
             {
-                lblRADEStatus.Text = "off";
-                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+                lblRadeRX1Status.Text = "off";
+                lblRadeRX1Status.ForeColor = System.Drawing.SystemColors.ControlText;
             }
         }
 
@@ -36769,8 +36776,8 @@ namespace Thetis
         {
             if (!console.PowerOn)
             {
-                lblRADEStatus.Text = "radio off";
-                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+                lblRadeRX1Status.Text = "radio off";
+                lblRadeRX1Status.ForeColor = System.Drawing.SystemColors.ControlText;
                 return;
             }
 
@@ -36778,14 +36785,223 @@ namespace Thetis
             if (sync)
             {
                 int snr = WDSP.GetRadaeSnrDb(0);
-                lblRADEStatus.Text = string.Format("SYNC   SNR {0} dB", snr);
-                lblRADEStatus.ForeColor = System.Drawing.Color.Green;
+                lblRadeRX1Status.Text = string.Format("SYNC   SNR {0} dB", snr);
+                lblRadeRX1Status.ForeColor = System.Drawing.Color.Green;
             }
             else
             {
-                lblRADEStatus.Text = "no sync";
-                lblRADEStatus.ForeColor = System.Drawing.SystemColors.ControlText;
+                lblRadeRX1Status.Text = "no sync";
+                lblRadeRX1Status.ForeColor = System.Drawing.SystemColors.ControlText;
             }
+        }
+
+        // W5TSU: RX1 RADE loopback bridge (ZZDL's UI equivalent, RX1-only
+        // matching this prototype's scope) -- see radae.c's
+        // SetRadaeLoopbackEnabled.
+        private void chkRadeRX1Loopback_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeLoopbackEnabled(0, chkRadeRX1Loopback.Checked ? 1 : 0);
+        }
+
+        // W5TSU: RX decoder input gain. Wired to SetRadaeRxScale specifically
+        // -- SetRadaeRxDialScale (a related but separate function) has zero
+        // callers anywhere in this codebase, confirmed before wiring this;
+        // left untouched, not exposed here.
+        private void udRadeRxLevel_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeRxScale(0, (double)udRadeRxLevel.Value);
+        }
+
+        // W5TSU: mic/TX conditioning controls (RADE core Setup panel).
+        private void udRadeMicLevel_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicScale((double)udRadeMicLevel.Value);
+        }
+
+        private void chkRadeMicRNNoise_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicRNNoiseEnabled(chkRadeMicRNNoise.Checked ? 1 : 0);
+        }
+
+        private void chkRadeMicAGC_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicAGCEnabled(chkRadeMicAGC.Checked ? 1 : 0);
+        }
+
+        private void udRadeMicAGCTarget_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicAGCTargetLufs((double)udRadeMicAGCTarget.Value);
+        }
+
+        private void chkRadeMicEQ_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQEnabled(chkRadeMicEQ.Checked ? 1 : 0);
+        }
+
+        private void udRadeEQBassFreq_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQBass((double)udRadeEQBassFreq.Value, (double)udRadeEQBassGain.Value);
+        }
+
+        private void udRadeEQBassGain_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQBass((double)udRadeEQBassFreq.Value, (double)udRadeEQBassGain.Value);
+        }
+
+        private void udRadeEQMidFreq_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQMid((double)udRadeEQMidFreq.Value, (double)udRadeEQMidGain.Value, (double)udRadeEQMidQ.Value);
+        }
+
+        private void udRadeEQMidGain_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQMid((double)udRadeEQMidFreq.Value, (double)udRadeEQMidGain.Value, (double)udRadeEQMidQ.Value);
+        }
+
+        private void udRadeEQMidQ_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQMid((double)udRadeEQMidFreq.Value, (double)udRadeEQMidGain.Value, (double)udRadeEQMidQ.Value);
+        }
+
+        private void udRadeEQTrebleFreq_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQTreble((double)udRadeEQTrebleFreq.Value, (double)udRadeEQTrebleGain.Value);
+        }
+
+        private void udRadeEQTrebleGain_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQTreble((double)udRadeEQTrebleFreq.Value, (double)udRadeEQTrebleGain.Value);
+        }
+
+        private void udRadeEQVol_ValueChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeMicEQVol((double)udRadeEQVol.Value);
+        }
+
+        // W5TSU: protocol version selector.
+        private void cmbRadeProtocol_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeProtocolV2(0, cmbRadeProtocol.SelectedIndex == 1 ? 1 : 0);
+        }
+
+        // W5TSU: diagnostics bypass ladder ("boots OFF", matching sv1eia's
+        // own framing -- see docs/superpowers/specs/2026-08-24-rade-setup-panel-design.md).
+        private void chkRadeBypassMicDsp_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeBypassMicDsp(chkRadeBypassMicDsp.Checked ? 1 : 0);
+        }
+
+        private void chkRadeBypassEncoderCore_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeBypassEncoderCore(chkRadeBypassEncoderCore.Checked ? 1 : 0);
+        }
+
+        private void chkRadeBypassRmatch_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeBypassRmatch(chkRadeBypassRmatch.Checked ? 1 : 0);
+        }
+
+        private void chkRadeBypassEncoder_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeBypassEncoder(chkRadeBypassEncoder.Checked ? 1 : 0);
+        }
+
+        private void chkRadeBypassAll_CheckedChanged(object sender, EventArgs e)
+        {
+            WDSP.SetRadaeBypassAll(chkRadeBypassAll.Checked ? 1 : 0);
+        }
+
+        // W5TSU: reads current backend state into every new RADE-panel control
+        // on tab load, so the panel reflects reality even if something was
+        // changed via CAT while Setup was closed. No persistence across a
+        // Thetis restart (out of scope, see the spec doc) -- this only syncs
+        // what's currently live in the running process.
+        private void InitRadePanelFromBackend()
+        {
+            chkRadeRX1Loopback.CheckedChanged -= chkRadeRX1Loopback_CheckedChanged;
+            chkRadeRX1Loopback.Checked = WDSP.GetRadaeLoopbackEnabled(0) != 0;
+            chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
+
+            udRadeRxLevel.ValueChanged -= udRadeRxLevel_ValueChanged;
+            udRadeRxLevel.Value = (decimal)WDSP.GetRadaeRxScale(0);
+            udRadeRxLevel.ValueChanged += udRadeRxLevel_ValueChanged;
+
+            udRadeMicLevel.ValueChanged -= udRadeMicLevel_ValueChanged;
+            udRadeMicLevel.Value = (decimal)WDSP.GetRadaeMicScale();
+            udRadeMicLevel.ValueChanged += udRadeMicLevel_ValueChanged;
+
+            chkRadeMicRNNoise.CheckedChanged -= chkRadeMicRNNoise_CheckedChanged;
+            chkRadeMicRNNoise.Checked = WDSP.GetRadaeMicRNNoiseEnabled() != 0;
+            chkRadeMicRNNoise.CheckedChanged += chkRadeMicRNNoise_CheckedChanged;
+
+            chkRadeMicAGC.CheckedChanged -= chkRadeMicAGC_CheckedChanged;
+            chkRadeMicAGC.Checked = WDSP.GetRadaeMicAGCEnabled() != 0;
+            chkRadeMicAGC.CheckedChanged += chkRadeMicAGC_CheckedChanged;
+
+            udRadeMicAGCTarget.ValueChanged -= udRadeMicAGCTarget_ValueChanged;
+            udRadeMicAGCTarget.Value = (decimal)WDSP.GetRadaeMicAGCTargetLufs();
+            udRadeMicAGCTarget.ValueChanged += udRadeMicAGCTarget_ValueChanged;
+
+            chkRadeMicEQ.CheckedChanged -= chkRadeMicEQ_CheckedChanged;
+            chkRadeMicEQ.Checked = WDSP.GetRadaeMicEQEnabled() != 0;
+            chkRadeMicEQ.CheckedChanged += chkRadeMicEQ_CheckedChanged;
+
+            double bassFreq, bassGain, midFreq, midGain, midQ, trebleFreq, trebleGain;
+            WDSP.GetRadaeMicEQBass(out bassFreq, out bassGain);
+            WDSP.GetRadaeMicEQMid(out midFreq, out midGain, out midQ);
+            WDSP.GetRadaeMicEQTreble(out trebleFreq, out trebleGain);
+
+            udRadeEQBassFreq.ValueChanged -= udRadeEQBassFreq_ValueChanged;
+            udRadeEQBassFreq.Value = (decimal)bassFreq;
+            udRadeEQBassFreq.ValueChanged += udRadeEQBassFreq_ValueChanged;
+            udRadeEQBassGain.ValueChanged -= udRadeEQBassGain_ValueChanged;
+            udRadeEQBassGain.Value = (decimal)bassGain;
+            udRadeEQBassGain.ValueChanged += udRadeEQBassGain_ValueChanged;
+
+            udRadeEQMidFreq.ValueChanged -= udRadeEQMidFreq_ValueChanged;
+            udRadeEQMidFreq.Value = (decimal)midFreq;
+            udRadeEQMidFreq.ValueChanged += udRadeEQMidFreq_ValueChanged;
+            udRadeEQMidGain.ValueChanged -= udRadeEQMidGain_ValueChanged;
+            udRadeEQMidGain.Value = (decimal)midGain;
+            udRadeEQMidGain.ValueChanged += udRadeEQMidGain_ValueChanged;
+            udRadeEQMidQ.ValueChanged -= udRadeEQMidQ_ValueChanged;
+            udRadeEQMidQ.Value = (decimal)midQ;
+            udRadeEQMidQ.ValueChanged += udRadeEQMidQ_ValueChanged;
+
+            udRadeEQTrebleFreq.ValueChanged -= udRadeEQTrebleFreq_ValueChanged;
+            udRadeEQTrebleFreq.Value = (decimal)trebleFreq;
+            udRadeEQTrebleFreq.ValueChanged += udRadeEQTrebleFreq_ValueChanged;
+            udRadeEQTrebleGain.ValueChanged -= udRadeEQTrebleGain_ValueChanged;
+            udRadeEQTrebleGain.Value = (decimal)trebleGain;
+            udRadeEQTrebleGain.ValueChanged += udRadeEQTrebleGain_ValueChanged;
+
+            udRadeEQVol.ValueChanged -= udRadeEQVol_ValueChanged;
+            udRadeEQVol.Value = (decimal)WDSP.GetRadaeMicEQVol();
+            udRadeEQVol.ValueChanged += udRadeEQVol_ValueChanged;
+
+            cmbRadeProtocol.SelectedIndexChanged -= cmbRadeProtocol_SelectedIndexChanged;
+            cmbRadeProtocol.SelectedIndex = WDSP.GetRadaeProtocolV2(0) != 0 ? 1 : 0;
+            cmbRadeProtocol.SelectedIndexChanged += cmbRadeProtocol_SelectedIndexChanged;
+
+            chkRadeBypassMicDsp.CheckedChanged -= chkRadeBypassMicDsp_CheckedChanged;
+            chkRadeBypassMicDsp.Checked = WDSP.GetRadaeBypassMicDsp() != 0;
+            chkRadeBypassMicDsp.CheckedChanged += chkRadeBypassMicDsp_CheckedChanged;
+
+            chkRadeBypassEncoderCore.CheckedChanged -= chkRadeBypassEncoderCore_CheckedChanged;
+            chkRadeBypassEncoderCore.Checked = WDSP.GetRadaeBypassEncoderCore() != 0;
+            chkRadeBypassEncoderCore.CheckedChanged += chkRadeBypassEncoderCore_CheckedChanged;
+
+            chkRadeBypassRmatch.CheckedChanged -= chkRadeBypassRmatch_CheckedChanged;
+            chkRadeBypassRmatch.Checked = WDSP.GetRadaeBypassRmatch() != 0;
+            chkRadeBypassRmatch.CheckedChanged += chkRadeBypassRmatch_CheckedChanged;
+
+            chkRadeBypassEncoder.CheckedChanged -= chkRadeBypassEncoder_CheckedChanged;
+            chkRadeBypassEncoder.Checked = WDSP.GetRadaeBypassEncoder() != 0;
+            chkRadeBypassEncoder.CheckedChanged += chkRadeBypassEncoder_CheckedChanged;
+
+            chkRadeBypassAll.CheckedChanged -= chkRadeBypassAll_CheckedChanged;
+            chkRadeBypassAll.Checked = WDSP.GetRadaeBypassAll() != 0;
+            chkRadeBypassAll.CheckedChanged += chkRadeBypassAll_CheckedChanged;
         }
 
         private void pbCMasio_InOut_Info_Click(object sender, EventArgs e)

@@ -382,6 +382,106 @@ namespace Thetis
 
         [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeEooCallsign", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern int GetRadaeEooCallsign(StringBuilder dst, int max);
+
+        // W5TSU: RADE core Setup panel -- protocol version selector.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeProtocolV2", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeProtocolV2(int rx, int on);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeProtocolV2", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeProtocolV2(int rx);
+
+        // W5TSU: RADE core Setup panel -- RX/mic level scaling.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicScale", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicScale(double scale);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicScale", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double GetRadaeMicScale();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeRxScale", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeRxScale(int rx, double scale);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeRxScale", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double GetRadaeRxScale(int rx);
+
+        // W5TSU: RADE core Setup panel -- pre-encoder mic conditioning.
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicRNNoiseEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicRNNoiseEnabled(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicRNNoiseEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeMicRNNoiseEnabled();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicAGCEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicAGCEnabled(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicAGCEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeMicAGCEnabled();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicAGCTargetLufs", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicAGCTargetLufs(double target_lufs);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicAGCTargetLufs", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double GetRadaeMicAGCTargetLufs();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicEQEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicEQEnabled(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicEQEnabled", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeMicEQEnabled();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicEQBass", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicEQBass(double freq_hz, double gain_db);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicEQBass", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void GetRadaeMicEQBass(out double freq_hz, out double gain_db);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicEQMid", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicEQMid(double freq_hz, double gain_db, double q);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicEQMid", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void GetRadaeMicEQMid(out double freq_hz, out double gain_db, out double q);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicEQTreble", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicEQTreble(double freq_hz, double gain_db);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicEQTreble", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void GetRadaeMicEQTreble(out double freq_hz, out double gain_db);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeMicEQVol", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeMicEQVol(double gain_db);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeMicEQVol", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double GetRadaeMicEQVol();
+
+        // W5TSU: RADE core Setup panel -- diagnostic bypass ladder ("boots OFF").
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeBypassMicDsp", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeBypassMicDsp(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeBypassMicDsp", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeBypassMicDsp();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeBypassEncoderCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeBypassEncoderCore(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeBypassEncoderCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeBypassEncoderCore();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeBypassRmatch", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeBypassRmatch(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeBypassRmatch", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeBypassRmatch();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeBypassEncoder", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeBypassEncoder(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeBypassEncoder", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeBypassEncoder();
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "SetRadaeBypassAll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SetRadaeBypassAll(int enable);
+
+        [DllImport("ChannelMaster.dll", EntryPoint = "GetRadaeBypassAll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int GetRadaeBypassAll();
         //
 
         // W5TSU: DEBUG - temporary diagnostic dump control, remove before merge.

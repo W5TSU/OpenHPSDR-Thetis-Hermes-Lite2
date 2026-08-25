@@ -1000,6 +1000,19 @@ PORT void SetRadaeRxDialScale(int rx, double scale)
     g_radae_rx_dial_scale[rx] = (float)scale;
 }
 
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT double GetRadaeMicScale(void)         { return (double)g_radae_mic_scale; }
+PORT double GetRadaeRxScale(int rx)
+{
+    if (!radae_rx_valid(rx)) return 1.0;
+    return (double)g_radae_rx_scale[rx];
+}
+PORT double GetRadaeRxDialScale(int rx)
+{
+    if (!radae_rx_valid(rx)) return 1.0;
+    return (double)g_radae_rx_dial_scale[rx];
+}
+
 PORT void SetRadaeRxAFGain(int rx, double gain)
 {
     if (!radae_rx_valid(rx)) return;
@@ -1025,6 +1038,15 @@ PORT void SetRadaeMicEQBass(double f, double g)   { radae_micdsp_set_eq_bass(f, 
 PORT void SetRadaeMicEQMid(double f, double g, double q) { radae_micdsp_set_eq_mid(f, g, q); }
 PORT void SetRadaeMicEQTreble(double f, double g) { radae_micdsp_set_eq_treble(f, g); }
 PORT void SetRadaeMicEQVol(double db)             { radae_micdsp_set_eq_vol(db); }
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT int    GetRadaeMicRNNoiseEnabled(void)       { return radae_micdsp_get_rnnoise_enabled(); }
+PORT int    GetRadaeMicAGCEnabled(void)           { return radae_micdsp_get_agc_enabled(); }
+PORT double GetRadaeMicAGCTargetLufs(void)        { return radae_micdsp_get_agc_target_lufs(); }
+PORT int    GetRadaeMicEQEnabled(void)            { return radae_micdsp_get_eq_enabled(); }
+PORT void   GetRadaeMicEQBass(double* f, double* g)   { radae_micdsp_get_eq_bass(f, g); }
+PORT void   GetRadaeMicEQMid(double* f, double* g, double* q) { radae_micdsp_get_eq_mid(f, g, q); }
+PORT void   GetRadaeMicEQTreble(double* f, double* g) { radae_micdsp_get_eq_treble(f, g); }
+PORT double GetRadaeMicEQVol(void)                { return radae_micdsp_get_eq_vol(); }
 
 /* ============================================================
  * Diagnostic bypass flags (TX-side, single).
@@ -1034,6 +1056,12 @@ PORT void SetRadaeBypassEncoderCore(int enable)   { _InterlockedExchange(&g_rada
 PORT void SetRadaeBypassRmatch(int enable)        { _InterlockedExchange(&g_radae_bypass_rmatch, enable ? 1 : 0); }
 PORT void SetRadaeBypassEncoder(int enable)       { _InterlockedExchange(&g_radae_bypass_encoder, enable ? 1 : 0); }
 PORT void SetRadaeBypassAll(int enable)           { _InterlockedExchange(&g_radae_bypass_all,    enable ? 1 : 0); }
+// W5TSU: getters, for the Setup UI panel to read current state on tab load.
+PORT int GetRadaeBypassMicDsp(void)        { return (int)_InterlockedAnd(&g_radae_bypass_micdsp, 1); }
+PORT int GetRadaeBypassEncoderCore(void)   { return (int)_InterlockedAnd(&g_radae_bypass_core,   1); }
+PORT int GetRadaeBypassRmatch(void)        { return (int)_InterlockedAnd(&g_radae_bypass_rmatch, 1); }
+PORT int GetRadaeBypassEncoder(void)       { return (int)_InterlockedAnd(&g_radae_bypass_encoder, 1); }
+PORT int GetRadaeBypassAll(void)           { return (int)_InterlockedAnd(&g_radae_bypass_all,    1); }
 
 PORT void SetRadaeEooCallsign(const char* callsign)
 {

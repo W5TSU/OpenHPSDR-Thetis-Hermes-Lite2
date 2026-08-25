@@ -407,6 +407,54 @@ void radae_micdsp_set_eq_vol(double db)
 }
 
 /* ============================================================
+ * Getters -- W5TSU, added for the Setup UI panel (see radae_micdsp.h)
+ * ============================================================ */
+
+int radae_micdsp_get_rnnoise_enabled(void)
+{
+    return (int)_InterlockedAnd(&g_rnnoise_enable, 1);
+}
+
+int radae_micdsp_get_agc_enabled(void)
+{
+    return (int)_InterlockedAnd(&g_agc_enable, 1);
+}
+
+double radae_micdsp_get_agc_target_lufs(void)
+{
+    return g_agc_target_lufs;
+}
+
+int radae_micdsp_get_eq_enabled(void)
+{
+    return (int)_InterlockedAnd(&g_eq_enable, 1);
+}
+
+void radae_micdsp_get_eq_bass(double* freq_hz, double* gain_db)
+{
+    if (freq_hz) *freq_hz = g_eq_bass_freq;
+    if (gain_db) *gain_db = g_eq_bass_gain;
+}
+
+void radae_micdsp_get_eq_mid(double* freq_hz, double* gain_db, double* q)
+{
+    if (freq_hz) *freq_hz = g_eq_mid_freq;
+    if (gain_db) *gain_db = g_eq_mid_gain;
+    if (q)       *q       = g_eq_mid_q;
+}
+
+void radae_micdsp_get_eq_treble(double* freq_hz, double* gain_db)
+{
+    if (freq_hz) *freq_hz = g_eq_treble_freq;
+    if (gain_db) *gain_db = g_eq_treble_gain;
+}
+
+double radae_micdsp_get_eq_vol(void)
+{
+    return g_eq_vol_gain_db;
+}
+
+/* ============================================================
  * EQ rebuild (audio-thread).  Runs at most once per UI change.
  * ============================================================ */
 

@@ -65,6 +65,18 @@ void radae_micdsp_set_eq_mid (double freq_hz, double gain_db, double q);
 void radae_micdsp_set_eq_treble(double freq_hz, double gain_db);
 void radae_micdsp_set_eq_vol(double gain_db);
 
+// W5TSU: getters -- Setup UI panel needs to read current state back on tab
+// load (so it reflects reality even if changed via CAT while Setup was
+// closed). All of these just return already-tracked state, no new DSP.
+int    radae_micdsp_get_rnnoise_enabled(void);
+int    radae_micdsp_get_agc_enabled(void);
+double radae_micdsp_get_agc_target_lufs(void);
+int    radae_micdsp_get_eq_enabled(void);
+void   radae_micdsp_get_eq_bass(double* freq_hz, double* gain_db);
+void   radae_micdsp_get_eq_mid (double* freq_hz, double* gain_db, double* q);
+void   radae_micdsp_get_eq_treble(double* freq_hz, double* gain_db);
+double radae_micdsp_get_eq_vol(void);
+
 /* Reset all stage state.  Called from the MOX RX->TX edge in radae.c
  * so each over starts deterministic: RNNoise first-frame re-primed,
  * AGC current/target gain zeroed and ebur128 + WebRTC limiter state
