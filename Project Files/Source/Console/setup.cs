@@ -36807,15 +36807,30 @@ namespace Thetis
         // -- SetRadaeRxDialScale (a related but separate function) has zero
         // callers anywhere in this codebase, confirmed before wiring this;
         // left untouched, not exposed here.
+        //
+        // SetRadaeRxScale takes a *linear* gain factor (see radae.c: "Per-RX
+        // linear gain factors"), clamped there to (0, 100] -- but this control
+        // is labeled and spun as a signed dB value (-40..+40). The -40..+40dB
+        // range maps exactly onto that 0.01..100.0 linear clamp (20*log10),
+        // so the intended design was clearly dB with a log/exp conversion at
+        // the boundary; it was just never applied. Bug found via a live CAT
+        // round-trip test: setting a negative dB value silently reset the
+        // gain to unity (any scale <= 0.0 defaults to 1.0 in radae.c), so the
+        // entire negative half of the spinner's range was dead. Fixed here by
+        // converting dB -> linear before the call. // W5TSU
         private void udRadeRxLevel_ValueChanged(object sender, EventArgs e)
         {
-            WDSP.SetRadaeRxScale(0, (double)udRadeRxLevel.Value);
+            double linear = Math.Pow(10.0, (double)udRadeRxLevel.Value / 20.0);
+            WDSP.SetRadaeRxScale(0, linear);
         }
 
         // W5TSU: mic/TX conditioning controls (RADE core Setup panel).
+        // Same dB<->linear mismatch as udRadeRxLevel_ValueChanged above --
+        // SetRadaeMicScale is also a linear gain factor. // W5TSU
         private void udRadeMicLevel_ValueChanged(object sender, EventArgs e)
         {
-            WDSP.SetRadaeMicScale((double)udRadeMicLevel.Value);
+            double linear = Math.Pow(10.0, (double)udRadeMicLevel.Value / 20.0);
+            WDSP.SetRadaeMicScale(linear);
         }
 
         private void chkRadeMicRNNoise_CheckedChanged(object sender, EventArgs e)
@@ -36922,12 +36937,16 @@ namespace Thetis
             chkRadeRX1Loopback.Checked = WDSP.GetRadaeLoopbackEnabled(0) != 0;
             chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
 
+            // W5TSU: linear -> dB, inverse of udRadeRxLevel_ValueChanged's
+            // conversion above -- see that handler's comment for why.
             udRadeRxLevel.ValueChanged -= udRadeRxLevel_ValueChanged;
-            udRadeRxLevel.Value = (decimal)WDSP.GetRadaeRxScale(0);
+            double rxDb = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeRxScale(0)));
+            udRadeRxLevel.Value = (decimal)Math.Max(-40.0, Math.Min(40.0, rxDb));
             udRadeRxLevel.ValueChanged += udRadeRxLevel_ValueChanged;
 
             udRadeMicLevel.ValueChanged -= udRadeMicLevel_ValueChanged;
-            udRadeMicLevel.Value = (decimal)WDSP.GetRadaeMicScale();
+            double micDb = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeMicScale()));
+            udRadeMicLevel.Value = (decimal)Math.Max(-40.0, Math.Min(40.0, micDb));
             udRadeMicLevel.ValueChanged += udRadeMicLevel_ValueChanged;
 
             chkRadeMicRNNoise.CheckedChanged -= chkRadeMicRNNoise_CheckedChanged;

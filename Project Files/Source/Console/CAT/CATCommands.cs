@@ -7578,19 +7578,25 @@ namespace Thetis
         // Reads or sets the RADE mic-conditioning input level (ChannelMaster/
         // radae.c SetRadaeMicScale/GetRadaeMicScale) -- Setup DSP/RADE panel's
         // "Mic Level (dB)" field. Signed 2-digit field ("+05"/"-05"), clamped to
-        // the same -40..+40 range as the udRadeMicLevel spinner. // W5TSU
+        // the same -40..+40 range as the udRadeMicLevel spinner.
+        // SetRadaeMicScale/GetRadaeMicScale take a *linear* gain factor, not
+        // dB (see setup.cs's udRadeMicLevel_ValueChanged comment for the full
+        // story -- found via a live CAT round-trip test: a negative dB value
+        // sent straight through silently reset the gain to unity). Converts
+        // dB<->linear here the same way. // W5TSU
         public string ZZEC(string s)
         {
             if (s.Length == parser.nSet)
             {
                 int n = Convert.ToInt32(s);
                 n = Math.Max(-40, Math.Min(40, n));
-                WDSP.SetRadaeMicScale(n);
+                WDSP.SetRadaeMicScale(Math.Pow(10.0, n / 20.0));
                 return "";
             }
             else if (s.Length == parser.nGet)
             {
-                int n = (int)Math.Round(WDSP.GetRadaeMicScale());
+                double db = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeMicScale()));
+                int n = (int)Math.Round(Math.Max(-40.0, Math.Min(40.0, db)));
                 string sign = n < 0 ? "-" : "+";
                 return sign + AddLeadingZeros(Math.Abs(n), 2);
             }
@@ -7808,7 +7814,9 @@ namespace Thetis
         // radae.c SetRadaeRxScale/GetRadaeRxScale) -- Setup DSP/RADE panel's
         // RX1 Core "RX Level (dB)" field. RX1 only, matching the panel's
         // current single-channel scope (rx index 0). Signed 2-digit field,
-        // clamped to the same -40..+40 range as udRadeRxLevel. // W5TSU
+        // clamped to the same -40..+40 range as udRadeRxLevel.
+        // SetRadaeRxScale/GetRadaeRxScale take a *linear* gain factor, not dB
+        // -- same dB<->linear conversion as ZZEC, see its comment. // W5TSU
         public string ZZEO(string s)
         {
             const int rx = 0;
@@ -7816,12 +7824,13 @@ namespace Thetis
             {
                 int n = Convert.ToInt32(s);
                 n = Math.Max(-40, Math.Min(40, n));
-                WDSP.SetRadaeRxScale(rx, n);
+                WDSP.SetRadaeRxScale(rx, Math.Pow(10.0, n / 20.0));
                 return "";
             }
             else if (s.Length == parser.nGet)
             {
-                int n = (int)Math.Round(WDSP.GetRadaeRxScale(rx));
+                double db = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeRxScale(rx)));
+                int n = (int)Math.Round(Math.Max(-40.0, Math.Min(40.0, db)));
                 string sign = n < 0 ? "-" : "+";
                 return sign + AddLeadingZeros(Math.Abs(n), 2);
             }
