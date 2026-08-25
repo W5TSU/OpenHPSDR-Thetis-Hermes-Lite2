@@ -2318,6 +2318,74 @@ decision made here. Branch `fork_merge_20260824` (off `trial-merge-upstream`) ha
 the full vendor-drop + build fixes + committed artifacts if that work gets picked
 up; not merged anywhere yet.
 
+### 🟢 Real Setup UI at last: RADE Setup panel, then unified into a "Digital Voice" mode selector with 700E (2026-08-24/25)
+
+Direct follow-through on the "port sv1eia's UI richness onto this fork's own
+architecture" read above — the operator has never had more than two bare
+checkboxes for either mode before this. Run via a brainstorming-first process
+(the "duplicate everything, then fold 700E in" ask decomposed into 5
+independent sub-projects — FreeDV Reporter integration, RX2/dual-channel, and
+panadapter overlays don't exist in this fork's backend at all yet, not just
+missing UI, so those stay future work). Specs and plans live under
+`docs/superpowers/{specs,plans}/` for anyone who wants the full detail; this
+entry is the summary.
+
+**Sub-project 1 — RADE Setup panel** (`3183427f` spec, `3ef97f20`/`34fb2689`
+implementation, `510d90d9` bugfix). New `Setup → DSP → RADE` tab, three group
+boxes: **Mic/TX Conditioning** (mic level, RNNoise, AGC + LUFS target, 3-band
+EQ), **RX1 Core** (protocol select, loopback test, RX level, live sync
+status), **Diagnostics** (the 5-checkbox bypass ladder, boots OFF). Backend
+audit before writing any UI code found the real gap was narrower than it
+looked: RX1 enable/TX enable/loopback/sync-SNR/level-meter/EOO-callsign were
+already fully CAT-wired (all this project's own prior work); only mic
+RNNoise/AGC/EQ, protocol selection, RX/mic gain, and the diagnostics ladder
+had working C-level DSP logic with zero C#/CAT exposure — real wiring work,
+not new signal processing. 16 new CAT commands. **A real bug found via live
+testing**: `SetRadaeMicScale`/`SetRadaeRxScale` take a *linear* gain factor,
+but the new spinners were feeding them dB values directly — fixed at both the
+C# and CAT layers, reverified live (`-40`/`-20`/`0`/`+40` dB all round-trip
+exactly now). Status per its own spec: "Implemented — UI, CAT, and backend
+wiring all built, deployed, and verified live on `hl2winbox`."
+
+**Sub-project 2 — unify 700E into one "Digital Voice" mode selector**
+(`66ff5f94` spec, `3c9f2cef` plan, `b1689338`/`698f4582`/`cb664941`
+implementation). The panel above only covered RADE; this folds FreeDV 700E in
+as a peer rather than leaving it on its own separate, more primitive tab.
+`cmbRadeMode`: **Off / 700E / RADE V1 / RADE V2** — one exclusive combo box
+replacing three independent, previously-uninterlocked enable paths.
+**Mutual exclusion is enforced in `radio.cs`'s property setters themselves**,
+not just the UI — holds regardless of entry point (the new combo, or the old
+per-mode CAT commands used directly). New CAT command `ZZEX` for the unified
+mode index; existing per-subsystem commands (`ZZDK`, `ZZEF`, etc.) keep
+working unchanged, now cross-disarming each other correctly. The old
+`grpFreeDV`/`chkFreeDVDecode` FreeDV tab is removed entirely — same treatment
+sub-project #1 gave the old bare `grpRADE` checkbox. Loopback Test is now
+mode-aware (`SetFDVLoopbackEnabled` for 700E, `SetRadaeLoopbackEnabled` for
+RADE, same checkbox). RADE-only controls (RX Level, Mic/TX Conditioning,
+Diagnostics) gray out for Off/700E, since they have no meaning there. Tab
+renamed **RADE → Digital Voice**.
+
+**Worth being direct about, not just noted in passing**: picking a mode in
+this combo box **arms TX encode, not just RX decode** — the tooltip says so
+plainly ("Arming a mode starts its RX decode and TX encode together; picking
+a different mode disarms the previous one automatically"). This is a real
+behavior change from the old two-checkbox UI, which only ever armed RX. No
+RF goes out from touching the dropdown alone — a real MOX/PTT event is still
+required — but the *next* PTT after picking a mode transmits that mode's
+encoded signal instead of normal SSB, not something the old UI could ever
+do by accident. Worth flagging clearly in the User Guide, not just here.
+
+**Verification status**: a live screenshot of the deployed, merged panel
+(`Documentation/images/digital-voice-setup-panel.png`, captured on
+`hl2winbox` 2026-08-25) confirms all three groups render correctly, the
+`cmbRadeMode` combo shows all four options with **RADE V2** selectable and
+selected, and the RX1 status label updates (reading "no sync" — a real,
+running status read, not a placeholder string). That's UI-render
+confirmation, not a full functional pass — actually cycling through all four
+modes with real signals, confirming the `radio.cs`-level interlock holds
+under real CAT traffic, and a real PTT test of the new TX-arms-on-mode-select
+behavior are all still open next steps, not yet claimed here.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real

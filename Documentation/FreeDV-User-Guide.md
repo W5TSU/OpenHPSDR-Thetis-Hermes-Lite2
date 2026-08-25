@@ -86,16 +86,35 @@ that's only been synced for a few seconds.
 
 ## Using it in Thetis
 
-Both modes live in **Setup → DSP → FreeDV** tab, as two separate group boxes:
+As of 2026-08-25, both modes live in **one place**: **Setup → DSP → Digital Voice**
+(this replaced the old separate "FreeDV"/"RADE" checkboxes and tabs).
 
-- **"FreeDV (prototype)"** — **Decode FreeDV 700E (RX1)** checkbox, with a live sync/SNR
-  status label underneath.
-- **"RADE V1 (prototype)"** — **Decode RADE V1 (RX1)** checkbox, with its own status
-  label.
+![Digital Voice setup panel — Mic/TX Conditioning, RX1 Core with the Mode dropdown, and Diagnostics group boxes](images/digital-voice-setup-panel.png)
 
-Only one should normally be enabled at a time, on RX1.
+Three group boxes:
 
-**Setup, both modes:**
+- **RX1 Core** — the **Mode** dropdown: **Off / 700E / RADE V1 / RADE V2**. Picking
+  a mode arms that mode's RX decode; a live status label underneath shows sync/SNR
+  (or "no sync" when not locked). **RX1 RADE Loopback Test** and **RX Level (dB)**
+  live here too — Loopback Test is mode-aware (it exercises whichever of 700E/RADE
+  is currently selected).
+- **Mic/TX Conditioning** — mic input level, RNNoise denoise, AGC (with an LUFS
+  target), and a 3-band EQ (bass/mid/treble + master volume) applied to the mic
+  signal before it reaches whichever encoder is armed. Only meaningful for RADE
+  V1/V2 currently — grayed out for Off/700E.
+- **Diagnostics** — a 5-step pipeline-bypass ladder for isolating problems in the
+  RADE encode chain (boots OFF, RADE-only, leave alone unless you're debugging).
+
+> ⚠️ **Selecting a mode arms TX, not just RX.** This is a real behavior change from
+> the old two-checkbox UI, which only ever armed RX decode. Picking 700E/RADE V1/V2
+> in the Mode dropdown arms **both** that mode's RX decode **and** TX encode
+> together — picking a different mode (or Off) disarms the previous one
+> automatically. Choosing a mode here does **not** itself transmit anything — a real
+> PTT/MOX event is still required — but the *next* time you key up after picking a
+> mode, that transmission will be digitally encoded instead of normal SSB voice.
+> Leave **Off** selected unless you specifically intend to transmit that mode.
+
+**Setup, all modes:**
 1. RX1 mode: **DIGU** (USB-side digital voice convention).
 2. Filter: roughly 3 kHz wide, centered normally.
 3. Turn **off** NR, NR2, ANF, NB, and squelch — these DSP stages hurt a modem/codec
@@ -104,14 +123,16 @@ Only one should normally be enabled at a time, on RX1.
    referenced from the `thetisctl freedv-scan` tool, or use
    `thetisctl freedv-reporter watch` to auto-tune to live activity reported on
    [FreeDV Reporter](https://qso.freedv.org)).
-5. Check the matching decode box. Audio passes through unmodified until sync is
+5. Pick the mode from the dropdown. Audio passes through unmodified until sync is
    achieved, then switches to decoded speech. For 700E, decoded volume is tuned to
    roughly match passthrough loudness (see "Known issues / recent changes" below) —
    expect a similar level, not a sudden drop, when sync engages.
 
-**Remote/CAT status:** the 700E sync/SNR state is also exposed over CAT as `ZZFD`
-(run flag) / `ZZFS` (sync/SNR query), and RADE V1 status via `ZZDW`/`ZZDZ`, if you're
-scripting or monitoring remotely (e.g. via `thetisctl`).
+**Remote/CAT status:** a unified mode index is now exposed as `ZZEX`; the older
+per-mode commands still work too (700E: `ZZFD` run flag / `ZZFS` sync/SNR; RADE:
+`ZZDW`/`ZZDZ`) and now correctly cross-disarm each other regardless of which
+command armed which mode — useful for scripting/monitoring remotely (e.g. via
+`thetisctl`).
 
 ## Known issues / recent changes
 
@@ -178,6 +199,16 @@ scripting or monitoring remotely (e.g. via `thetisctl`).
   regardless of the mode requested) invalidated the first attempts at closing
   this, now fixed and ready for a real retest. Disarmed by default. See
   `FreeDV-Plan.md` Stage B for the full trace.
+
+- **Unified Digital Voice mode selector (2026-08-24/25).** Replaces the old
+  separate FreeDV/RADE checkboxes and tabs with one `Setup → DSP → Digital
+  Voice` panel and a single Off/700E/RADE V1/RADE V2 mode dropdown — see
+  "Using it in Thetis" above, including the important note that selecting a
+  mode now arms TX as well as RX. Deployment confirmed via a live screenshot
+  of the panel rendering correctly on `hl2winbox`; a full functional pass
+  (cycling all four modes with real signals, a real PTT test of the new
+  TX-arms-on-select behavior) is still open. See `FreeDV-Plan.md`'s
+  2026-08-24/25 entry for the full trace.
 
 See `Documentation/FreeDV-Plan.md` for the full dated history, evidence, and any
 issues still open.
