@@ -2674,6 +2674,13 @@
             this.chkRadeBypassRmatch = new System.Windows.Forms.CheckBoxTS();
             this.chkRadeBypassEncoder = new System.Windows.Forms.CheckBoxTS();
             this.chkRadeBypassAll = new System.Windows.Forms.CheckBoxTS();
+            this.grpRadeRX2Core = new System.Windows.Forms.GroupBoxTS();
+            this.lblRadeRX2Mode = new System.Windows.Forms.LabelTS();
+            this.cmbRadeRX2Mode = new System.Windows.Forms.ComboBoxTS();
+            this.chkRadeRX2Loopback = new System.Windows.Forms.CheckBoxTS();
+            this.lblRadeRX2Level = new System.Windows.Forms.LabelTS();
+            this.udRadeRX2Level = new System.Windows.Forms.NumericUpDownTS();
+            this.lblRadeRX2Status = new System.Windows.Forms.LabelTS();
 
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
@@ -5166,6 +5173,7 @@
             this.grpRadeMicCond.SuspendLayout();
             this.grpRadeRX1Core.SuspendLayout();
             this.grpRadeDiagnostics.SuspendLayout();
+            this.grpRadeRX2Core.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicLevel)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicAGCTarget)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeEQBassFreq)).BeginInit();
@@ -5177,6 +5185,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleGain)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeEQVol)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeRxLevel)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeRX2Level)).BeginInit();
             this.grpDSPNR2RX2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_factor_rx2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNR2PostProc_level_rx2)).BeginInit();
@@ -43808,10 +43817,111 @@
             this.chkRadeBypassAll.UseVisualStyleBackColor = true;
             this.chkRadeBypassAll.CheckedChanged += new System.EventHandler(this.chkRadeBypassAll_CheckedChanged);
             //
+            // grpRadeRX2Core
+            //
+            this.grpRadeRX2Core.Controls.Add(this.lblRadeRX2Mode);
+            this.grpRadeRX2Core.Controls.Add(this.cmbRadeRX2Mode);
+            this.grpRadeRX2Core.Controls.Add(this.chkRadeRX2Loopback);
+            this.grpRadeRX2Core.Controls.Add(this.lblRadeRX2Level);
+            this.grpRadeRX2Core.Controls.Add(this.udRadeRX2Level);
+            this.grpRadeRX2Core.Controls.Add(this.lblRadeRX2Status);
+            this.grpRadeRX2Core.Location = new System.Drawing.Point(352, 152);
+            this.grpRadeRX2Core.Name = "grpRadeRX2Core";
+            this.grpRadeRX2Core.Size = new System.Drawing.Size(340, 76);
+            this.grpRadeRX2Core.TabIndex = 50;
+            this.grpRadeRX2Core.TabStop = false;
+            this.grpRadeRX2Core.Text = "RX2 Core";
+            //
+            // lblRadeRX2Mode
+            //
+            this.lblRadeRX2Mode.AutoSize = true;
+            this.lblRadeRX2Mode.Image = null;
+            this.lblRadeRX2Mode.Location = new System.Drawing.Point(16, 22);
+            this.lblRadeRX2Mode.Name = "lblRadeRX2Mode";
+            this.lblRadeRX2Mode.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeRX2Mode.TabIndex = 0;
+            this.lblRadeRX2Mode.Text = "Mode:";
+            //
+            // cmbRadeRX2Mode
+            //
+            this.cmbRadeRX2Mode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRadeRX2Mode.Items.AddRange(new object[] {
+            "Off", "700E", "RADE V1", "RADE V2"});
+            this.cmbRadeRX2Mode.Location = new System.Drawing.Point(60, 20);
+            this.cmbRadeRX2Mode.Name = "cmbRadeRX2Mode";
+            this.cmbRadeRX2Mode.Size = new System.Drawing.Size(85, 21);
+            this.cmbRadeRX2Mode.TabIndex = 0;
+            this.toolTip1.SetToolTip(this.cmbRadeRX2Mode, "Select the RX2 digital voice mode: Off, FreeDV 700E, or RADE V1/V2. Arms RX2\'s own decode only -- TX encode is a single shared resource controlled via RX1\'s Mode selector, not this one.");
+            this.cmbRadeRX2Mode.SelectedIndexChanged += new System.EventHandler(this.cmbRadeRX2Mode_SelectedIndexChanged);
+            //
+            // chkRadeRX2Loopback
+            //
+            this.chkRadeRX2Loopback.AutoSize = true;
+            this.chkRadeRX2Loopback.Image = null;
+            this.chkRadeRX2Loopback.Location = new System.Drawing.Point(155, 22);
+            this.chkRadeRX2Loopback.Name = "chkRadeRX2Loopback";
+            this.chkRadeRX2Loopback.Size = new System.Drawing.Size(90, 17);
+            this.chkRadeRX2Loopback.TabIndex = 1;
+            this.chkRadeRX2Loopback.Text = "Loopback";
+            this.toolTip1.SetToolTip(this.chkRadeRX2Loopback, "RADE V1/V2 only -- 700E\'s loopback bridge is RX1-only at the ChannelMaster level, no RX2 equivalent exists. TX encoder\'s modem output is bridged directly into RX2\'s decoder input -- no RF, radio never keys.");
+            this.chkRadeRX2Loopback.UseVisualStyleBackColor = true;
+            this.chkRadeRX2Loopback.CheckedChanged += new System.EventHandler(this.chkRadeRX2Loopback_CheckedChanged);
+            //
+            // lblRadeRX2Level
+            //
+            this.lblRadeRX2Level.AutoSize = true;
+            this.lblRadeRX2Level.Image = null;
+            this.lblRadeRX2Level.Location = new System.Drawing.Point(16, 50);
+            this.lblRadeRX2Level.Name = "lblRadeRX2Level";
+            this.lblRadeRX2Level.Size = new System.Drawing.Size(84, 13);
+            this.lblRadeRX2Level.TabIndex = 0;
+            this.lblRadeRX2Level.Text = "RX Lvl (dB):";
+            //
+            // udRadeRX2Level
+            //
+            this.udRadeRX2Level.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udRadeRX2Level.Location = new System.Drawing.Point(100, 48);
+            this.udRadeRX2Level.Maximum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            0});
+            this.udRadeRX2Level.Minimum = new decimal(new int[] {
+            40,
+            0,
+            0,
+            -2147483648});
+            this.udRadeRX2Level.Name = "udRadeRX2Level";
+            this.udRadeRX2Level.Size = new System.Drawing.Size(45, 20);
+            this.udRadeRX2Level.TabIndex = 2;
+            this.udRadeRX2Level.TinyStep = false;
+            this.toolTip1.SetToolTip(this.udRadeRX2Level, "RX2 decoder input gain. Default 0 dB.");
+            this.udRadeRX2Level.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.udRadeRX2Level.ValueChanged += new System.EventHandler(this.udRadeRX2Level_ValueChanged);
+            //
+            // lblRadeRX2Status
+            //
+            this.lblRadeRX2Status.AutoSize = true;
+            this.lblRadeRX2Status.Image = null;
+            this.lblRadeRX2Status.Location = new System.Drawing.Point(155, 50);
+            this.lblRadeRX2Status.Name = "lblRadeRX2Status";
+            this.lblRadeRX2Status.Size = new System.Drawing.Size(21, 13);
+            this.lblRadeRX2Status.TabIndex = 0;
+            this.lblRadeRX2Status.Text = "off";
+            //
             // tpDSPRADE
             //
             this.tpDSPRADE.Controls.Add(this.grpRadeMicCond);
             this.tpDSPRADE.Controls.Add(this.grpRadeRX1Core);
+            this.tpDSPRADE.Controls.Add(this.grpRadeRX2Core);
             this.tpDSPRADE.Controls.Add(this.grpRadeDiagnostics);
             this.tpDSPRADE.Location = new System.Drawing.Point(4, 22);
             this.tpDSPRADE.Name = "tpDSPRADE";
@@ -73401,6 +73511,8 @@
             this.grpRadeRX1Core.PerformLayout();
             this.grpRadeDiagnostics.ResumeLayout(false);
             this.grpRadeDiagnostics.PerformLayout();
+            this.grpRadeRX2Core.ResumeLayout(false);
+            this.grpRadeRX2Core.PerformLayout();
             this.tpDSPRADE.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicLevel)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeMicAGCTarget)).EndInit();
@@ -73413,6 +73525,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.udRadeEQTrebleGain)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeEQVol)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udRadeRxLevel)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udRadeRX2Level)).EndInit();
             this.grpRNnoise.PerformLayout();
             this.grpDSPNR2RX2.ResumeLayout(false);
             this.grpDSPNR2RX2.PerformLayout();
@@ -78358,6 +78471,13 @@
         private CheckBoxTS chkRadeBypassRmatch;
         private CheckBoxTS chkRadeBypassEncoder;
         private CheckBoxTS chkRadeBypassAll;
+        private GroupBoxTS grpRadeRX2Core;
+        private LabelTS lblRadeRX2Mode;
+        private ComboBoxTS cmbRadeRX2Mode;
+        private CheckBoxTS chkRadeRX2Loopback;
+        private LabelTS lblRadeRX2Level;
+        private NumericUpDownTS udRadeRX2Level;
+        private LabelTS lblRadeRX2Status;
 
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;

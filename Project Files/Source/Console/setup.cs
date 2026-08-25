@@ -36853,6 +36853,149 @@ namespace Thetis
             }
         }
 
+        // W5TSU: RX2 Digital Voice mode selector (sub-project 3 of 5, see
+        // docs/superpowers/specs/2026-08-25-rx2-digital-voice-design.md).
+        // Mirrors cmbRadeMode_SelectedIndexChanged (RX1) exactly for the
+        // decode-arm/disarm logic, but never touches TX -- TX encode is a
+        // single shared resource that stays controlled only via RX1's Mode
+        // selector (see the spec's "TX semantics" section). RX2's own
+        // 700E/RADE interlock still applies automatically: GetDSPRX(1, 0)
+        // is a separate RadioDSPRX instance with its own rx_fdv_run/
+        // rx_radae_enabled fields, and radio.cs's interlock is already
+        // per-instance, so it needs no new code here.
+        private System.Windows.Forms.Timer _rade_rx2_status_timer = null;
+        private System.Windows.Forms.Timer _rade_rx2_available_timer = null;
+        private void cmbRadeRX2Mode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+
+            int mode = cmbRadeRX2Mode.SelectedIndex;
+
+            switch (mode)
+            {
+                case 0: // Off
+                    console.radio.GetDSPRX(1, 0).RXAFDVRun = 0;
+                    console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 0;
+                    break;
+                case 1: // 700E
+                    console.radio.GetDSPRX(1, 0).RXAFDVRun = 1;
+                    break;
+                case 2: // RADE V1
+                    WDSP.SetRadaeProtocolV2(1, 0);
+                    console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 1;
+                    break;
+                case 3: // RADE V2
+                    WDSP.SetRadaeProtocolV2(1, 1);
+                    console.radio.GetDSPRX(1, 0).RXRadaeEnabled = 1;
+                    break;
+            }
+
+            // W5TSU: Loopback is RADE V1/V2 only for RX2 -- unlike RX1,
+            // 700E's loopback bridge (ChannelMaster pipe.c's
+            // g_fdvloop_enabled) only drains into RX1's raw antenna I/Q
+            // slot; there is no RX2 equivalent. Confirmed by reading
+            // pipe.c's xpipe() directly: the "other PowerSDR receivers"
+            // branch RX2 runs through has no bridging logic like RX1's
+            // "case 0" branch does.
+            bool loopbackAvailable = (mode == 2 || mode == 3);
+            chkRadeRX2Loopback.Enabled = loopbackAvailable;
+            if (!loopbackAvailable && chkRadeRX2Loopback.Checked)
+            {
+                chkRadeRX2Loopback.CheckedChanged -= chkRadeRX2Loopback_CheckedChanged;
+                chkRadeRX2Loopback.Checked = false;
+                chkRadeRX2Loopback.CheckedChanged += chkRadeRX2Loopback_CheckedChanged;
+            }
+            WDSP.SetRadaeLoopbackEnabled(1, 0);
+            if (loopbackAvailable && chkRadeRX2Loopback.Checked)
+            {
+                WDSP.SetRadaeLoopbackEnabled(1, 1);
+            }
+
+            if (_rade_rx2_status_timer == null)
+            {
+                _rade_rx2_status_timer = new System.Windows.Forms.Timer();
+                _rade_rx2_status_timer.Interval = 500;
+                _rade_rx2_status_timer.Tick += radeRX2StatusTimer_Tick;
+            }
+            _rade_rx2_status_timer.Enabled = (mode != 0);
+
+            if (mode == 0)
+            {
+                lblRadeRX2Status.Text = "off";
+                lblRadeRX2Status.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+        }
+
+        // W5TSU: RX2 status readout -- mirrors radeStatusTimer_Tick (RX1)
+        // exactly, reading whichever backend matches RX2's own selected mode.
+        private void radeRX2StatusTimer_Tick(object sender, EventArgs e)
+        {
+            if (!console.PowerOn)
+            {
+                lblRadeRX2Status.Text = "radio off";
+                lblRadeRX2Status.ForeColor = System.Drawing.SystemColors.ControlText;
+                return;
+            }
+
+            int mode = cmbRadeRX2Mode.SelectedIndex;
+            bool sync;
+            string snrText;
+
+            if (mode == 1) // 700E
+            {
+                sync = WDSP.GetRXAFDVSync(WDSP.id(1, 0)) != 0;
+                snrText = sync ? string.Format("{0:F1}", WDSP.GetRXAFDVSnr(WDSP.id(1, 0))) : "";
+            }
+            else // RADE V1/V2 (mode 2/3) -- the timer is disabled for mode 0, never reaches here then
+            {
+                sync = WDSP.GetRadaeSync(1) != 0;
+                snrText = sync ? string.Format("{0}", WDSP.GetRadaeSnrDb(1)) : "";
+            }
+
+            if (sync)
+            {
+                lblRadeRX2Status.Text = string.Format("SYNC   SNR {0} dB", snrText);
+                lblRadeRX2Status.ForeColor = System.Drawing.Color.Green;
+            }
+            else
+            {
+                lblRadeRX2Status.Text = "no sync";
+                lblRadeRX2Status.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+        }
+
+        // W5TSU: RX2 loopback bridge -- RADE V1/V2 only, see
+        // cmbRadeRX2Mode_SelectedIndexChanged's comment for why 700E has
+        // no RX2 loopback path.
+        private void chkRadeRX2Loopback_CheckedChanged(object sender, EventArgs e)
+        {
+            int mode = cmbRadeRX2Mode.SelectedIndex;
+            if (mode == 2 || mode == 3)
+            {
+                WDSP.SetRadaeLoopbackEnabled(1, chkRadeRX2Loopback.Checked ? 1 : 0);
+            }
+        }
+
+        // W5TSU: RX2 decoder input gain -- mirrors udRadeRxLevel_ValueChanged
+        // (RX1) exactly, same linear<->dB conversion (see that handler's
+        // comment for why).
+        private void udRadeRX2Level_ValueChanged(object sender, EventArgs e)
+        {
+            double linear = Math.Pow(10.0, (double)udRadeRX2Level.Value / 20.0);
+            WDSP.SetRadaeRxScale(1, linear);
+        }
+
+        // W5TSU: RX2 Core is only meaningful while RX2 itself is running --
+        // console.RX2Enabled has no change event to hook, so this polls it
+        // on the same 500ms cadence as the status timers. Runs
+        // independently of RX2's own mode/status timer (that one only runs
+        // while mode != 0), so toggling RX2 on/off in the main console
+        // updates this group even while its own Mode is Off.
+        private void radeRX2AvailableTimer_Tick(object sender, EventArgs e)
+        {
+            grpRadeRX2Core.Enabled = console.RX2Enabled;
+        }
+
         // W5TSU: RX decoder input gain. Wired to SetRadaeRxScale specifically
         // -- SetRadaeRxDialScale (a related but separate function) has zero
         // callers anywhere in this codebase, confirmed before wiring this;
@@ -37020,6 +37163,54 @@ namespace Thetis
             else
                 chkRadeRX1Loopback.Checked = false;
             chkRadeRX1Loopback.CheckedChanged += chkRadeRX1Loopback_CheckedChanged;
+
+            // W5TSU: RX2 Core -- mirrors the RX1 derivation above exactly,
+            // but for GetDSPRX(1, 0). See cmbRadeRX2Mode_SelectedIndexChanged's
+            // own comment for why TX is never touched here.
+            cmbRadeRX2Mode.SelectedIndexChanged -= cmbRadeRX2Mode_SelectedIndexChanged;
+            int rx2Mode;
+            if (console.radio.GetDSPRX(1, 0).RXRadaeEnabled != 0)
+                rx2Mode = (WDSP.GetRadaeProtocolV2(1) != 0) ? 3 : 2;
+            else if (console.radio.GetDSPRX(1, 0).RXAFDVRun != 0)
+                rx2Mode = 1;
+            else
+                rx2Mode = 0;
+            cmbRadeRX2Mode.SelectedIndex = rx2Mode;
+            cmbRadeRX2Mode.SelectedIndexChanged += cmbRadeRX2Mode_SelectedIndexChanged;
+
+            bool rx2LoopbackAvailable = (rx2Mode == 2 || rx2Mode == 3);
+            chkRadeRX2Loopback.Enabled = rx2LoopbackAvailable;
+
+            if (_rade_rx2_status_timer == null)
+            {
+                _rade_rx2_status_timer = new System.Windows.Forms.Timer();
+                _rade_rx2_status_timer.Interval = 500;
+                _rade_rx2_status_timer.Tick += radeRX2StatusTimer_Tick;
+            }
+            _rade_rx2_status_timer.Enabled = (rx2Mode != 0);
+            if (rx2Mode == 0)
+            {
+                lblRadeRX2Status.Text = "off";
+                lblRadeRX2Status.ForeColor = System.Drawing.SystemColors.ControlText;
+            }
+
+            chkRadeRX2Loopback.CheckedChanged -= chkRadeRX2Loopback_CheckedChanged;
+            chkRadeRX2Loopback.Checked = rx2LoopbackAvailable && (WDSP.GetRadaeLoopbackEnabled(1) != 0);
+            chkRadeRX2Loopback.CheckedChanged += chkRadeRX2Loopback_CheckedChanged;
+
+            udRadeRX2Level.ValueChanged -= udRadeRX2Level_ValueChanged;
+            double rx2Db = 20.0 * Math.Log10(Math.Max(0.001, WDSP.GetRadaeRxScale(1)));
+            udRadeRX2Level.Value = (decimal)Math.Max(-40.0, Math.Min(40.0, rx2Db));
+            udRadeRX2Level.ValueChanged += udRadeRX2Level_ValueChanged;
+
+            if (_rade_rx2_available_timer == null)
+            {
+                _rade_rx2_available_timer = new System.Windows.Forms.Timer();
+                _rade_rx2_available_timer.Interval = 500;
+                _rade_rx2_available_timer.Tick += radeRX2AvailableTimer_Tick;
+            }
+            _rade_rx2_available_timer.Enabled = true;
+            grpRadeRX2Core.Enabled = console.RX2Enabled;
 
             // W5TSU: linear -> dB, inverse of udRadeRxLevel_ValueChanged's
             // conversion above -- see that handler's comment for why.
