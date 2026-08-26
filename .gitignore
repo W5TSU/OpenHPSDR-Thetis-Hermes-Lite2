@@ -430,3 +430,7 @@ dox/
 # superpowers subagent-driven-development workspace (ledgers, briefs, review
 # packages) -- scratch state per in-progress plan, not part of the source tree
 .superpowers/
+
+# raw off-air audio captures (large media, reproducible only by re-recording;
+# keep local, not in the repo)
+Tools/*.wav

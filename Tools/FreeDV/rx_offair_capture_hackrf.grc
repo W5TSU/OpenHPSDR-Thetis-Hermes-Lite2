@@ -3,21 +3,23 @@ options:
     alias: ''
     author: W5TSU
     catch_exceptions: 'True'
-    comment: 'Receives Thetis''s real over-the-air TX output (RADE V1 or FreeDV 700E, whichever the operator
-      has armed via ZZDK/ZZEF and keyed) via HackRF, demodulates it as a standard USB/SSB signal (complex
-      band-pass filter selecting the positive-frequency voice passband, then real part -- the standard
-      software-defined way to do SSB demod when you have full I/Q, no phasing-method analog circuitry
-      needed), and records the result to a mono wav. That wav is the input for an independent decode check:
-      freedv-gui''s own reference decoder (''freedv -ut rx -utmode 700E'' or ''-utmode RADEV1'', see a
-      local freedv-gui checkout) or Tools/FreeDV/make_fdv_test_iq.py''s own analysis conventions -- this
-      flowgraph only captures and demodulates, it does not attempt to decode FreeDV/RADE itself. This
-      is the missing half of the existing tx_700e_hackrf.grc / tx_radev1_hackrf.grc pair (which transmit
-      a known-good signal *into* Thetis''s RX): this one listens to what Thetis''s TX chain actually puts
-      out, closing the ''no off-air decode confirmation'' gap noted throughout FreeDV-Plan.md for both
-      RADE V1 TX and FreeDV 700E TX.'
+    comment: 'Receives Thetis''s real over-the-air TX output (RADE V1 or FreeDV 700E,
+      whichever the operator has armed via ZZDK/ZZEF and keyed) via HackRF, demodulates
+      it as a standard USB/SSB signal (complex band-pass filter selecting the positive-frequency
+      voice passband, then real part -- the standard software-defined way to do SSB
+      demod when you have full I/Q, no phasing-method analog circuitry needed), and
+      records the result to a mono wav. That wav is the input for an independent decode
+      check: freedv-gui''s own reference decoder (''freedv -ut rx -utmode 700E'' or
+      ''-utmode RADEV1'', see a local freedv-gui checkout) or Tools/FreeDV/make_fdv_test_iq.py''s
+      own analysis conventions -- this flowgraph only captures and demodulates, it
+      does not attempt to decode FreeDV/RADE itself. This is the missing half of the
+      existing tx_700e_hackrf.grc / tx_radev1_hackrf.grc pair (which transmit a known-good
+      signal *into* Thetis''s RX): this one listens to what Thetis''s TX chain actually
+      puts out, closing the ''no off-air decode confirmation'' gap noted throughout
+      FreeDV-Plan.md for both RADE V1 TX and FreeDV 700E TX.'
     copyright: ''
-    description: Off-air capture of Thetis's own RADE V1 / FreeDV 700E TX output, via HackRF RX, for independent
-      reference-decoder confirmation
+    description: Off-air capture of Thetis's own RADE V1 / FreeDV 700E TX output,
+      via HackRF RX, for independent reference-decoder confirmation
     gen_linking: dynamic
     generate_options: qt_gui
     generator_class_name: PythonQtGuiGenerator
@@ -36,93 +38,25 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 10
-    - 10
+    coordinate: [10, 10]
     rotation: 0
     state: enabled
+
 blocks:
-- name: samp_rate
-  id: variable
-  parameters:
-    comment: HackRF RX front-end rate. 2 Msps -- comfortably above the ~2 Msps floor the TX flowgraphs
-      found HackRF needs for reliable quality (same hardware, same floor applies to RX), and a clean multiple
-      of audio_rate (250:1) so the frequency-xlating filter's decimation is an exact integer.
-    value: '2000000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate:
-    - 16
-    - 12
-    rotation: 0
-    state: enabled
 - name: audio_rate
   id: variable
   parameters:
-    comment: Output wav rate -- matches freedv_get_modem_sample_rate() for both 700E and RADE V1 (8 kHz)
-      exactly, so the captured audio can be fed straight to freedv-gui's reference decoder with no rate
-      ambiguity (unlike Tools/FreeDV/make_fdv_test_iq.py's --input-wav, which does handle arbitrary rates
-      -- this file is for the reference-decoder path instead, which is pickier).
+    comment: Output wav rate -- matches freedv_get_modem_sample_rate() for both 700E
+      and RADE V1 (8 kHz) exactly, so the captured audio can be fed straight to freedv-gui's
+      reference decoder with no rate ambiguity (unlike Tools/FreeDV/make_fdv_test_iq.py's
+      --input-wav, which does handle arbitrary rates -- this file is for the reference-decoder
+      path instead, which is pickier).
     value: '8000'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 16
-    - 76
-    rotation: 0
-    state: enabled
-- name: center_freq
-  id: parameter
-  parameters:
-    alias: ''
-    hide: none
-    comment: Must match whatever Thetis is actually transmitting on -- 14.236 MHz / DIGU is this project's
-      established calling frequency for both RADE V1 and 700E testing (see Tools/thetis-ai-control's freedv-calling-frequencies
-      table), same default the TX flowgraphs use. Change if Thetis is tuned elsewhere, but keep this and
-      Thetis's dial frequency identical -- there is no frequency search here, just a fixed-tuned USB demod.
-    label: Center Frequency (Hz)
-    short_id: ''
-    type: eng_float
-    value: '14236000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate:
-    - 180
-    - 12
-    rotation: 0
-    state: enabled
-- name: rx_if_gain
-  id: variable_qtgui_range
-  parameters:
-    comment: HackRF IF (VGA) gain. Thetis's real TX is a strong, close signal compared to typical off-air
-      DX, so this doesn't need the TX flowgraphs' full range -- but an initial live test found 8dB (this
-      flowgraph's original default) too conservative for FreeDV 700E's signal specifically (RADE V1 synced
-      fine at 8dB, 700E didn't sync at all until raised to 24dB) -- 20dB here is a revised starting point
-      from that finding, matching the TX flowgraphs' own default. Watch for a flat-topped/clipped time-domain
-      trace as a sign this or rx_bb_gain is too high, which would corrupt the very thing being verified.
-    gui_hint: 0,1,1,1
-    label: RX IF/VGA Gain (dB)
-    min_len: '200'
-    orient: QtCore.Qt.Horizontal
-    rangeType: int
-    start: '0'
-    step: '1'
-    stop: '40'
-    value: '20'
-    widget: counter_slider
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate:
-    - 400
-    - 12
+    coordinate: [24, 176.0]
     rotation: 0
     state: enabled
 - name: rx_bb_gain
@@ -143,391 +77,116 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 700
-    - 12
+    coordinate: [600, 16.0]
     rotation: 0
     state: enabled
-- name: out_file
-  id: parameter
+- name: rx_if_gain
+  id: variable_qtgui_range
   parameters:
-    alias: ''
-    hide: none
-    comment: Captured mono USB audio, 8 kHz float32 wav. Rename per capture (this does NOT auto-timestamp)
-      so successive test runs don't overwrite each other -- e.g. offair_tx_radev1_<date>.wav vs offair_tx_700e_<date>.wav,
-      matching this repo's convention of a descriptive name over a bare default (see offair_14236000_RADEV1_20260808.wav).
-    label: Output wav (captured demodulated audio)
-    short_id: ''
-    type: str
-    value: '"offair_capture.wav"'
+    comment: HackRF IF (VGA) gain. Thetis's real TX is a strong, close signal compared
+      to typical off-air DX, so this doesn't need the TX flowgraphs' full range --
+      but an initial live test found 8dB (this flowgraph's original default) too conservative
+      for FreeDV 700E's signal specifically (RADE V1 synced fine at 8dB, 700E didn't
+      sync at all until raised to 24dB) -- 20dB here is a revised starting point from
+      that finding, matching the TX flowgraphs' own default. Watch for a flat-topped/clipped
+      time-domain trace as a sign this or rx_bb_gain is too high, which would corrupt
+      the very thing being verified.
+    gui_hint: 0,1,1,1
+    label: RX IF/VGA Gain (dB)
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: int
+    start: '0'
+    step: '1'
+    stop: '40'
+    value: '20'
+    widget: counter_slider
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 1000
-    - 12
+    coordinate: [400, 12]
     rotation: 0
     state: enabled
-- name: osmosdr_source_0
-  id: osmosdr_source
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: HackRF RX front-end rate. 2 Msps -- comfortably above the ~2 Msps floor
+      the TX flowgraphs found HackRF needs for reliable quality (same hardware, same
+      floor applies to RX), and a clean multiple of audio_rate (250:1) so the frequency-xlating
+      filter's decimation is an exact integer.
+    value: '2000000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [120, 176.0]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_real_0
+  id: blocks_complex_to_real
   parameters:
     affinity: ''
     alias: ''
-    type: fc32
-    args: '"hackrf=0"'
-    sync: sync
-    num_mboards: '1'
-    clock_source0: ''
-    time_source0: ''
-    clock_source1: ''
-    time_source1: ''
-    clock_source2: ''
-    time_source2: ''
-    clock_source3: ''
-    time_source3: ''
-    clock_source4: ''
-    time_source4: ''
-    clock_source5: ''
-    time_source5: ''
-    clock_source6: ''
-    time_source6: ''
-    clock_source7: ''
-    time_source7: ''
-    nchan: '1'
-    sample_rate: samp_rate
-    freq0: center_freq
-    corr0: '0'
-    dc_offset_mode0: '0'
-    iq_balance_mode0: '0'
-    gain_mode0: 'False'
-    gain0: '0'
-    if_gain0: rx_if_gain
-    bb_gain0: rx_bb_gain
-    ant0: ''
-    bw0: '0'
-    freq1: 100e6
-    corr1: '0'
-    dc_offset_mode1: '0'
-    iq_balance_mode1: '0'
-    gain_mode1: 'False'
-    gain1: '10'
-    if_gain1: '20'
-    bb_gain1: '20'
-    ant1: ''
-    bw1: '0'
-    freq2: 100e6
-    corr2: '0'
-    dc_offset_mode2: '0'
-    iq_balance_mode2: '0'
-    gain_mode2: 'False'
-    gain2: '10'
-    if_gain2: '20'
-    bb_gain2: '20'
-    ant2: ''
-    bw2: '0'
-    freq3: 100e6
-    corr3: '0'
-    dc_offset_mode3: '0'
-    iq_balance_mode3: '0'
-    gain_mode3: 'False'
-    gain3: '10'
-    if_gain3: '20'
-    bb_gain3: '20'
-    ant3: ''
-    bw3: '0'
-    freq4: 100e6
-    corr4: '0'
-    dc_offset_mode4: '0'
-    iq_balance_mode4: '0'
-    gain_mode4: 'False'
-    gain4: '10'
-    if_gain4: '20'
-    bb_gain4: '20'
-    ant4: ''
-    bw4: '0'
-    freq5: 100e6
-    corr5: '0'
-    dc_offset_mode5: '0'
-    iq_balance_mode5: '0'
-    gain_mode5: 'False'
-    gain5: '10'
-    if_gain5: '20'
-    bb_gain5: '20'
-    ant5: ''
-    bw5: '0'
-    freq6: 100e6
-    corr6: '0'
-    dc_offset_mode6: '0'
-    iq_balance_mode6: '0'
-    gain_mode6: 'False'
-    gain6: '10'
-    if_gain6: '20'
-    bb_gain6: '20'
-    ant6: ''
-    bw6: '0'
-    freq7: 100e6
-    corr7: '0'
-    dc_offset_mode7: '0'
-    iq_balance_mode7: '0'
-    gain_mode7: 'False'
-    gain7: '10'
-    if_gain7: '20'
-    bb_gain7: '20'
-    ant7: ''
-    bw7: '0'
-    freq8: 100e6
-    corr8: '0'
-    dc_offset_mode8: '0'
-    iq_balance_mode8: '0'
-    gain_mode8: 'False'
-    gain8: '10'
-    if_gain8: '20'
-    bb_gain8: '20'
-    ant8: ''
-    bw8: '0'
-    freq9: 100e6
-    corr9: '0'
-    dc_offset_mode9: '0'
-    iq_balance_mode9: '0'
-    gain_mode9: 'False'
-    gain9: '10'
-    if_gain9: '20'
-    bb_gain9: '20'
-    ant9: ''
-    bw9: '0'
-    freq10: 100e6
-    corr10: '0'
-    dc_offset_mode10: '0'
-    iq_balance_mode10: '0'
-    gain_mode10: 'False'
-    gain10: '10'
-    if_gain10: '20'
-    bb_gain10: '20'
-    ant10: ''
-    bw10: '0'
-    freq11: 100e6
-    corr11: '0'
-    dc_offset_mode11: '0'
-    iq_balance_mode11: '0'
-    gain_mode11: 'False'
-    gain11: '10'
-    if_gain11: '20'
-    bb_gain11: '20'
-    ant11: ''
-    bw11: '0'
-    freq12: 100e6
-    corr12: '0'
-    dc_offset_mode12: '0'
-    iq_balance_mode12: '0'
-    gain_mode12: 'False'
-    gain12: '10'
-    if_gain12: '20'
-    bb_gain12: '20'
-    ant12: ''
-    bw12: '0'
-    freq13: 100e6
-    corr13: '0'
-    dc_offset_mode13: '0'
-    iq_balance_mode13: '0'
-    gain_mode13: 'False'
-    gain13: '10'
-    if_gain13: '20'
-    bb_gain13: '20'
-    ant13: ''
-    bw13: '0'
-    freq14: 100e6
-    corr14: '0'
-    dc_offset_mode14: '0'
-    iq_balance_mode14: '0'
-    gain_mode14: 'False'
-    gain14: '10'
-    if_gain14: '20'
-    bb_gain14: '20'
-    ant14: ''
-    bw14: '0'
-    freq15: 100e6
-    corr15: '0'
-    dc_offset_mode15: '0'
-    iq_balance_mode15: '0'
-    gain_mode15: 'False'
-    gain15: '10'
-    if_gain15: '20'
-    bb_gain15: '20'
-    ant15: ''
-    bw15: '0'
-    freq16: 100e6
-    corr16: '0'
-    dc_offset_mode16: '0'
-    iq_balance_mode16: '0'
-    gain_mode16: 'False'
-    gain16: '10'
-    if_gain16: '20'
-    bb_gain16: '20'
-    ant16: ''
-    bw16: '0'
-    freq17: 100e6
-    corr17: '0'
-    dc_offset_mode17: '0'
-    iq_balance_mode17: '0'
-    gain_mode17: 'False'
-    gain17: '10'
-    if_gain17: '20'
-    bb_gain17: '20'
-    ant17: ''
-    bw17: '0'
-    freq18: 100e6
-    corr18: '0'
-    dc_offset_mode18: '0'
-    iq_balance_mode18: '0'
-    gain_mode18: 'False'
-    gain18: '10'
-    if_gain18: '20'
-    bb_gain18: '20'
-    ant18: ''
-    bw18: '0'
-    freq19: 100e6
-    corr19: '0'
-    dc_offset_mode19: '0'
-    iq_balance_mode19: '0'
-    gain_mode19: 'False'
-    gain19: '10'
-    if_gain19: '20'
-    bb_gain19: '20'
-    ant19: ''
-    bw19: '0'
-    freq20: 100e6
-    corr20: '0'
-    dc_offset_mode20: '0'
-    iq_balance_mode20: '0'
-    gain_mode20: 'False'
-    gain20: '10'
-    if_gain20: '20'
-    bb_gain20: '20'
-    ant20: ''
-    bw20: '0'
-    freq21: 100e6
-    corr21: '0'
-    dc_offset_mode21: '0'
-    iq_balance_mode21: '0'
-    gain_mode21: 'False'
-    gain21: '10'
-    if_gain21: '20'
-    bb_gain21: '20'
-    ant21: ''
-    bw21: '0'
-    freq22: 100e6
-    corr22: '0'
-    dc_offset_mode22: '0'
-    iq_balance_mode22: '0'
-    gain_mode22: 'False'
-    gain22: '10'
-    if_gain22: '20'
-    bb_gain22: '20'
-    ant22: ''
-    bw22: '0'
-    freq23: 100e6
-    corr23: '0'
-    dc_offset_mode23: '0'
-    iq_balance_mode23: '0'
-    gain_mode23: 'False'
-    gain23: '10'
-    if_gain23: '20'
-    bb_gain23: '20'
-    ant23: ''
-    bw23: '0'
-    freq24: 100e6
-    corr24: '0'
-    dc_offset_mode24: '0'
-    iq_balance_mode24: '0'
-    gain_mode24: 'False'
-    gain24: '10'
-    if_gain24: '20'
-    bb_gain24: '20'
-    ant24: ''
-    bw24: '0'
-    freq25: 100e6
-    corr25: '0'
-    dc_offset_mode25: '0'
-    iq_balance_mode25: '0'
-    gain_mode25: 'False'
-    gain25: '10'
-    if_gain25: '20'
-    bb_gain25: '20'
-    ant25: ''
-    bw25: '0'
-    freq26: 100e6
-    corr26: '0'
-    dc_offset_mode26: '0'
-    iq_balance_mode26: '0'
-    gain_mode26: 'False'
-    gain26: '10'
-    if_gain26: '20'
-    bb_gain26: '20'
-    ant26: ''
-    bw26: '0'
-    freq27: 100e6
-    corr27: '0'
-    dc_offset_mode27: '0'
-    iq_balance_mode27: '0'
-    gain_mode27: 'False'
-    gain27: '10'
-    if_gain27: '20'
-    bb_gain27: '20'
-    ant27: ''
-    bw27: '0'
-    freq28: 100e6
-    corr28: '0'
-    dc_offset_mode28: '0'
-    iq_balance_mode28: '0'
-    gain_mode28: 'False'
-    gain28: '10'
-    if_gain28: '20'
-    bb_gain28: '20'
-    ant28: ''
-    bw28: '0'
-    freq29: 100e6
-    corr29: '0'
-    dc_offset_mode29: '0'
-    iq_balance_mode29: '0'
-    gain_mode29: 'False'
-    gain29: '10'
-    if_gain29: '20'
-    bb_gain29: '20'
-    ant29: ''
-    bw29: '0'
-    freq30: 100e6
-    corr30: '0'
-    dc_offset_mode30: '0'
-    iq_balance_mode30: '0'
-    gain_mode30: 'False'
-    gain30: '10'
-    if_gain30: '20'
-    bb_gain30: '20'
-    ant30: ''
-    bw30: '0'
-    freq31: 100e6
-    corr31: '0'
-    dc_offset_mode31: '0'
-    iq_balance_mode31: '0'
-    gain_mode31: 'False'
-    gain31: '10'
-    if_gain31: '20'
-    bb_gain31: '20'
-    ant31: ''
-    bw31: '0'
-    comment: RF amp (gain0) left at 0 -- HackRF's front-end amp is a coarse +14dB step. Raise rx_if_gain/rx_bb_gain
-      (the fine-grained VGA/baseband sliders) instead if the signal is weak; lower them if it's overloading
-      (this is a very strong, very close signal -- Thetis's own real TX -- not a weak off-air DX catch).
+    comment: Taking the real part after a one-sided (positive-frequency-only) complex
+      band-pass IS how software SSB/USB demod works with full I/Q -- no separate phasing-method
+      mixer stage needed.
     maxoutbuf: '0'
     minoutbuf: '0'
+    vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 200
-    - 220
+    coordinate: [696, 536.0]
+    rotation: 0
+    state: enabled
+- name: blocks_wavfile_sink_0
+  id: blocks_wavfile_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    bits_per_sample1: FORMAT_PCM_16
+    bits_per_sample2: FORMAT_PCM_16
+    bits_per_sample3: FORMAT_VORBIS
+    bits_per_sample4: FORMAT_PCM_16
+    comment: Runs until you press GRC's stop button (unlike the TX flowgraphs, which
+      play a fixed-length wav once and stop automatically -- there's no natural end-of-signal
+      marker on receive, so start this flowgraph, key Thetis's TX per the usual thetisctl
+      --confirm-tx protocol, let the transmission run, then stop this once Thetis
+      unkeys).
+    file: out_file
+    format: FORMAT_WAV
+    nchan: '1'
+    samp_rate: audio_rate
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [920, 496.0]
+    rotation: 0
+    state: enabled
+- name: center_freq
+  id: parameter
+  parameters:
+    alias: ''
+    comment: Must match whatever Thetis is actually transmitting on -- 14.236 MHz
+      / DIGU is this project's established calling frequency for both RADE V1 and
+      700E testing (see Tools/thetis-ai-control's freedv-calling-frequencies table),
+      same default the TX flowgraphs use. Change if Thetis is tuned elsewhere, but
+      keep this and Thetis's dial frequency identical -- there is no frequency search
+      here, just a fixed-tuned USB demod.
+    hide: none
+    label: Center Frequency (Hz)
+    short_id: ''
+    type: eng_float
+    value: '14236000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [180, 12]
     rotation: 0
     state: enabled
 - name: freq_xlating_fir_filter_xxx_0
@@ -535,11 +194,12 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    comment: 'USB demod + decimate to audio_rate in one block: a complex band-pass covering only +300..+2700
-      Hz (the positive-frequency side -- USB) rejects the mirror-image LSB content that a real-valued
-      filter couldn''t distinguish. center_freq=0 since osmosdr_source is already tuned exactly to center_freq
-      (the dial frequency), so no further shift is needed here, only filtering + decimation.'
     center_freq: '0'
+    comment: 'USB demod + decimate to audio_rate in one block: a complex band-pass
+      covering only +300..+2700 Hz (the positive-frequency side -- USB) rejects the
+      mirror-image LSB content that a real-valued filter couldn''t distinguish. center_freq=0
+      since osmosdr_source is already tuned exactly to center_freq (the dial frequency),
+      so no further shift is needed here, only filtering + decimation.'
     decim: samp_rate // audio_rate
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -550,52 +210,387 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 500
-    - 220
+    coordinate: [440, 504.0]
     rotation: 0
     state: enabled
-- name: blocks_complex_to_real_0
-  id: blocks_complex_to_real
+- name: osmosdr_source_0
+  id: osmosdr_source
   parameters:
     affinity: ''
     alias: ''
-    comment: Taking the real part after a one-sided (positive-frequency-only) complex band-pass IS how
-      software SSB/USB demod works with full I/Q -- no separate phasing-method mixer stage needed.
+    ant0: ''
+    ant1: ''
+    ant10: ''
+    ant11: ''
+    ant12: ''
+    ant13: ''
+    ant14: ''
+    ant15: ''
+    ant16: ''
+    ant17: ''
+    ant18: ''
+    ant19: ''
+    ant2: ''
+    ant20: ''
+    ant21: ''
+    ant22: ''
+    ant23: ''
+    ant24: ''
+    ant25: ''
+    ant26: ''
+    ant27: ''
+    ant28: ''
+    ant29: ''
+    ant3: ''
+    ant30: ''
+    ant31: ''
+    ant4: ''
+    ant5: ''
+    ant6: ''
+    ant7: ''
+    ant8: ''
+    ant9: ''
+    args: '"hackrf=0"'
+    bb_gain0: rx_bb_gain
+    bb_gain1: '20'
+    bb_gain10: '20'
+    bb_gain11: '20'
+    bb_gain12: '20'
+    bb_gain13: '20'
+    bb_gain14: '20'
+    bb_gain15: '20'
+    bb_gain16: '20'
+    bb_gain17: '20'
+    bb_gain18: '20'
+    bb_gain19: '20'
+    bb_gain2: '20'
+    bb_gain20: '20'
+    bb_gain21: '20'
+    bb_gain22: '20'
+    bb_gain23: '20'
+    bb_gain24: '20'
+    bb_gain25: '20'
+    bb_gain26: '20'
+    bb_gain27: '20'
+    bb_gain28: '20'
+    bb_gain29: '20'
+    bb_gain3: '20'
+    bb_gain30: '20'
+    bb_gain31: '20'
+    bb_gain4: '20'
+    bb_gain5: '20'
+    bb_gain6: '20'
+    bb_gain7: '20'
+    bb_gain8: '20'
+    bb_gain9: '20'
+    bw0: '0'
+    bw1: '0'
+    bw10: '0'
+    bw11: '0'
+    bw12: '0'
+    bw13: '0'
+    bw14: '0'
+    bw15: '0'
+    bw16: '0'
+    bw17: '0'
+    bw18: '0'
+    bw19: '0'
+    bw2: '0'
+    bw20: '0'
+    bw21: '0'
+    bw22: '0'
+    bw23: '0'
+    bw24: '0'
+    bw25: '0'
+    bw26: '0'
+    bw27: '0'
+    bw28: '0'
+    bw29: '0'
+    bw3: '0'
+    bw30: '0'
+    bw31: '0'
+    bw4: '0'
+    bw5: '0'
+    bw6: '0'
+    bw7: '0'
+    bw8: '0'
+    bw9: '0'
+    clock_source0: ''
+    clock_source1: ''
+    clock_source2: ''
+    clock_source3: ''
+    clock_source4: ''
+    clock_source5: ''
+    clock_source6: ''
+    clock_source7: ''
+    comment: RF amp (gain0) left at 0 -- HackRF's front-end amp is a coarse +14dB
+      step. Raise rx_if_gain/rx_bb_gain (the fine-grained VGA/baseband sliders) instead
+      if the signal is weak; lower them if it's overloading (this is a very strong,
+      very close signal -- Thetis's own real TX -- not a weak off-air DX catch).
+    corr0: '0'
+    corr1: '0'
+    corr10: '0'
+    corr11: '0'
+    corr12: '0'
+    corr13: '0'
+    corr14: '0'
+    corr15: '0'
+    corr16: '0'
+    corr17: '0'
+    corr18: '0'
+    corr19: '0'
+    corr2: '0'
+    corr20: '0'
+    corr21: '0'
+    corr22: '0'
+    corr23: '0'
+    corr24: '0'
+    corr25: '0'
+    corr26: '0'
+    corr27: '0'
+    corr28: '0'
+    corr29: '0'
+    corr3: '0'
+    corr30: '0'
+    corr31: '0'
+    corr4: '0'
+    corr5: '0'
+    corr6: '0'
+    corr7: '0'
+    corr8: '0'
+    corr9: '0'
+    dc_offset_mode0: '0'
+    dc_offset_mode1: '0'
+    dc_offset_mode10: '0'
+    dc_offset_mode11: '0'
+    dc_offset_mode12: '0'
+    dc_offset_mode13: '0'
+    dc_offset_mode14: '0'
+    dc_offset_mode15: '0'
+    dc_offset_mode16: '0'
+    dc_offset_mode17: '0'
+    dc_offset_mode18: '0'
+    dc_offset_mode19: '0'
+    dc_offset_mode2: '0'
+    dc_offset_mode20: '0'
+    dc_offset_mode21: '0'
+    dc_offset_mode22: '0'
+    dc_offset_mode23: '0'
+    dc_offset_mode24: '0'
+    dc_offset_mode25: '0'
+    dc_offset_mode26: '0'
+    dc_offset_mode27: '0'
+    dc_offset_mode28: '0'
+    dc_offset_mode29: '0'
+    dc_offset_mode3: '0'
+    dc_offset_mode30: '0'
+    dc_offset_mode31: '0'
+    dc_offset_mode4: '0'
+    dc_offset_mode5: '0'
+    dc_offset_mode6: '0'
+    dc_offset_mode7: '0'
+    dc_offset_mode8: '0'
+    dc_offset_mode9: '0'
+    freq0: center_freq
+    freq1: 100e6
+    freq10: 100e6
+    freq11: 100e6
+    freq12: 100e6
+    freq13: 100e6
+    freq14: 100e6
+    freq15: 100e6
+    freq16: 100e6
+    freq17: 100e6
+    freq18: 100e6
+    freq19: 100e6
+    freq2: 100e6
+    freq20: 100e6
+    freq21: 100e6
+    freq22: 100e6
+    freq23: 100e6
+    freq24: 100e6
+    freq25: 100e6
+    freq26: 100e6
+    freq27: 100e6
+    freq28: 100e6
+    freq29: 100e6
+    freq3: 100e6
+    freq30: 100e6
+    freq31: 100e6
+    freq4: 100e6
+    freq5: 100e6
+    freq6: 100e6
+    freq7: 100e6
+    freq8: 100e6
+    freq9: 100e6
+    gain0: '0'
+    gain1: '10'
+    gain10: '10'
+    gain11: '10'
+    gain12: '10'
+    gain13: '10'
+    gain14: '10'
+    gain15: '10'
+    gain16: '10'
+    gain17: '10'
+    gain18: '10'
+    gain19: '10'
+    gain2: '10'
+    gain20: '10'
+    gain21: '10'
+    gain22: '10'
+    gain23: '10'
+    gain24: '10'
+    gain25: '10'
+    gain26: '10'
+    gain27: '10'
+    gain28: '10'
+    gain29: '10'
+    gain3: '10'
+    gain30: '10'
+    gain31: '10'
+    gain4: '10'
+    gain5: '10'
+    gain6: '10'
+    gain7: '10'
+    gain8: '10'
+    gain9: '10'
+    gain_mode0: 'False'
+    gain_mode1: 'False'
+    gain_mode10: 'False'
+    gain_mode11: 'False'
+    gain_mode12: 'False'
+    gain_mode13: 'False'
+    gain_mode14: 'False'
+    gain_mode15: 'False'
+    gain_mode16: 'False'
+    gain_mode17: 'False'
+    gain_mode18: 'False'
+    gain_mode19: 'False'
+    gain_mode2: 'False'
+    gain_mode20: 'False'
+    gain_mode21: 'False'
+    gain_mode22: 'False'
+    gain_mode23: 'False'
+    gain_mode24: 'False'
+    gain_mode25: 'False'
+    gain_mode26: 'False'
+    gain_mode27: 'False'
+    gain_mode28: 'False'
+    gain_mode29: 'False'
+    gain_mode3: 'False'
+    gain_mode30: 'False'
+    gain_mode31: 'False'
+    gain_mode4: 'False'
+    gain_mode5: 'False'
+    gain_mode6: 'False'
+    gain_mode7: 'False'
+    gain_mode8: 'False'
+    gain_mode9: 'False'
+    if_gain0: rx_if_gain
+    if_gain1: '20'
+    if_gain10: '20'
+    if_gain11: '20'
+    if_gain12: '20'
+    if_gain13: '20'
+    if_gain14: '20'
+    if_gain15: '20'
+    if_gain16: '20'
+    if_gain17: '20'
+    if_gain18: '20'
+    if_gain19: '20'
+    if_gain2: '20'
+    if_gain20: '20'
+    if_gain21: '20'
+    if_gain22: '20'
+    if_gain23: '20'
+    if_gain24: '20'
+    if_gain25: '20'
+    if_gain26: '20'
+    if_gain27: '20'
+    if_gain28: '20'
+    if_gain29: '20'
+    if_gain3: '20'
+    if_gain30: '20'
+    if_gain31: '20'
+    if_gain4: '20'
+    if_gain5: '20'
+    if_gain6: '20'
+    if_gain7: '20'
+    if_gain8: '20'
+    if_gain9: '20'
+    iq_balance_mode0: '0'
+    iq_balance_mode1: '0'
+    iq_balance_mode10: '0'
+    iq_balance_mode11: '0'
+    iq_balance_mode12: '0'
+    iq_balance_mode13: '0'
+    iq_balance_mode14: '0'
+    iq_balance_mode15: '0'
+    iq_balance_mode16: '0'
+    iq_balance_mode17: '0'
+    iq_balance_mode18: '0'
+    iq_balance_mode19: '0'
+    iq_balance_mode2: '0'
+    iq_balance_mode20: '0'
+    iq_balance_mode21: '0'
+    iq_balance_mode22: '0'
+    iq_balance_mode23: '0'
+    iq_balance_mode24: '0'
+    iq_balance_mode25: '0'
+    iq_balance_mode26: '0'
+    iq_balance_mode27: '0'
+    iq_balance_mode28: '0'
+    iq_balance_mode29: '0'
+    iq_balance_mode3: '0'
+    iq_balance_mode30: '0'
+    iq_balance_mode31: '0'
+    iq_balance_mode4: '0'
+    iq_balance_mode5: '0'
+    iq_balance_mode6: '0'
+    iq_balance_mode7: '0'
+    iq_balance_mode8: '0'
+    iq_balance_mode9: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
-    vlen: '1'
+    nchan: '1'
+    num_mboards: '1'
+    sample_rate: samp_rate
+    sync: sync
+    time_source0: ''
+    time_source1: ''
+    time_source2: ''
+    time_source3: ''
+    time_source4: ''
+    time_source5: ''
+    time_source6: ''
+    time_source7: ''
+    type: fc32
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 800
-    - 220
+    coordinate: [80, 420.0]
     rotation: 0
     state: enabled
-- name: blocks_wavfile_sink_0
-  id: blocks_wavfile_sink
+- name: out_file
+  id: parameter
   parameters:
-    affinity: ''
     alias: ''
-    append: 'False'
-    comment: Runs until you press GRC's stop button (unlike the TX flowgraphs, which play a fixed-length
-      wav once and stop automatically -- there's no natural end-of-signal marker on receive, so start
-      this flowgraph, key Thetis's TX per the usual thetisctl --confirm-tx protocol, let the transmission
-      run, then stop this once Thetis unkeys).
-    file: out_file
-    nchan: '1'
-    samp_rate: audio_rate
-    format: FORMAT_WAV
-    bits_per_sample1: FORMAT_PCM_16
+    comment: Captured mono USB audio, 8 kHz float32 wav. Rename per capture (this
+      does NOT auto-timestamp) so successive test runs don't overwrite each other
+      -- e.g. offair_tx_radev1_<date>.wav vs offair_tx_700e_<date>.wav, matching this
+      repo's convention of a descriptive name over a bare default (see offair_14236000_RADEV1_20260808.wav).
+    hide: none
+    label: Output wav (captured demodulated audio)
+    short_id: ''
+    type: str
+    value: '"offair_capture.wav"'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 1000
-    - 220
+    coordinate: [776, 16.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -604,6 +599,7 @@ blocks:
     affinity: ''
     alias: ''
     alpha1: '1.0'
+    alpha10: '1.0'
     alpha2: '1.0'
     alpha3: '1.0'
     alpha4: '1.0'
@@ -612,7 +608,6 @@ blocks:
     alpha7: '1.0'
     alpha8: '1.0'
     alpha9: '1.0'
-    alpha10: '1.0'
     autoscale: 'False'
     average: '0.2'
     axislabels: 'True'
@@ -627,10 +622,10 @@ blocks:
     color7: '"yellow"'
     color8: '"dark red"'
     color9: '"dark green"'
-    comment: Wide-view spectrum at the HackRF's native rate, before the USB filter -- confirms the signal
-      is actually present and roughly centred before trusting the demodulated audio. Expect 700E's clean
-      OFDM comb or RADE V1's broadband/noise-like signature, matching the TX flowgraphs' own spectrum-sink
-      comments.
+    comment: Wide-view spectrum at the HackRF's native rate, before the USB filter
+      -- confirms the signal is actually present and roughly centred before trusting
+      the demodulated audio. Expect 700E's clean OFDM comb or RADE V1's broadband/noise-like
+      signature, matching the TX flowgraphs' own spectrum-sink comments.
     ctrlpanel: 'False'
     fc: center_freq
     fftsize: '1024'
@@ -639,6 +634,7 @@ blocks:
     gui_hint: ''
     label: Relative Gain
     label1: ''
+    label10: ''''''
     label2: ''''''
     label3: ''''''
     label4: ''''''
@@ -647,7 +643,6 @@ blocks:
     label7: ''''''
     label8: ''''''
     label9: ''''''
-    label10: ''''''
     legend: 'True'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -663,6 +658,7 @@ blocks:
     units: dB
     update_time: '0.10'
     width1: '1'
+    width10: '1'
     width2: '1'
     width3: '1'
     width4: '1'
@@ -671,7 +667,6 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    width10: '1'
     wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-140'
@@ -679,9 +674,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 500
-    - 60
+    coordinate: [440, 336.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -690,6 +683,7 @@ blocks:
     affinity: ''
     alias: ''
     alpha1: '1.0'
+    alpha10: '1.0'
     alpha2: '1.0'
     alpha3: '1.0'
     alpha4: '1.0'
@@ -698,28 +692,28 @@ blocks:
     alpha7: '1.0'
     alpha8: '1.0'
     alpha9: '1.0'
-    alpha10: '1.0'
     autoscale: 'False'
     axislabels: 'True'
     color1: blue
-    color2: '"red"'
-    color3: '"green"'
-    color4: '"black"'
-    color5: '"cyan"'
-    color6: '"magenta"'
-    color7: '"yellow"'
-    color8: '"dark red"'
-    color9: '"dark green"'
-    color10: '"dark blue"'
-    comment: Demodulated audio waveform after the USB filter -- watch for a flat-topped/clipped trace
-      as a sign rx_if_gain/rx_bb_gain need lowering (this is a very strong, very close signal, not a weak
-      off-air catch), and for real varying content (not a flat line) as basic confirmation something is
-      actually being received.
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: Demodulated audio waveform after the USB filter -- watch for a flat-topped/clipped
+      trace as a sign rx_if_gain/rx_bb_gain need lowering (this is a very strong,
+      very close signal, not a weak off-air catch), and for real varying content (not
+      a flat line) as basic confirmation something is actually being received.
     ctrlpanel: 'False'
     entags: 'True'
     grid: 'False'
     gui_hint: ''
     label1: ''''''
+    label10: ''''''
     label2: ''''''
     label3: ''''''
     label4: ''''''
@@ -728,9 +722,9 @@ blocks:
     label7: ''''''
     label8: ''''''
     label9: ''''''
-    label10: ''''''
     legend: 'True'
     marker1: '-1'
+    marker10: '-1'
     marker2: '-1'
     marker3: '-1'
     marker4: '-1'
@@ -739,15 +733,13 @@ blocks:
     marker7: '-1'
     marker8: '-1'
     marker9: '-1'
-    marker10: '-1'
-    maxoutbuf: '0'
-    minoutbuf: '0'
     name: '"Demodulated audio"'
     nconnections: '1'
     size: audio_rate
     srate: audio_rate
     stemplot: 'False'
     style1: '1'
+    style10: '1'
     style2: '1'
     style3: '1'
     style4: '1'
@@ -756,7 +748,6 @@ blocks:
     style7: '1'
     style8: '1'
     style9: '1'
-    style10: '1'
     tr_chan: '0'
     tr_delay: '0'
     tr_level: '0.0'
@@ -766,6 +757,7 @@ blocks:
     type: float
     update_time: '0.10'
     width1: '1'
+    width10: '1'
     width2: '1'
     width3: '1'
     width4: '1'
@@ -774,8 +766,6 @@ blocks:
     width7: '1'
     width8: '1'
     width9: '1'
-    width10: '1'
-    wintype: window.WIN_BLACKMAN_hARRIS
     ylabel: Amplitude
     ymax: '1'
     ymin: '-1'
@@ -784,32 +774,17 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate:
-    - 800
-    - 60
+    coordinate: [904, 272.0]
     rotation: 0
     state: enabled
+
 connections:
-- - osmosdr_source_0
-  - '0'
-  - freq_xlating_fir_filter_xxx_0
-  - '0'
-- - osmosdr_source_0
-  - '0'
-  - qtgui_freq_sink_x_0
-  - '0'
-- - freq_xlating_fir_filter_xxx_0
-  - '0'
-  - blocks_complex_to_real_0
-  - '0'
-- - blocks_complex_to_real_0
-  - '0'
-  - blocks_wavfile_sink_0
-  - '0'
-- - blocks_complex_to_real_0
-  - '0'
-  - qtgui_time_sink_x_0
-  - '0'
+- [blocks_complex_to_real_0, '0', blocks_wavfile_sink_0, '0']
+- [blocks_complex_to_real_0, '0', qtgui_time_sink_x_0, '0']
+- [freq_xlating_fir_filter_xxx_0, '0', blocks_complex_to_real_0, '0']
+- [osmosdr_source_0, '0', freq_xlating_fir_filter_xxx_0, '0']
+- [osmosdr_source_0, '0', qtgui_freq_sink_x_0, '0']
+
 metadata:
   file_format: 1
   grc_version: 3.10.12.0
