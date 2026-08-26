@@ -2386,6 +2386,19 @@ modes with real signals, confirming the `radio.cs`-level interlock holds
 under real CAT traffic, and a real PTT test of the new TX-arms-on-mode-select
 behavior are all still open next steps, not yet claimed here.
 
+### ✅ First successful over-the-air QSO using RADE V1 (2026-08-26)
+
+The milestone every earlier RADE V1 entry in this log was building toward.
+Prior entries confirmed the pieces individually — first off-air decode of
+Thetis's own transmission (2026-08-18), first intelligible decode once the
+VAC routing bug was fixed (2026-08-16), the Setup UI to arm/monitor it
+cleanly (2026-08-24/25) — but none of them was a real two-way contact with
+another station. On this date, one was completed: a full over-the-air QSO
+conducted using RADE V1, on real RF, with a real correspondent. This closes
+the open item flagged at the end of the foundational chapter ("neither TX
+path has word-level content verification of a real transmission") for the
+RADE V1 side specifically; 700E off-air QSO confirmation remains open.
+
 ## Stage D — FreeDV Reporter spotting *(future, planned 2026-08-08; re-scoped same day)*
 
 Motivation: off-air bench testing (Phase 3 step 5) is blocked on catching a real
