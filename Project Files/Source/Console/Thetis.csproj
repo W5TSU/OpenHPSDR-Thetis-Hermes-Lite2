@@ -520,6 +520,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Dumpcap.cs" />
+    <Compile Include="FreeDVReporterHelper.cs" />
     <Compile Include="enums.cs" />
     <Compile Include="Andromeda\FilterButtonsPopup.cs">
       <SubType>Form</SubType>

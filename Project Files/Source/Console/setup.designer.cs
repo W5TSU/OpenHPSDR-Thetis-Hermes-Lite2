@@ -2682,6 +2682,15 @@
             this.udRadeRX2Level = new System.Windows.Forms.NumericUpDownTS();
             this.lblRadeRX2Status = new System.Windows.Forms.LabelTS();
             this.chkShowRadeSyncOverlay = new System.Windows.Forms.CheckBoxTS();
+            this.grpFreeDVReporter = new System.Windows.Forms.GroupBoxTS();
+            this.lblFreeDVReporterHelperPath = new System.Windows.Forms.LabelTS();
+            this.txtFreeDVReporterHelperPath = new System.Windows.Forms.TextBoxTS();
+            this.chkFreeDVReporterSpot = new System.Windows.Forms.CheckBoxTS();
+            this.chkFreeDVReporterSelfReport = new System.Windows.Forms.CheckBoxTS();
+            this.lblFreeDVReporterGrid = new System.Windows.Forms.LabelTS();
+            this.txtFreeDVReporterGrid = new System.Windows.Forms.TextBoxTS();
+            this.chkFreeDVReporterRxOnly = new System.Windows.Forms.CheckBoxTS();
+            this.lblFreeDVReporterStatus = new System.Windows.Forms.LabelTS();
 
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
@@ -43702,6 +43711,102 @@
             this.chkShowRadeSyncOverlay.UseVisualStyleBackColor = true;
             this.chkShowRadeSyncOverlay.CheckedChanged += new System.EventHandler(this.chkShowRadeSyncOverlay_CheckedChanged);
             //
+            // grpFreeDVReporter
+            //
+            this.grpFreeDVReporter.Controls.Add(this.lblFreeDVReporterHelperPath);
+            this.grpFreeDVReporter.Controls.Add(this.txtFreeDVReporterHelperPath);
+            this.grpFreeDVReporter.Controls.Add(this.chkFreeDVReporterSpot);
+            this.grpFreeDVReporter.Controls.Add(this.chkFreeDVReporterSelfReport);
+            this.grpFreeDVReporter.Controls.Add(this.lblFreeDVReporterGrid);
+            this.grpFreeDVReporter.Controls.Add(this.txtFreeDVReporterGrid);
+            this.grpFreeDVReporter.Controls.Add(this.chkFreeDVReporterRxOnly);
+            this.grpFreeDVReporter.Controls.Add(this.lblFreeDVReporterStatus);
+            this.grpFreeDVReporter.Location = new System.Drawing.Point(16, 356);
+            this.grpFreeDVReporter.Name = "grpFreeDVReporter";
+            this.grpFreeDVReporter.Size = new System.Drawing.Size(320, 190);
+            this.grpFreeDVReporter.TabIndex = 52;
+            this.grpFreeDVReporter.TabStop = false;
+            this.grpFreeDVReporter.Text = "FreeDV Reporter";
+            //
+            // lblFreeDVReporterHelperPath
+            //
+            this.lblFreeDVReporterHelperPath.AutoSize = true;
+            this.lblFreeDVReporterHelperPath.Location = new System.Drawing.Point(12, 20);
+            this.lblFreeDVReporterHelperPath.Name = "lblFreeDVReporterHelperPath";
+            this.lblFreeDVReporterHelperPath.Size = new System.Drawing.Size(140, 13);
+            this.lblFreeDVReporterHelperPath.TabIndex = 0;
+            this.lblFreeDVReporterHelperPath.Text = "Helper (blank = use PATH):";
+            //
+            // txtFreeDVReporterHelperPath
+            //
+            this.txtFreeDVReporterHelperPath.Location = new System.Drawing.Point(12, 36);
+            this.txtFreeDVReporterHelperPath.Name = "txtFreeDVReporterHelperPath";
+            this.txtFreeDVReporterHelperPath.Size = new System.Drawing.Size(296, 20);
+            this.txtFreeDVReporterHelperPath.TabIndex = 1;
+            //
+            // chkFreeDVReporterSpot
+            //
+            this.chkFreeDVReporterSpot.AutoSize = true;
+            this.chkFreeDVReporterSpot.Image = null;
+            this.chkFreeDVReporterSpot.Location = new System.Drawing.Point(12, 62);
+            this.chkFreeDVReporterSpot.Name = "chkFreeDVReporterSpot";
+            this.chkFreeDVReporterSpot.Size = new System.Drawing.Size(180, 17);
+            this.chkFreeDVReporterSpot.TabIndex = 2;
+            this.chkFreeDVReporterSpot.Text = "Show other stations on panadapter";
+            this.toolTip1.SetToolTip(this.chkFreeDVReporterSpot, "Launches the FreeDV Reporter helper to push other active stations onto the panadapter as spot markers (sub-project 4).");
+            this.chkFreeDVReporterSpot.UseVisualStyleBackColor = true;
+            this.chkFreeDVReporterSpot.CheckedChanged += new System.EventHandler(this.chkFreeDVReporter_SettingChanged);
+            //
+            // chkFreeDVReporterSelfReport
+            //
+            this.chkFreeDVReporterSelfReport.AutoSize = true;
+            this.chkFreeDVReporterSelfReport.Image = null;
+            this.chkFreeDVReporterSelfReport.Location = new System.Drawing.Point(12, 84);
+            this.chkFreeDVReporterSelfReport.Name = "chkFreeDVReporterSelfReport";
+            this.chkFreeDVReporterSelfReport.Size = new System.Drawing.Size(200, 17);
+            this.chkFreeDVReporterSelfReport.TabIndex = 3;
+            this.chkFreeDVReporterSelfReport.Text = "Report my station to FreeDV Reporter";
+            this.toolTip1.SetToolTip(this.chkFreeDVReporterSelfReport, "Publishes this station's callsign, grid square, frequency, mode, and TX state to qso.freedv.org so other operators see it on the reporter's live map.");
+            this.chkFreeDVReporterSelfReport.UseVisualStyleBackColor = true;
+            this.chkFreeDVReporterSelfReport.CheckedChanged += new System.EventHandler(this.chkFreeDVReporter_SettingChanged);
+            //
+            // lblFreeDVReporterGrid
+            //
+            this.lblFreeDVReporterGrid.AutoSize = true;
+            this.lblFreeDVReporterGrid.Location = new System.Drawing.Point(12, 110);
+            this.lblFreeDVReporterGrid.Name = "lblFreeDVReporterGrid";
+            this.lblFreeDVReporterGrid.Size = new System.Drawing.Size(64, 13);
+            this.lblFreeDVReporterGrid.TabIndex = 4;
+            this.lblFreeDVReporterGrid.Text = "Grid square:";
+            //
+            // txtFreeDVReporterGrid
+            //
+            this.txtFreeDVReporterGrid.Location = new System.Drawing.Point(100, 106);
+            this.txtFreeDVReporterGrid.Name = "txtFreeDVReporterGrid";
+            this.txtFreeDVReporterGrid.Size = new System.Drawing.Size(80, 20);
+            this.txtFreeDVReporterGrid.TabIndex = 5;
+            //
+            // chkFreeDVReporterRxOnly
+            //
+            this.chkFreeDVReporterRxOnly.AutoSize = true;
+            this.chkFreeDVReporterRxOnly.Image = null;
+            this.chkFreeDVReporterRxOnly.Location = new System.Drawing.Point(190, 108);
+            this.chkFreeDVReporterRxOnly.Name = "chkFreeDVReporterRxOnly";
+            this.chkFreeDVReporterRxOnly.Size = new System.Drawing.Size(105, 17);
+            this.chkFreeDVReporterRxOnly.TabIndex = 6;
+            this.chkFreeDVReporterRxOnly.Text = "I don't transmit";
+            this.chkFreeDVReporterRxOnly.UseVisualStyleBackColor = true;
+            this.chkFreeDVReporterRxOnly.CheckedChanged += new System.EventHandler(this.chkFreeDVReporter_SettingChanged);
+            //
+            // lblFreeDVReporterStatus
+            //
+            this.lblFreeDVReporterStatus.AutoSize = true;
+            this.lblFreeDVReporterStatus.Location = new System.Drawing.Point(12, 136);
+            this.lblFreeDVReporterStatus.Name = "lblFreeDVReporterStatus";
+            this.lblFreeDVReporterStatus.Size = new System.Drawing.Size(100, 13);
+            this.lblFreeDVReporterStatus.TabIndex = 7;
+            this.lblFreeDVReporterStatus.Text = "Status: not running";
+            //
             // lblRadeRxLevel
             //
             this.lblRadeRxLevel.AutoSize = true;
@@ -43938,12 +44043,14 @@
             this.tpDSPRADE.Controls.Add(this.grpRadeRX2Core);
             this.tpDSPRADE.Controls.Add(this.grpRadeDiagnostics);
             this.tpDSPRADE.Controls.Add(this.chkShowRadeSyncOverlay);
+            this.tpDSPRADE.Controls.Add(this.grpFreeDVReporter);
             this.tpDSPRADE.Location = new System.Drawing.Point(4, 22);
             this.tpDSPRADE.Name = "tpDSPRADE";
             this.tpDSPRADE.Padding = new System.Windows.Forms.Padding(3);
             this.tpDSPRADE.Size = new System.Drawing.Size(724, 414);
+            this.tpDSPRADE.AutoScroll = true;
             this.tpDSPRADE.TabIndex = 13;
-            this.tpDSPRADE.Text = "Digital Voice";
+            this.tpDSPRADE.Text = "FreeDV";
 
             //
             // chkNR3_RNNoiseFixedGain
@@ -78494,6 +78601,15 @@
         private NumericUpDownTS udRadeRX2Level;
         private LabelTS lblRadeRX2Status;
         private CheckBoxTS chkShowRadeSyncOverlay;
+        private GroupBoxTS grpFreeDVReporter;
+        private LabelTS lblFreeDVReporterHelperPath;
+        private TextBoxTS txtFreeDVReporterHelperPath;
+        private CheckBoxTS chkFreeDVReporterSpot;
+        private CheckBoxTS chkFreeDVReporterSelfReport;
+        private LabelTS lblFreeDVReporterGrid;
+        private TextBoxTS txtFreeDVReporterGrid;
+        private CheckBoxTS chkFreeDVReporterRxOnly;
+        private LabelTS lblFreeDVReporterStatus;
 
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;

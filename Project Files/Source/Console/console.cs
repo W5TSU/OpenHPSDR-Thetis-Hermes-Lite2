@@ -29015,6 +29015,9 @@ namespace Thetis
             shutdownLogStringToPath("Before DumpCap.StopDumpcap()");
             DumpCap.StopDumpcap();
 
+            shutdownLogStringToPath("Before FreeDVReporterHelper.Stop()");
+            FreeDVReporterHelper.Stop();
+
             //MW0LGE_21d -- the db is updated with everything
             //all stored as part of DB.Exit below
             //we are shutting down, but may have moved frquency and not stored that into the current active slot, so do it now

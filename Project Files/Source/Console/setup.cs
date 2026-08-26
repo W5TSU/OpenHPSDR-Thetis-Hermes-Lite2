@@ -36863,6 +36863,82 @@ namespace Thetis
             Display.ShowRadeSyncOverlay = chkShowRadeSyncOverlay.Checked;
         }
 
+        // W5TSU: FreeDV Reporter enable UI (sub-project 6 of 6, see
+        // docs/superpowers/specs/2026-08-26-freedv-tab-and-self-reporting-design.md).
+        // One shared handler for all three checkboxes -- any of them
+        // changing means the helper process needs restarting with the
+        // current combined argument set (or stopped, if none are checked
+        // anymore). Grid square/RX-only text-field edits are picked up the
+        // next time any checkbox changes, matching the spec's "changing a
+        // setting while running restarts it" behavior without needing a
+        // separate TextChanged-triggered restart for every keystroke.
+        private void chkFreeDVReporter_SettingChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            ApplyFreeDVReporterSettings();
+        }
+
+        private System.Windows.Forms.Timer _freedv_reporter_status_timer = null;
+
+        // W5TSU: starts/stops/restarts FreeDVReporterHelper to match the
+        // three checkboxes' current state, and (re)arms the status-label
+        // poll timer. Called both from InitRadePanelFromBackend (Setup
+        // startup, reading whatever Setup's generic persistence mechanism
+        // already restored into the checkboxes) and from
+        // chkFreeDVReporter_SettingChanged (a live operator toggle) --
+        // both cases want exactly the same "make the running process match
+        // what the checkboxes say" behavior.
+        private void ApplyFreeDVReporterSettings()
+        {
+            bool doSpot = chkFreeDVReporterSpot.Checked;
+            bool doSelfReport = chkFreeDVReporterSelfReport.Checked;
+
+            if (!doSpot && !doSelfReport)
+            {
+                FreeDVReporterHelper.Stop();
+                lblFreeDVReporterStatus.Text = "Status: not running";
+                if (_freedv_reporter_status_timer != null)
+                    _freedv_reporter_status_timer.Enabled = false;
+                return;
+            }
+
+            // --no-tune is always passed: this UI never exposes the
+            // pre-existing "auto-tune my own radio to other stations'
+            // activity" behavior watch already has baked in whenever
+            // --tci is given at all, and enabling that as an undeclared
+            // side effect of checking either of THESE checkboxes would be
+            // a surprise -- an operator who only wants self-reporting
+            // does not also want their own VFO silently retuning to
+            // someone else's transmission.
+            string args = "freedv-reporter watch --tci 127.0.0.1 --no-tune";
+            if (doSpot)
+                args += " --spot";
+            if (doSelfReport)
+            {
+                string callsign = TCIOwnCallsign;
+                string grid = txtFreeDVReporterGrid.Text;
+                args += " --self-report --callsign " + callsign + " --grid " + grid;
+                if (chkFreeDVReporterRxOnly.Checked)
+                    args += " --rx-only";
+            }
+
+            bool started = FreeDVReporterHelper.EnsureRunning(txtFreeDVReporterHelperPath.Text, args);
+            lblFreeDVReporterStatus.Text = started ? "Status: running" : "Status: failed to start";
+
+            if (_freedv_reporter_status_timer == null)
+            {
+                _freedv_reporter_status_timer = new System.Windows.Forms.Timer();
+                _freedv_reporter_status_timer.Interval = 2000;
+                _freedv_reporter_status_timer.Tick += freedvReporterStatusTimer_Tick;
+            }
+            _freedv_reporter_status_timer.Enabled = true;
+        }
+
+        private void freedvReporterStatusTimer_Tick(object sender, EventArgs e)
+        {
+            lblFreeDVReporterStatus.Text = FreeDVReporterHelper.IsRunning ? "Status: running" : "Status: not running";
+        }
+
         // W5TSU: RX2 Digital Voice mode selector (sub-project 3 of 5, see
         // docs/superpowers/specs/2026-08-25-rx2-digital-voice-design.md).
         // Mirrors cmbRadeMode_SelectedIndexChanged (RX1) exactly for the
@@ -37152,6 +37228,14 @@ namespace Thetis
             cmbRadeMode.SelectedIndexChanged += cmbRadeMode_SelectedIndexChanged;
 
             Display.ShowRadeSyncOverlay = chkShowRadeSyncOverlay.Checked;
+
+            chkFreeDVReporterSpot.CheckedChanged -= chkFreeDVReporter_SettingChanged;
+            chkFreeDVReporterSelfReport.CheckedChanged -= chkFreeDVReporter_SettingChanged;
+            chkFreeDVReporterRxOnly.CheckedChanged -= chkFreeDVReporter_SettingChanged;
+            ApplyFreeDVReporterSettings();
+            chkFreeDVReporterSpot.CheckedChanged += chkFreeDVReporter_SettingChanged;
+            chkFreeDVReporterSelfReport.CheckedChanged += chkFreeDVReporter_SettingChanged;
+            chkFreeDVReporterRxOnly.CheckedChanged += chkFreeDVReporter_SettingChanged;
 
             bool radeActive = (mode == 2 || mode == 3);
             udRadeRxLevel.Enabled = radeActive;
