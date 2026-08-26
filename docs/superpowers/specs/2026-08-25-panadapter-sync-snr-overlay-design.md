@@ -33,13 +33,26 @@ already-complete halves, not new subsystems on either side.
 2. **`display.cs` already has a directly-analogous overlay** —
    `BandStackOverlay` (`m_bShowBandStackOverlays` flag +
    `m_bandStackOverlays` static data + `drawFilterOverlayDX2D`, gated
-   `rx == 1` inside `DrawPanadapterDX2D`) is drawn today from exactly this
-   same per-RX, per-frame draw path. This sub-project follows that same
-   shape: a static show/hide flag, read at draw time, drawn per-rx.
+   `rx == 1`) is drawn today from exactly this same per-RX, per-frame draw
+   path. **Correction from an earlier draft of this spec, verified by
+   reading the actual function boundaries**: this code — and the RX's own
+   filter-passband overlay it sits beside — lives inside
+   `drawPanadapterAndWaterfallGridDX2D` (`display.cs:8802`), a single
+   shared helper called once for the actual panadapter/spectrum pass
+   (`DrawPanadapterDX2D:4980`, with its own `bIsWaterfall` parameter
+   `false`) and once for the waterfall pass (`DrawWaterfallDX2D:7707`,
+   `bIsWaterfall` `true`) — not a function named `DrawPanadapterDX2D`
+   itself, which only handles a few other overlay elements (the
+   noise-floor readout). This sub-project follows the same shape: a
+   static show/hide flag, read at draw time, drawn per-rx, inside this
+   shared helper's own `!bIsWaterfall`-gated branch (so it never appears on
+   the waterfall) and its own `if (!local_mox)`-gated branch (so it's
+   already guaranteed hidden during TX, no separate MOX check needed).
 3. **Text drawing, string measurement, and color-brush helpers all
-   already exist** and are used throughout `DrawPanadapterDX2D` for
-   similar small in-spectrum labels (the noise-floor readout, the FPS/CPU
-   diagnostic overlay, waterfall time labels) — `drawStringDX2D`,
+   already exist** and are used throughout `display.cs`'s DX2D draw
+   functions for similar small in-spectrum labels (the noise-floor
+   readout, the FPS/CPU diagnostic overlay, waterfall time labels,
+   frequency-scale grid labels) — `drawStringDX2D`,
    `measureStringDX2D`, and `getDXBrushForColour` (a self-caching
    Color→Brush helper, `display.cs:11570`, already used for one-off fixed
    status colors like `m_bDX2_Red`/`m_bDX2_Yellow` at setup time and
@@ -120,45 +133,55 @@ free as a side effect of the render loop already running.
 
 ### TX gating
 
-`DrawPanadapterDX2D` already has a MOX/TX signal threaded into its draw
-path for the existing filter overlay's own TX-awareness (`local_mox`,
-referenced at `display.cs:9194`'s `!local_mox` check on
-`BandStackOverlay`'s own draw gate). The sync/SNR overlay reuses that same
-signal: when `local_mox` is true for a given rx, skip drawing the overlay
-entirely for that rx's pane this frame (per the "hide during TX" decision)
-— no separate MOX lookup needed.
+`drawPanadapterAndWaterfallGridDX2D` already has a MOX/TX signal threaded
+into its draw path for the existing filter overlay's own TX-awareness
+(`local_mox`) — the RX filter overlay block and everything after it in
+this function only runs inside `if (!local_mox)`. Placing this overlay's
+code inside that same block (see "Rendering" below) means it is already
+guaranteed hidden during TX as a structural side effect of where it lives
+— no separate MOX check needed.
 
 ### Rendering
 
-Per rx (1 and 2 — RX2 only when its pane is actually visible/split,
-mirroring `BandStackOverlay`'s existing `rx == 1` gate generalized to also
-handle `rx == 2` the same way the existing filter-overlay code already
-does for other per-rx elements in this same function):
+Inside `drawPanadapterAndWaterfallGridDX2D`, the new code sits immediately
+after the existing "RX FILTER overlay + highlight edges" block's own
+`if (!bIsWaterfall) { ... nFilterEdge switch ... }` sub-block (the one
+that highlights a filter edge for CW), as a sibling `if (!bIsWaterfall)`
+block at the same nesting level — still inside the enclosing
+`if (!local_mox)` and `if ((bIsWaterfall && m_bShowRXFilterOnWaterfall) ||
+!bIsWaterfall)` blocks, where `filter_left_x`, `filter_right_x`, `rx`,
+`top`, `nVerticalShift`, `H`, and `W` are all already in scope from the
+surrounding code — no new parameters need to be threaded in.
 
-- Skip entirely if `!ShowRadeSyncOverlay` (new toggle, see below), if
-  `!active` for this rx, or if `local_mox` is true for this rx.
+Per rx (1 and 2 — RX2's own pane naturally only reaches this code when
+its call to `drawPanadapterAndWaterfallGridDX2D` happens at all, the same
+way the existing filter-overlay code already only runs for whichever rx
+is actually being drawn this call):
+
+- Skip entirely if `!ShowRadeSyncOverlay` (new toggle, see below) or if
+  `!active` for this rx (TX and waterfall are already excluded structurally
+  by this insertion point, see "TX gating" above).
 - Otherwise compute the display string: `"SYNC  SNR {snrText} dB"` when
   `sync`, else `"no sync"` — matching the Setup panel's own exact wording
   for consistency between the two surfaces.
 - Color: `getDXBrushForColour(Color.Green)` when `sync`, otherwise reuse
-  `m_bDX2_grid_text_pen` (the skin's own existing grid/frequency-label
+  `m_bDX2_grid_text_brush` (the skin's own existing grid/frequency-label
   text color, already computed and cached each time the DX2D surface is
-  set up, `display.cs:8350`) — deliberately not a WinForms `SystemColors`
-  value, since those are meant for form controls and would not read
-  correctly against an arbitrary (often dark, often user-skinned)
-  spectrum background. `m_bDX2_grid_text_pen` is what every other
-  in-spectrum label already uses for its own "default, not an alert"
-  color, e.g. the VFO/click-tune text at `display.cs:9731`.
-- Position: `filter_left_x` (already computed at this point in
-  `DrawPanadapterDX2D` for this rx's own filter-passband shading — the
-  exact X pixel position of the currently-tuned passband) for the X
-  coordinate; vertically, a few pixels above the top of that same
-  passband shading (`nVerticalShift + top`, the same top-left corner
-  `drawFilterOverlayDX2D`'s own rectangle starts from) minus the text's
-  own measured height via `measureStringDX2D`, so the label sits directly
-  above the passband it describes without overlapping it — the same
-  "measure then offset above" placement already used for the noise-floor
-  readout label (`display.cs:5449`, `nf_box.Y - 6`).
+  set up, and already used directly as a `drawStringDX2D` brush argument
+  elsewhere in this same file, e.g. `display.cs:10315-10316`'s frequency
+  labels) — deliberately not a WinForms `SystemColors` value, since those
+  are meant for form controls and would not read correctly against an
+  arbitrary (often dark, often user-skinned) spectrum background.
+- Position: `filter_left_x` (already computed at this point for this
+  rx's own filter-passband shading — the exact X pixel position of the
+  currently-tuned passband) for the X coordinate; vertically, a few
+  pixels above the top of that same passband shading (`nVerticalShift +
+  top`, the same top-left corner `drawFilterOverlayDX2D`'s own rectangle
+  starts from) minus the text's own measured height via
+  `measureStringDX2D`, so the label sits directly above the passband it
+  describes without overlapping it — the same "measure then offset above"
+  placement already used for the noise-floor readout label
+  (`display.cs:5449`, `nf_box.Y - 6`).
 - Draw via the existing `drawStringDX2D(text, font, brush, x, y)` helper
   (`display.cs:8504`) with `fontDX2d_font9` — the same small label font
   already used for the noise-floor value/waterfall time labels, keeping
@@ -231,12 +254,15 @@ is this project's established practice for `display.cs`/Setup-panel work
   active" indicator) — the existing MOX/PTT indicators elsewhere in the
   UI already cover this; this spec is RX-decode-quality only, matching the
   original "Panadapter SNR/sync overlay" scoping from sub-project #1.
-- Waterfall-pane rendering (only the panadapter/spectrum view,
-  `DrawPanadapterDX2D`, is in scope) — the waterfall has its own draw
-  function (`DrawWaterfallDX2D`) and the original scoping note ("touches
-  `display.cs`") never called out the waterfall specifically; a compact
-  SNR/sync text label doesn't fit the waterfall's continuously-scrolling
-  presentation the way it fits the static spectrum view.
+- Waterfall-pane rendering — although the RX filter overlay this sub-project
+  sits beside is drawn by a helper shared between the panadapter and
+  waterfall passes (`drawPanadapterAndWaterfallGridDX2D`, see "Rendering"
+  above), the new code is placed inside that helper's own
+  `!bIsWaterfall`-gated branch, so it only ever draws on the panadapter
+  pass, never the waterfall's — a compact SNR/sync text label doesn't fit
+  the waterfall's continuously-scrolling presentation the way it fits the
+  static spectrum view, matching the original "Panadapter SNR/sync
+  overlay" scoping from sub-project #1.
 - Persisting the overlay's on/off state anywhere beyond Setup's existing
   generic checkbox-persistence mechanism (no separate config file, no CAT
   command) — this is a display preference, not something CAT/TCI clients
