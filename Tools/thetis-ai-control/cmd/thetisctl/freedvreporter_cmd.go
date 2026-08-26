@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -327,6 +328,16 @@ func selfReportListenLoop(stateClient *tci.Client, reportClient *freedvreporter.
 	for {
 		cmd, args, err := stateClient.RecvCmd()
 		if err != nil {
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
+				// tci.Dial's timeout is reapplied as a read deadline before
+				// every frame (internal/tci/ws.go), so this loop's own
+				// passive listen naturally times out during any idle radio
+				// state -- not a real disconnect. Keep listening rather
+				// than tearing down and reconnecting both connections on a
+				// ~5s cadence.
+				continue
+			}
 			fmt.Printf("[self-report] TCI connection lost: %v\n", err)
 			return
 		}
