@@ -2681,6 +2681,7 @@
             this.lblRadeRX2Level = new System.Windows.Forms.LabelTS();
             this.udRadeRX2Level = new System.Windows.Forms.NumericUpDownTS();
             this.lblRadeRX2Status = new System.Windows.Forms.LabelTS();
+            this.chkShowRadeSyncOverlay = new System.Windows.Forms.CheckBoxTS();
 
             this.chkNR3_RNNoiseFixedGain = new System.Windows.Forms.CheckBoxTS();
             this.btnNR3_model_default = new System.Windows.Forms.ButtonTS();
@@ -43688,6 +43689,19 @@
             this.chkRadeRX1Loopback.UseVisualStyleBackColor = true;
             this.chkRadeRX1Loopback.CheckedChanged += new System.EventHandler(this.chkRadeRX1Loopback_CheckedChanged);
             //
+            // chkShowRadeSyncOverlay
+            //
+            this.chkShowRadeSyncOverlay.AutoSize = true;
+            this.chkShowRadeSyncOverlay.Image = null;
+            this.chkShowRadeSyncOverlay.Location = new System.Drawing.Point(16, 328);
+            this.chkShowRadeSyncOverlay.Name = "chkShowRadeSyncOverlay";
+            this.chkShowRadeSyncOverlay.Size = new System.Drawing.Size(190, 17);
+            this.chkShowRadeSyncOverlay.TabIndex = 51;
+            this.chkShowRadeSyncOverlay.Text = "Show sync/SNR on panadapter";
+            this.toolTip1.SetToolTip(this.chkShowRadeSyncOverlay, "Shows the active Digital Voice mode's live SYNC/SNR status directly above the tuned filter on the panadapter, for RX1 and RX2 independently. Hidden during TX.");
+            this.chkShowRadeSyncOverlay.UseVisualStyleBackColor = true;
+            this.chkShowRadeSyncOverlay.CheckedChanged += new System.EventHandler(this.chkShowRadeSyncOverlay_CheckedChanged);
+            //
             // lblRadeRxLevel
             //
             this.lblRadeRxLevel.AutoSize = true;
@@ -43923,6 +43937,7 @@
             this.tpDSPRADE.Controls.Add(this.grpRadeRX1Core);
             this.tpDSPRADE.Controls.Add(this.grpRadeRX2Core);
             this.tpDSPRADE.Controls.Add(this.grpRadeDiagnostics);
+            this.tpDSPRADE.Controls.Add(this.chkShowRadeSyncOverlay);
             this.tpDSPRADE.Location = new System.Drawing.Point(4, 22);
             this.tpDSPRADE.Name = "tpDSPRADE";
             this.tpDSPRADE.Padding = new System.Windows.Forms.Padding(3);
@@ -78478,6 +78493,7 @@
         private LabelTS lblRadeRX2Level;
         private NumericUpDownTS udRadeRX2Level;
         private LabelTS lblRadeRX2Status;
+        private CheckBoxTS chkShowRadeSyncOverlay;
 
         private GroupBoxTS groupBoxTS55;
         private LabelTS labelTS447;

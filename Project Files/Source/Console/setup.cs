@@ -36853,6 +36853,16 @@ namespace Thetis
             }
         }
 
+        // W5TSU: panadapter sync/SNR overlay toggle (sub-project 5 of 6) --
+        // one-line passthrough to Display's static flag, guarded like every
+        // other Digital Voice tab handler against firing during Setup's own
+        // startup sequence.
+        private void chkShowRadeSyncOverlay_CheckedChanged(object sender, EventArgs e)
+        {
+            if (initializing) return;
+            Display.ShowRadeSyncOverlay = chkShowRadeSyncOverlay.Checked;
+        }
+
         // W5TSU: RX2 Digital Voice mode selector (sub-project 3 of 5, see
         // docs/superpowers/specs/2026-08-25-rx2-digital-voice-design.md).
         // Mirrors cmbRadeMode_SelectedIndexChanged (RX1) exactly for the
@@ -37140,6 +37150,10 @@ namespace Thetis
                 mode = 0;
             cmbRadeMode.SelectedIndex = mode;
             cmbRadeMode.SelectedIndexChanged += cmbRadeMode_SelectedIndexChanged;
+
+            chkShowRadeSyncOverlay.CheckedChanged -= chkShowRadeSyncOverlay_CheckedChanged;
+            chkShowRadeSyncOverlay.Checked = Display.ShowRadeSyncOverlay;
+            chkShowRadeSyncOverlay.CheckedChanged += chkShowRadeSyncOverlay_CheckedChanged;
 
             bool radeActive = (mode == 2 || mode == 3);
             udRadeRxLevel.Enabled = radeActive;
