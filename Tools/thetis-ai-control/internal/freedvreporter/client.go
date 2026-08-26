@@ -3,6 +3,7 @@ package freedvreporter
 import (
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"time"
 )
 
@@ -27,6 +28,68 @@ type Client struct {
 // Socket.IO CONNECT packet ("40" + JSON auth) in reply before it will start
 // pushing station/activity events.
 func Dial(timeout time.Duration) (*Client, error) {
+	// The site's own client (index.js) sends { role: "view", protocol_version: 2 }
+	// as the `auth` option — matched exactly here since an unrecognised
+	// auth shape may be rejected server-side.
+	auth, err := json.Marshal(struct {
+		Role            string `json:"role"`
+		ProtocolVersion int    `json:"protocol_version"`
+	}{Role: "view", ProtocolVersion: 2})
+	if err != nil {
+		return nil, fmt.Errorf("freedvreporter: marshal auth: %w", err)
+	}
+	return dialAndHandshake(auth, timeout)
+}
+
+// DialReport connects to FreeDV Reporter in a self-reporting role instead
+// of Dial's read-only "view" role, publishing this station's own presence
+// rather than watching others'. Auth payload shape and role names
+// confirmed directly against freedv-gui's own FreeDVReporter.cpp (fetched
+// from its freedv_backend dependency) — role/callsign/grid_square/version/
+// rx_only/os/protocol_version fields, NOT inferred from the read-only web
+// viewer, which never emits station data at all. writeOnly selects
+// "report_wo" over "report": the server then skips streaming the full
+// station table back to this connection, which a Client obtained this way
+// (Emit-only — see below) has no use for.
+func DialReport(callsign, gridSquare string, rxOnly, writeOnly bool, timeout time.Duration) (*Client, error) {
+	role := "report"
+	if writeOnly {
+		role = "report_wo"
+	}
+	auth, err := json.Marshal(struct {
+		Role            string `json:"role"`
+		Callsign        string `json:"callsign"`
+		GridSquare      string `json:"grid_square"`
+		Version         string `json:"version"`
+		RXOnly          bool   `json:"rx_only"`
+		OS              string `json:"os"`
+		ProtocolVersion int    `json:"protocol_version"`
+	}{
+		Role:            role,
+		Callsign:        callsign,
+		GridSquare:      gridSquare,
+		Version:         "Thetis (thetisctl)",
+		RXOnly:          rxOnly,
+		OS:              runtime.GOOS,
+		ProtocolVersion: 2,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("freedvreporter: marshal report auth: %w", err)
+	}
+	return dialAndHandshake(auth, timeout)
+}
+
+// dialAndHandshake performs the connection plus Engine.IO/Socket.IO v4
+// handshake shared by every role this package supports (Dial's own
+// original doc comment described this exact sequence, confirmed by direct
+// protocol probing 2026-08-09): the server accepts a direct WebSocket
+// connection (no polling transport needed first) at ReporterHost's
+// "/socket.io/?EIO=4&transport=websocket", immediately sends an Engine.IO
+// OPEN packet ("0{...}"), and expects a Socket.IO CONNECT packet ("40" +
+// JSON auth) in reply before it will start pushing (view role) or
+// accepting (report role) events. auth is the already-marshaled JSON
+// value for the "auth" option — its shape depends on the caller's role.
+func dialAndHandshake(auth []byte, timeout time.Duration) (*Client, error) {
 	ws, err := dialWS(ReporterHost, socketIOPath, timeout)
 	if err != nil {
 		return nil, err
@@ -46,18 +109,6 @@ func Dial(timeout time.Duration) (*Client, error) {
 		return nil, fmt.Errorf("freedvreporter: expected engine.io OPEN packet, got %q", truncate(payload, 80))
 	}
 
-	// Socket.IO CONNECT to the default "/" namespace. The site's own client
-	// (index.js) sends { role: "view", protocol_version: 2 } as the `auth`
-	// option — matched exactly here since an unrecognised auth shape may be
-	// rejected server-side.
-	auth, err := json.Marshal(struct {
-		Role            string `json:"role"`
-		ProtocolVersion int    `json:"protocol_version"`
-	}{Role: "view", ProtocolVersion: 2})
-	if err != nil {
-		ws.Close()
-		return nil, fmt.Errorf("freedvreporter: marshal auth: %w", err)
-	}
 	if err := ws.WriteText("40" + string(auth)); err != nil {
 		ws.Close()
 		return nil, fmt.Errorf("freedvreporter: send socket.io connect: %w", err)
@@ -145,6 +196,22 @@ func (c *Client) ReadEvent() (Event, error) {
 
 		return Event{Name: name, Payload: data}, nil
 	}
+}
+
+// Emit writes a Socket.IO v4 EVENT frame ("42" + a JSON array [event,
+// payload]) — the exact inverse of ReadEvent's own "42"-prefix parsing
+// above, so both directions of this package share one understanding of
+// the wire format. Confirmed against freedv-gui's own FreeDVReporter.cpp
+// emit call shapes (e.g. its freqChangeImpl_ builds {"freq": <Hz>} and
+// calls sioClient_->emit("freq_change", ...)). Only meaningful on a
+// Client obtained from DialReport — a view-role Client from Dial has
+// nothing to emit and the server will not be listening for events from it.
+func (c *Client) Emit(event string, payload any) error {
+	b, err := json.Marshal([]any{event, payload})
+	if err != nil {
+		return fmt.Errorf("freedvreporter: marshal emit payload for %q: %w", event, err)
+	}
+	return c.ws.WriteText("42" + string(b))
 }
 
 func truncate(b []byte, n int) string {
