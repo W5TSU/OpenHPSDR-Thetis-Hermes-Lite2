@@ -832,8 +832,7 @@ PORT void SetRadaeTxSilenceHold(int on)
 
 PORT void SetRadaeLoopbackEnabled(int rx, int enable)
 {
-    /* Loopback is RX1-only -- no cross-protocol loopback can occur. */
-    if (rx != 0) return;
+    if (!radae_rx_valid(rx)) return;
     long prev = _InterlockedExchange(&g_radae_loopback_enabled[rx], enable ? 1 : 0);
     if (!enable)
     {
@@ -1329,6 +1328,37 @@ void xradae_rx(int rx, double* rbuff_io)
 #define RADE_TX_SCALE_V1  0.5f
 #define RADE_TX_SCALE_V2  0.66f
 
+/* Copies up to `have` samples of TX-encoded modem audio (`scratch`) into
+ * loop_rx's bridge, respecting its capacity and logging overruns the same
+ * way for every RX.  Overflow is dropped and counted, matching the
+ * original RX1-only behaviour.  Called once per enabled loopback RX from
+ * xradae_tx -- each call touches only its own slot's fields, so the
+ * single-writer-per-slot invariant that made the RX1-only code safe
+ * carries over unchanged. */
+static void push_loop_bridge(int loop_rx, const float* scratch, int have)
+{
+    int avail = RADAE_LOOP_BRIDGE_CAP - g_loop_bridge_n[loop_rx];
+    int take  = (have < avail) ? have : avail;
+    if (take > 0)
+    {
+        memcpy(g_loop_bridge[loop_rx] + g_loop_bridge_n[loop_rx], scratch,
+               (size_t)take * sizeof(float));
+        g_loop_bridge_n[loop_rx] += take;
+    }
+    if (take < have)
+    {
+        long c = ++g_loop_bridge_ovrun_count[loop_rx];
+        if (c == 1 || (c % 50) == 0)
+        {
+            char log[140];
+            sprintf_s(log, sizeof(log),
+                "[RADAE] RX%d loop_bridge OVRUN dropped=%d total=%ld\n",
+                loop_rx + 1, have - take, c);
+            OutputDebugStringA(log);
+        }
+    }
+}
+
 void xradae_tx(double* mic_io)
 {
     const int tx_in_id = inid(1, 0);
@@ -1342,11 +1372,14 @@ void xradae_tx(double* mic_io)
 
     if (_InterlockedAnd(&g_radae_bypass_all, 1)) return;
 
-    /* Loopback is RX1-only; otherwise the encoder follows the transmitting RX
-     * (set by SetRadaeTxRx at the MOX edge).  tx_rx selects both the handle and
+    /* During any loopback (RX1 and/or RX2) the encoder is forced to RX1's
+     * handle/protocol; otherwise it follows the transmitting RX (set by
+     * SetRadaeTxRx at the MOX edge).  tx_rx selects both the handle and
      * its per-RX geometry, so transmitting on an RX running V2 encodes V2. */
     const long lpb0 = _InterlockedAnd(&g_radae_loopback_enabled[0], 1);
-    int tx_rx = lpb0 ? 0 : (int)_InterlockedAnd(&g_radae_tx_rx, 1);
+    const long lpb1 = _InterlockedAnd(&g_radae_loopback_enabled[1], 1);
+    const long lpb_any = lpb0 || lpb1;
+    int tx_rx = lpb_any ? 0 : (int)_InterlockedAnd(&g_radae_tx_rx, 1);
     if (tx_rx < 0 || tx_rx >= RADAE_NRX) tx_rx = 0;
     if (g_rade[tx_rx] == NULL) return;
 
@@ -1356,8 +1389,8 @@ void xradae_tx(double* mic_io)
     const float tx_scale = ((int)_InterlockedAnd(&g_radae_protocol_v2[tx_rx], 1))
                            ? RADE_TX_SCALE_V2 : RADE_TX_SCALE_V1;
 
-    /* MOX-state gating.  Mirror of the RX-side gate.  Loopback (RX1-only)
-     * passes the gate so the encoder->bridge->RX1 path runs without MOX. */
+    /* MOX-state gating.  Mirror of the RX-side gate.  Loopback (either RX)
+     * passes the gate so the encoder->bridge->RX path runs without MOX. */
     {
         const long mox  = _InterlockedAnd(&g_radae_mox_state,                 1);
         const long eoo  = _InterlockedAnd(&g_radae_eoo_pending,               1);
@@ -1366,7 +1399,7 @@ void xradae_tx(double* mic_io)
          * modem samples) into mic_io for the whole keyed flush window -- the
          * arbiter keeps the radio keyed until the EOO has flushed, and live
          * mic must never leak on-air. */
-        if (!mox && !lpb0 && !eoo && !hold)
+        if (!mox && !lpb_any && !eoo && !hold)
         {
             const long drain = _InterlockedAnd(&g_radae_drain_blocks, 0xffffffff);
             if (drain <= 0) return;
@@ -1608,28 +1641,10 @@ void xradae_tx(double* mic_io)
             }
         }
 
-        if (lpb0)
+        if (lpb_any)
         {
-            int avail = RADAE_LOOP_BRIDGE_CAP - g_loop_bridge_n[0];
-            int take  = (have < avail) ? have : avail;
-            if (take > 0)
-            {
-                memcpy(g_loop_bridge[0] + g_loop_bridge_n[0], scratch,
-                       (size_t)take * sizeof(float));
-                g_loop_bridge_n[0] += take;
-            }
-            if (take < have)
-            {
-                long c = ++g_loop_bridge_ovrun_count[0];
-                if (c == 1 || (c % 50) == 0)
-                {
-                    char log[140];
-                    sprintf_s(log, sizeof(log),
-                        "[RADAE] RX1 loop_bridge OVRUN dropped=%d total=%ld\n",
-                        have - take, c);
-                    OutputDebugStringA(log);
-                }
-            }
+            if (lpb0) push_loop_bridge(0, scratch, have);
+            if (lpb1) push_loop_bridge(1, scratch, have);
             for (i = 0; i < outsize; i++)
             {
                 mic_io[2 * i]     = 0.0;
