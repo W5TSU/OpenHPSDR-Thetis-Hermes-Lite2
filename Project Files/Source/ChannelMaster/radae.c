@@ -84,10 +84,11 @@ static volatile long g_radae_box_pending      = 0;   /* RX->MOX edge flag */
 /* Per-RX RX-side master enable. */
 static volatile long g_radae_rx_enabled[RADAE_NRX]       = { 0 };
 
-/* Loopback enable.  RX1-only (index 0): the TX-side modem audio is pushed
- * into RX1's loopback bridge instead of mic_io.  The array stays dimensioned
- * [RADAE_NRX] for the existing per-rx call shape but only index 0 is used, so
- * no cross-protocol loopback can occur. */
+/* Loopback enable: per-RX enable flags (indices 0 and 1).  During any
+ * loopback the encoder is forced to RX1's protocol/handle and pushes its
+ * TX-modem audio into every enabled RX's loopback bridge instead of mic_io.
+ * If an RX's own protocol differs from RX1's, it receives RX1-protocol audio
+ * and will not sync -- a test-configuration mismatch, not a safety hazard. */
 static volatile long g_radae_loopback_enabled[RADAE_NRX] = { 0 };
 
 /* Per-RX RADE protocol: 0 = V1, 1 = V2.  Captured at rade_open time and
@@ -1616,8 +1617,8 @@ void xradae_tx(double* mic_io)
         }
     }
 
-    /* 6) FIFO-drain into mic_io.  Loopback is RX1-only -- when RX1 loopback is
-     *    enabled, push the modem audio into RX1's bridge and keep mic_io silent
+    /* 6) FIFO-drain into mic_io.  When any RX's loopback is enabled, push
+     *    the modem audio into every enabled RX's bridge and keep mic_io silent
      *    so the radio does not transmit during loopback. */
     {
         float scratch[RADAE_MAX_BLOCK];
