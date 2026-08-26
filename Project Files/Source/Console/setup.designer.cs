@@ -43698,7 +43698,7 @@
             this.chkShowRadeSyncOverlay.Size = new System.Drawing.Size(190, 17);
             this.chkShowRadeSyncOverlay.TabIndex = 51;
             this.chkShowRadeSyncOverlay.Text = "Show sync/SNR on panadapter";
-            this.toolTip1.SetToolTip(this.chkShowRadeSyncOverlay, "Shows the active Digital Voice mode's live SYNC/SNR status directly above the tuned filter on the panadapter, for RX1 and RX2 independently. Hidden during TX.");
+            this.toolTip1.SetToolTip(this.chkShowRadeSyncOverlay, "Shows the active Digital Voice mode's live SYNC/SNR status on the panadapter, near the tuned filter passband, for RX1 and RX2 independently. Hidden during TX.");
             this.chkShowRadeSyncOverlay.UseVisualStyleBackColor = true;
             this.chkShowRadeSyncOverlay.CheckedChanged += new System.EventHandler(this.chkShowRadeSyncOverlay_CheckedChanged);
             //

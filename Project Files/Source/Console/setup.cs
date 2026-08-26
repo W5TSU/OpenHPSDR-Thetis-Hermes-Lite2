@@ -37151,9 +37151,7 @@ namespace Thetis
             cmbRadeMode.SelectedIndex = mode;
             cmbRadeMode.SelectedIndexChanged += cmbRadeMode_SelectedIndexChanged;
 
-            chkShowRadeSyncOverlay.CheckedChanged -= chkShowRadeSyncOverlay_CheckedChanged;
-            chkShowRadeSyncOverlay.Checked = Display.ShowRadeSyncOverlay;
-            chkShowRadeSyncOverlay.CheckedChanged += chkShowRadeSyncOverlay_CheckedChanged;
+            Display.ShowRadeSyncOverlay = chkShowRadeSyncOverlay.Checked;
 
             bool radeActive = (mode == 2 || mode == 3);
             udRadeRxLevel.Enabled = radeActive;
