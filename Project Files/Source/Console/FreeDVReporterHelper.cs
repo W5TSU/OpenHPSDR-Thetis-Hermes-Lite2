@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace Thetis
 {
@@ -15,6 +16,14 @@ namespace Thetis
         private static int m_nProcessID = -1;
         private const string PROCESS_NAME_NO_EXT = "thetisctl";
 
+        // Tracks whichever process name EnsureRunning actually launched,
+        // since the helper-path field may point at a differently-named
+        // binary (e.g. a thetis-ai-skill successor) -- IsRunning/Stop must
+        // look up by that same name, not always "thetisctl", or a renamed
+        // binary would make IsRunning permanently false and Stop() a
+        // permanent no-op (orphaning the process on Thetis exit).
+        private static string m_sProcessName = PROCESS_NAME_NO_EXT;
+
         public static bool IsRunning
         {
             get
@@ -22,7 +31,7 @@ namespace Thetis
                 if (m_nProcessID == -1) return false;
 
                 bool bRet = false;
-                Process[] proc = Process.GetProcessesByName(PROCESS_NAME_NO_EXT);
+                Process[] proc = Process.GetProcessesByName(m_sProcessName);
                 foreach (Process p in proc)
                 {
                     if (p.Id == m_nProcessID)
@@ -48,6 +57,7 @@ namespace Thetis
             try
             {
                 string fileName = string.IsNullOrEmpty(helperPath) ? PROCESS_NAME_NO_EXT : helperPath;
+                string processName = string.IsNullOrEmpty(helperPath) ? PROCESS_NAME_NO_EXT : Path.GetFileNameWithoutExtension(helperPath);
 
                 using (Process myProcess = new Process())
                 {
@@ -57,6 +67,7 @@ namespace Thetis
                     myProcess.StartInfo.CreateNoWindow = true;
                     myProcess.Start();
                     m_nProcessID = myProcess.Id;
+                    m_sProcessName = processName;
                 }
                 return true;
             }
@@ -71,7 +82,7 @@ namespace Thetis
         {
             if (!IsRunning) return;
 
-            Process[] proc = Process.GetProcessesByName(PROCESS_NAME_NO_EXT);
+            Process[] proc = Process.GetProcessesByName(m_sProcessName);
             foreach (Process p in proc)
             {
                 if (p.Id == m_nProcessID)

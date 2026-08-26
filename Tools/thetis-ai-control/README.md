@@ -132,22 +132,32 @@ that looked "flat, broadband, no speech pauses" turned out to just be
 mistuned voice). Listen to the files yourself, or run them through actual
 FreeDV software, to confirm.
 
-## FreeDV Reporter spotting (`thetisctl freedv-reporter watch`)
+## FreeDV Reporter spotting and self-reporting (`thetisctl freedv-reporter watch`)
 
 Watches [FreeDV Reporter](https://qso.freedv.org)'s live activity feed for stations
 starting to transmit within a frequency range, and — with `--tci` — automatically
-retunes Thetis's RX1 there. **Not TX-capable**: it only changes what Thetis is
-listening to, never keys anything, so it's safe to leave running unattended.
+retunes Thetis's RX1 there. **Auto-tune and `--spot` are not TX-capable**: they only
+read/display, never key anything. **`--self-report` is different: it publishes your
+own callsign, grid square, live frequency, mode, and TX state to the public
+qso.freedv.org service** (still never keys Thetis itself — it only reads Thetis's
+state over TCI — but it does make your station's identity and activity visible to
+other operators on a public map, so it is not something to enable unattended without
+understanding that).
 
 | Flag | Effect |
 |---|---|
 | `--min-freq <hz>` / `--max-freq <hz>` | Frequency range to watch (default: 20m, 14000000–14350000) |
-| `--tci <ip>` [`--tci-port 50001`] | Auto-tune this Thetis instance's RX1 on activity |
+| `--tci <ip>` [`--tci-port 50001`] | Required for `--spot`/`--self-report`; also enables auto-tune unless `--no-tune` |
+| `--no-tune` | Disable the auto-tune-on-activity behavior (still allows `--spot`/`--self-report`) |
 | `--mode <mode>` | Mode to set when auto-tuning (default `digu`) |
+| `--spot` | Push other stations' activity onto Thetis's panadapter as spot markers over TCI |
+| `--self-report --callsign <call> [--grid <grid>] [--rx-only]` | Publish this station's own presence to qso.freedv.org |
 
 ```bash
-./thetisctl freedv-reporter watch                      # just print alerts, don't tune anything
-./thetisctl freedv-reporter watch --tci 192.168.1.50    # also auto-tune that Thetis's RX1
+./thetisctl freedv-reporter watch                                              # just print alerts, don't tune anything
+./thetisctl freedv-reporter watch --tci 192.168.1.50                           # also auto-tune that Thetis's RX1
+./thetisctl freedv-reporter watch --tci 192.168.1.50 --no-tune --spot          # panadapter spotting only, no retuning
+./thetisctl freedv-reporter watch --tci 192.168.1.50 --no-tune --self-report --callsign W5TSU --grid EM12
 ```
 
 The reporter has no REST/JSON API — its live data is a Socket.IO v4 feed, confirmed

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,7 @@ const socketIOPath = "/socket.io/?EIO=4&transport=websocket"
 // against FreeDV Reporter's live feed.
 type Client struct {
 	ws *wsConn
+	mu sync.Mutex // serializes writes to ws: Emit and ReadEvent's own PONG reply can run on different goroutines
 }
 
 // Dial connects to FreeDV Reporter and completes both the Engine.IO and
@@ -165,7 +167,10 @@ func (c *Client) ReadEvent() (Event, error) {
 
 		switch payload[0] {
 		case '2': // Engine.IO PING -> reply PONG, keep waiting for a real event
-			if werr := c.ws.WriteText("3"); werr != nil {
+			c.mu.Lock()
+			werr := c.ws.WriteText("3")
+			c.mu.Unlock()
+			if werr != nil {
 				return Event{}, fmt.Errorf("freedvreporter: send pong: %w", werr)
 			}
 			continue
@@ -211,6 +216,8 @@ func (c *Client) Emit(event string, payload any) error {
 	if err != nil {
 		return fmt.Errorf("freedvreporter: marshal emit payload for %q: %w", event, err)
 	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.ws.WriteText("42" + string(b))
 }
 

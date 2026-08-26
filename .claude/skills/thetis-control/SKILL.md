@@ -189,18 +189,29 @@ actually still running.
 | `tci --host <ip> freedv-scan [--dwell 6s] [--out-dir <dir>]` | RX-only: tune RX1 through the FreeDV calling frequencies, record + report peak/RMS per band |
 | `tci --host <ip> query <cmd> [args...]` | Raw passthrough for anything not listed above |
 
-## FreeDV Reporter spotting (RX-only, no antenna/PA involvement)
+## FreeDV Reporter spotting and self-reporting
 
 `freedv-reporter watch [--min-freq 14000000] [--max-freq 14350000] [--tci <ip>]
-[--tci-port 50001] [--mode digu]` watches FreeDV Reporter's (qso.freedv.org) live
+[--tci-port 50001] [--no-tune] [--mode digu] [--spot] [--self-report --callsign <call>
+[--grid <grid>] [--rx-only]]` watches FreeDV Reporter's (qso.freedv.org) live
 Socket.IO feed (`internal/freedvreporter` — hand-rolled client, no third-party
 dependency, since the site has no REST/JSON API) for stations starting to transmit
 within a frequency range (default 20m). Prints an alert for each. With `--tci`, also
-retunes Thetis's RX1 there automatically over an existing TCI connection — **read/tune
-only, never keys anything**, safe to leave running unattended. Runs until Ctrl-C.
+retunes Thetis's RX1 there automatically over an existing TCI connection (disable with
+`--no-tune`) and/or (with `--spot`) pushes other stations onto Thetis's panadapter as
+spot markers — both of these are **read/tune only, never key anything**, safe to leave
+running unattended.
+
+**`--self-report` is different from the above**: it reads Thetis's own live
+VFO/mode/TX state over TCI (still never keys anything on the Thetis side) and
+publishes it — callsign, grid square, frequency, mode, TX state — to the public
+qso.freedv.org service, making this station visible to other operators on a live map.
+It requires `--callsign`. Understand that this is a public-visibility action before
+running it unattended, unlike auto-tune/`--spot`.
 
 ```bash
 ./thetisctl freedv-reporter watch --tci 192.168.1.50
+./thetisctl freedv-reporter watch --tci 192.168.1.50 --no-tune --self-report --callsign W5TSU
 ```
 
 ```bash

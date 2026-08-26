@@ -267,48 +267,39 @@ func runSelfReport(tciHost, tciPort, callsign, gridSquare string, rxOnly bool) {
 		}
 		fmt.Printf("[self-report] reporting %s to FreeDV Reporter\n", callsign)
 
-		selfReportQueryInitialState(stateClient, reportClient)
+		// Drain the report connection's own events in a separate goroutine.
+		// Engine.IO's PING/PONG keepalive is only answered from inside
+		// ReadEvent (see internal/freedvreporter's own ReadEvent), so a
+		// connection that's only ever Emit-ed to and never read from gets
+		// silently dropped by the server after its ping timeout -- no error
+		// surfaces on the Emit side, since writes to a half-open socket
+		// mostly still succeed. When this goroutine's read fails, close
+		// stateClient too so selfReportListenLoop's own blocking read
+		// unblocks, and the outer loop below reconnects both together.
+		reportDone := make(chan struct{})
+		go func() {
+			defer close(reportDone)
+			for {
+				if _, rerr := reportClient.ReadEvent(); rerr != nil {
+					fmt.Printf("[self-report] FreeDV Reporter connection lost: %v\n", rerr)
+					stateClient.Close()
+					return
+				}
+			}
+		}()
+
+		// Thetis broadcasts a full greeting on TCI connect, including the
+		// current VFO/mode/TX state as ordinary vfo:/modulation:/trx:
+		// frames (TCIServer.cs's sendInitialRadioState) -- selfReportListenLoop's
+		// own passive listen picks these up naturally, so no separate
+		// initial-state query is needed here.
 		selfReportListenLoop(stateClient, reportClient)
 
 		reportClient.Close()
 		stateClient.Close()
+		<-reportDone
 		fmt.Println("[self-report] connection lost; reconnecting in 5s")
 		time.Sleep(5 * time.Second)
-	}
-}
-
-// selfReportQueryInitialState actively queries Thetis's current VFO A
-// frequency, demod mode, and MOX state right after connecting (rather
-// than only waiting passively for the next change), so the very first
-// report reflects reality instead of a stale/empty value. Query wire
-// forms confirmed directly against TCIServer.cs: "vfo:0,0;" (2 args) is
-// the GET form replying "vfo:0,0,<hz>;" (TCIServer.cs:3859-3969,
-// sendVFO/TCIServer.cs:2099-2132); "modulation:0;" (1 arg) is the GET form
-// replying "modulation:0,<MODE>;" uppercase (TCIServer.cs:3972-4074,
-// sendMode/TCIServer.cs:2174-2195); "trx:0;" (1 arg) is the GET form
-// replying "trx:0,<true|false>[,tci];" (TCIServer.cs:3594-3694,
-// sendMOX/TCIServer.cs:2159-2169). Errors here are logged and swallowed —
-// a failed initial query just means the first report is skipped; the
-// listen loop below will emit as soon as anything actually changes.
-func selfReportQueryInitialState(stateClient *tci.Client, reportClient *freedvreporter.Client) {
-	if err := stateClient.SendCmd("vfo", "0", "0"); err == nil {
-		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "vfo" && len(args) >= 3 {
-			if hz, perr := strconv.ParseInt(args[2], 10, 64); perr == nil {
-				emitFreqChange(reportClient, hz)
-			}
-		}
-	}
-	if err := stateClient.SendCmd("modulation", "0"); err == nil {
-		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "modulation" && len(args) >= 2 {
-			lastKnownMode = args[1]
-		}
-	}
-	if err := stateClient.SendCmd("trx", "0"); err == nil {
-		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "trx" && len(args) >= 2 {
-			if tx, perr := strconv.ParseBool(args[1]); perr == nil {
-				emitTxReport(reportClient, lastKnownMode, tx)
-			}
-		}
 	}
 }
 

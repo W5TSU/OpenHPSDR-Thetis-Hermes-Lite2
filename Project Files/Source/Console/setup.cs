@@ -36902,6 +36902,32 @@ namespace Thetis
                 return;
             }
 
+            if (!TCIServerListening)
+            {
+                FreeDVReporterHelper.Stop();
+                lblFreeDVReporterStatus.Text = "Status: enable the TCI server first (Setup -> DSP -> TCI Server)";
+                if (_freedv_reporter_status_timer != null)
+                    _freedv_reporter_status_timer.Enabled = false;
+                return;
+            }
+
+            string callsign = TCIOwnCallsign == null ? "" : TCIOwnCallsign.Trim();
+            if (doSelfReport && callsign == "")
+            {
+                FreeDVReporterHelper.Stop();
+                lblFreeDVReporterStatus.Text = "Status: set a callsign in TCI Server settings first";
+                if (_freedv_reporter_status_timer != null)
+                    _freedv_reporter_status_timer.Enabled = false;
+                return;
+            }
+
+            // This helper process opens TWO independent TCI connections by
+            // design when --self-report is combined with --spot -- one for
+            // spotting/auto-tune, one dedicated to reading Thetis's own
+            // live state for self-reporting -- to avoid a cross-goroutine
+            // data race on a shared connection (see thetisctl's own
+            // runSelfReport doc comment for the Go-side rationale).
+            //
             // --no-tune is always passed: this UI never exposes the
             // pre-existing "auto-tune my own radio to other stations'
             // activity" behavior watch already has baked in whenever
@@ -36910,14 +36936,21 @@ namespace Thetis
             // a surprise -- an operator who only wants self-reporting
             // does not also want their own VFO silently retuning to
             // someone else's transmission.
-            string args = "freedv-reporter watch --tci 127.0.0.1 --no-tune";
+            //
+            // Free-text values (callsign/grid) are passed as --flag="value"
+            // rather than --flag value: the CLI's own flag parser treats a
+            // bare --flag as consuming the next whitespace-separated token
+            // unconditionally, so an empty value here would otherwise be
+            // silently swallowed by (or itself swallow) the next flag.
+            string args = "freedv-reporter watch --tci " + console.TCIip + " --tci-port " + console.TCIport.ToString() + " --no-tune";
             if (doSpot)
                 args += " --spot";
             if (doSelfReport)
             {
-                string callsign = TCIOwnCallsign;
-                string grid = txtFreeDVReporterGrid.Text;
-                args += " --self-report --callsign " + callsign + " --grid " + grid;
+                string grid = txtFreeDVReporterGrid.Text == null ? "" : txtFreeDVReporterGrid.Text.Trim();
+                args += " --self-report --callsign=\"" + callsign + "\"";
+                if (grid != "")
+                    args += " --grid=\"" + grid + "\"";
                 if (chkFreeDVReporterRxOnly.Checked)
                     args += " --rx-only";
             }

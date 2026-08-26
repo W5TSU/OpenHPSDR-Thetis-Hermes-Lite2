@@ -86,8 +86,10 @@ that's only been synced for a few seconds.
 
 ## Using it in Thetis
 
-As of 2026-08-25, both modes live in **one place**: **Setup → DSP → Digital Voice**
-(this replaced the old separate "FreeDV"/"RADE" checkboxes and tabs).
+As of 2026-08-26, both modes live in **one place**: **Setup → DSP → FreeDV**
+(renamed from "Digital Voice" — this replaced the old separate "FreeDV"/"RADE"
+checkboxes and tabs, and now also hosts the FreeDV Reporter enable UI described
+below).
 
 ![Digital Voice setup panel — Mic/TX Conditioning, RX1 Core with the Mode dropdown, and Diagnostics group boxes](images/digital-voice-setup-panel.png)
 
