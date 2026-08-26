@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"thetisctl/internal/freedvreporter"
@@ -61,9 +62,19 @@ func freedvReporterWatch(a parsedArgs) error {
 	tuneMode := a.flag("mode", "digu")
 	doSpot := a.has("spot")
 	noTune := a.has("no-tune")
+	doSelfReport := a.has("self-report")
+	selfReportCallsign := a.flag("callsign", "")
+	selfReportGrid := a.flag("grid", "")
+	selfReportRxOnly := a.has("rx-only")
 
 	if doSpot && tciHost == "" {
 		return fmt.Errorf("freedv-reporter watch: --spot requires --tci <host> (spots are pushed over TCI; there is nowhere else to send them)")
+	}
+	if doSelfReport && tciHost == "" {
+		return fmt.Errorf("freedv-reporter watch: --self-report requires --tci <host> (self-reporting reads Thetis's live VFO/mode/TX state over TCI)")
+	}
+	if doSelfReport && selfReportCallsign == "" {
+		return fmt.Errorf("freedv-reporter watch: --self-report requires --callsign <call>")
 	}
 
 	fmt.Printf("freedv-reporter watch: connecting to %s ...\n", freedvreporter.ReporterHost)
@@ -80,6 +91,9 @@ func freedvReporterWatch(a parsedArgs) error {
 	if doSpot {
 		fmt.Printf(" — pushing spots to %s panadapter", net.JoinHostPort(tciHost, tciPort))
 	}
+	if doSelfReport {
+		fmt.Printf(" — reporting %s to FreeDV Reporter", selfReportCallsign)
+	}
 	fmt.Println(". Ctrl-C to stop.")
 
 	// Ctrl-C closes the reporter connection cleanly rather than leaving the
@@ -92,6 +106,10 @@ func freedvReporterWatch(a parsedArgs) error {
 		fmt.Println("\nfreedv-reporter watch: stopping...")
 		client.Close()
 	}()
+
+	if doSelfReport {
+		go runSelfReport(tciHost, tciPort, selfReportCallsign, selfReportGrid, selfReportRxOnly)
+	}
 
 	tracker := freedvreporter.NewTracker()
 	var tciClient *tci.Client // lazily dialed on first qualifying tune/spot action, kept for reuse
@@ -209,4 +227,145 @@ func parseInt64(s string) (int64, error) {
 		return 0, fmt.Errorf("not an integer: %q", s)
 	}
 	return v, nil
+}
+
+// runSelfReport bridges Thetis's own live TCI state (VFO frequency, demod
+// mode, TX/MOX) into FreeDV Reporter's write-side protocol, publishing
+// this station's presence. It uses its OWN dedicated TCI connection,
+// deliberately never sharing freedvReporterWatch's tciClient variable —
+// that variable is written to and nilled out by the auto-tune/spot
+// features' own single-goroutine error handling; a second goroutine
+// reading it without synchronization would be a data race. Runs until the
+// process exits (see the call site's own comment for why no explicit
+// shutdown signal is threaded in here), reconnecting both sides on any
+// error after a short pause.
+//
+// KNOWN SIMPLIFICATION: the tx_report "mode" field below carries Thetis's
+// raw DSPMode string (e.g. "USB", "DIGU") from a plain "modulation:" TCI
+// query, not the actual active FreeDV codec name ("RADEV1", "700E") a real
+// freedv-gui report would show. Getting the real codec name needs a CAT
+// query (the ZZEX family) in addition to TCI — a second protocol
+// dependency deliberately out of scope for this pass.
+func runSelfReport(tciHost, tciPort, callsign, gridSquare string, rxOnly bool) {
+	for {
+		addr := net.JoinHostPort(tciHost, tciPort)
+		stateConn, derr := tci.Dial(addr, 5*time.Second)
+		if derr != nil {
+			fmt.Printf("[self-report] connect to Thetis TCI at %s failed: %v; retrying in 5s\n", addr, derr)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		stateClient := tci.NewClient(stateConn)
+
+		reportClient, rerr := freedvreporter.DialReport(callsign, gridSquare, rxOnly, true, 10*time.Second)
+		if rerr != nil {
+			fmt.Printf("[self-report] connect to FreeDV Reporter failed: %v; retrying in 5s\n", rerr)
+			stateClient.Close()
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		fmt.Printf("[self-report] reporting %s to FreeDV Reporter\n", callsign)
+
+		selfReportQueryInitialState(stateClient, reportClient)
+		selfReportListenLoop(stateClient, reportClient)
+
+		reportClient.Close()
+		stateClient.Close()
+		fmt.Println("[self-report] connection lost; reconnecting in 5s")
+		time.Sleep(5 * time.Second)
+	}
+}
+
+// selfReportQueryInitialState actively queries Thetis's current VFO A
+// frequency, demod mode, and MOX state right after connecting (rather
+// than only waiting passively for the next change), so the very first
+// report reflects reality instead of a stale/empty value. Query wire
+// forms confirmed directly against TCIServer.cs: "vfo:0,0;" (2 args) is
+// the GET form replying "vfo:0,0,<hz>;" (TCIServer.cs:3859-3969,
+// sendVFO/TCIServer.cs:2099-2132); "modulation:0;" (1 arg) is the GET form
+// replying "modulation:0,<MODE>;" uppercase (TCIServer.cs:3972-4074,
+// sendMode/TCIServer.cs:2174-2195); "trx:0;" (1 arg) is the GET form
+// replying "trx:0,<true|false>[,tci];" (TCIServer.cs:3594-3694,
+// sendMOX/TCIServer.cs:2159-2169). Errors here are logged and swallowed —
+// a failed initial query just means the first report is skipped; the
+// listen loop below will emit as soon as anything actually changes.
+func selfReportQueryInitialState(stateClient *tci.Client, reportClient *freedvreporter.Client) {
+	if err := stateClient.SendCmd("vfo", "0", "0"); err == nil {
+		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "vfo" && len(args) >= 3 {
+			if hz, perr := strconv.ParseInt(args[2], 10, 64); perr == nil {
+				emitFreqChange(reportClient, hz)
+			}
+		}
+	}
+	if err := stateClient.SendCmd("modulation", "0"); err == nil {
+		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "modulation" && len(args) >= 2 {
+			lastKnownMode = args[1]
+		}
+	}
+	if err := stateClient.SendCmd("trx", "0"); err == nil {
+		if cmd, args, rerr := stateClient.RecvCmd(); rerr == nil && cmd == "trx" && len(args) >= 2 {
+			if tx, perr := strconv.ParseBool(args[1]); perr == nil {
+				emitTxReport(reportClient, lastKnownMode, tx)
+			}
+		}
+	}
+}
+
+// lastKnownMode caches the most recently seen modulation string so a
+// standalone "trx:" broadcast (which carries no mode of its own) can
+// still emit a complete tx_report — mirrors freedv-gui's own
+// FreeDVReporter::transmitImpl_, which similarly remembers mode_
+// alongside tx_ state.
+var lastKnownMode string
+
+// selfReportListenLoop passively listens for Thetis's own unsolicited
+// vfo:/modulation:/trx: broadcasts (sent whenever that state changes) and
+// translates each into the matching Emit call. Returns (without erroring
+// further) as soon as RecvCmd fails, letting the caller reconnect both
+// connections.
+func selfReportListenLoop(stateClient *tci.Client, reportClient *freedvreporter.Client) {
+	for {
+		cmd, args, err := stateClient.RecvCmd()
+		if err != nil {
+			fmt.Printf("[self-report] TCI connection lost: %v\n", err)
+			return
+		}
+		switch cmd {
+		case "vfo":
+			if len(args) >= 3 {
+				if hz, perr := strconv.ParseInt(args[2], 10, 64); perr == nil {
+					emitFreqChange(reportClient, hz)
+				}
+			}
+		case "modulation":
+			if len(args) >= 2 {
+				lastKnownMode = args[1]
+			}
+		case "trx":
+			if len(args) >= 2 {
+				if tx, perr := strconv.ParseBool(args[1]); perr == nil {
+					emitTxReport(reportClient, lastKnownMode, tx)
+				}
+			}
+		}
+	}
+}
+
+func emitFreqChange(reportClient *freedvreporter.Client, hz int64) {
+	type freqChangePayload struct {
+		Freq int64 `json:"freq"`
+	}
+	if err := reportClient.Emit("freq_change", freqChangePayload{Freq: hz}); err != nil {
+		fmt.Printf("[self-report] emit freq_change failed: %v\n", err)
+	}
+}
+
+func emitTxReport(reportClient *freedvreporter.Client, mode string, transmitting bool) {
+	type txReportPayload struct {
+		Mode         string `json:"mode"`
+		Transmitting bool   `json:"transmitting"`
+	}
+	if err := reportClient.Emit("tx_report", txReportPayload{Mode: mode, Transmitting: transmitting}); err != nil {
+		fmt.Printf("[self-report] emit tx_report failed: %v\n", err)
+	}
 }

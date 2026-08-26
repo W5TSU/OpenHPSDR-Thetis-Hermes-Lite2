@@ -16,9 +16,11 @@ type parsedArgs struct {
 
 // boolFlagNames lists flags that never take a value (bare "--name").
 var boolFlagNames = map[string]bool{
-	"audio":   true,
-	"spot":    true,
-	"no-tune": true,
+	"audio":       true,
+	"spot":        true,
+	"no-tune":     true,
+	"self-report": true,
+	"rx-only":     true,
 }
 
 func parseArgs(args []string) parsedArgs {
