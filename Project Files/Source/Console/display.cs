@@ -999,6 +999,16 @@ namespace Thetis
             set { m_bShowBandStackOverlays = value; }
         }
 
+        // W5TSU: panadapter sync/SNR overlay -- default ON (opposite of
+        // ShowBandStackOverlays's own default), see
+        // drawPanadapterAndWaterfallGridDX2D for the draw code.
+        private static bool m_bShowRadeSyncOverlay = true;
+        public static bool ShowRadeSyncOverlay
+        {
+            get { return m_bShowRadeSyncOverlay; }
+            set { m_bShowRadeSyncOverlay = value; }
+        }
+
         private static BandStackEntry[] m_bandStackOverlays;
         public static BandStackEntry[] BandStackOverlays
         {
@@ -9062,6 +9072,51 @@ namespace Thetis
                                 break;
                             default:
                                 break;
+                        }
+                    }
+
+                    // W5TSU: panadapter sync/SNR overlay (sub-project 5 of 6)
+                    // -- draws only here: not on the waterfall (!bIsWaterfall,
+                    // this block), not during TX (enclosing !local_mox block).
+                    if (!bIsWaterfall && m_bShowRadeSyncOverlay)
+                    {
+                        int thread = rx - 1; // GetDSPRX's plain thread index: 0 = RX1, 1 = RX2
+                        RadioDSPRX dsp = console.radio.GetDSPRX(thread, 0);
+                        bool radeOn = dsp.RXRadaeEnabled != 0;
+                        bool fdv700eOn = dsp.RXAFDVRun != 0;
+
+                        if (radeOn || fdv700eOn)
+                        {
+                            bool sync;
+                            string snrText;
+
+                            if (fdv700eOn)
+                            {
+                                // WDSP.id() folds thread+subrx into one wdsp.dll channel
+                                // index (channel = 2*thread + subrx, dsp.cs:1161) -- RX2
+                                // is WDSP.id(2, 0), NOT WDSP.id(1, 0) (that resolves to
+                                // the TX channel). Verbatim from radeRX2StatusTimer_Tick /
+                                // radeStatusTimer_Tick, setup.cs:36947-36948 / 36815-36816.
+                                int channel = WDSP.id((uint)(thread == 0 ? 0 : 2), 0);
+                                sync = WDSP.GetRXAFDVSync(channel) != 0;
+                                snrText = sync ? string.Format("{0:F1}", WDSP.GetRXAFDVSnr(channel)) : "";
+                            }
+                            else // radeOn
+                            {
+                                // RADE V1/V2: ChannelMaster's radae.c uses its own plain
+                                // 0/1 rx index, unrelated to WDSP.id()'s doubled
+                                // convention. Verbatim from radeStatusTimer_Tick,
+                                // setup.cs:36820-36821 (rx=0) / radeRX2StatusTimer_Tick,
+                                // setup.cs:36952-36953 (rx=1).
+                                sync = WDSP.GetRadaeSync(thread) != 0;
+                                snrText = sync ? string.Format("{0}", WDSP.GetRadaeSnrDb(thread)) : "";
+                            }
+
+                            string overlayText = sync ? string.Format("SYNC  SNR {0} dB", snrText) : "no sync";
+                            SharpDX.Direct2D1.Brush overlayBrush = sync ? getDXBrushForColour(Color.Green) : m_bDX2_grid_text_brush;
+
+                            SizeF overlaySize = measureStringDX2D(overlayText, fontDX2d_font9);
+                            drawStringDX2D(overlayText, fontDX2d_font9, overlayBrush, filter_left_x, nVerticalShift + top - overlaySize.Height);
                         }
                     }
                 }
