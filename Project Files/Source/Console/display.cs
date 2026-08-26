@@ -9116,7 +9116,7 @@ namespace Thetis
                             SharpDX.Direct2D1.Brush overlayBrush = sync ? getDXBrushForColour(Color.Green) : m_bDX2_grid_text_brush;
 
                             SizeF overlaySize = measureStringDX2D(overlayText, fontDX2d_font9);
-                            drawStringDX2D(overlayText, fontDX2d_font9, overlayBrush, filter_left_x, nVerticalShift + top - overlaySize.Height);
+                            drawStringDX2D(overlayText, fontDX2d_font9, overlayBrush, filter_left_x, nVerticalShift + top + 2);
                         }
                     }
                 }
