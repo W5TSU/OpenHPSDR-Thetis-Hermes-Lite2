@@ -32,7 +32,7 @@
 - Consumes: `radae_rx_valid(int rx)` (existing static, radae.c:692), `g_radae_loopback_enabled` / `g_loop_bridge` / `g_loop_bridge_n` / `g_loop_bridge_ovrun_count` (existing `[RADAE_NRX]` statics, radae.c:285-288), `g_radae_tx_rx`, `RADAE_LOOP_BRIDGE_CAP`.
 - Produces: `SetRadaeLoopbackEnabled(int rx, int enable)` now accepts `rx` 0 and 1 (same exported signature, no header/P/Invoke change); new file-local `static void push_loop_bridge(int loop_rx, const float* scratch, int have)`. Task 2 relies only on the changed runtime behavior, not on any new symbol.
 
-- [ ] **Step 1: Write the splicing script**
+- [x] **Step 1: Write the splicing script**
 
 Create `scratchpad/splice_radae_rx2_loopback.py`. Every anchor below was verified byte-for-byte against the current file on 2026-08-26 — if any assert fires, re-read the file rather than loosening the assert.
 
@@ -188,7 +188,7 @@ print("done")
 
 Note the `\\n` inside the two `sprintf_s` format strings — that is Python escaping for a literal backslash-n in the C source, exactly matching the existing code's `\n` bytes. Do not "fix" it to a real newline.
 
-- [ ] **Step 2: Run it and verify the diff**
+- [x] **Step 2: Run it and verify the diff**
 
 ```bash
 python3 scratchpad/splice_radae_rx2_loopback.py
@@ -197,7 +197,7 @@ git diff --stat "Project Files/Source/ChannelMaster/radae.c"
 
 Expected: 6 "replaced" lines then `done`, and a diff on the order of `+55/-45` lines. If it shows hundreds or thousands of changed lines, the line endings got flattened: `git checkout -- "Project Files/Source/ChannelMaster/radae.c"` and fix the script before retrying.
 
-- [ ] **Step 3: Sweep for leftovers**
+- [x] **Step 3: Sweep for leftovers**
 
 ```bash
 grep -n "lpb0\|lpb1\|lpb_any\|push_loop_bridge\|rx != 0" "Project Files/Source/ChannelMaster/radae.c"
@@ -211,7 +211,7 @@ Expected:
 
 Any hit outside those (in particular a surviving bare `if (lpb0)` branch, or `lpb0` still in the MOX gate) means a splice was missed.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add "Project Files/Source/ChannelMaster/radae.c" && \
@@ -235,7 +235,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>" && \
 git push
 ```
 
-- [ ] **Step 5: CI compile check**
+- [x] **Step 5: CI compile check**
 
 ```bash
 gh workflow run build.yml --ref FreeDV -R W5TSU/OpenHPSDR-Thetis-Hermes-Lite2
@@ -256,7 +256,9 @@ Expected: `conclusion: success`. The workflow builds the full solution, so `Chan
 
 This is the first time RX2's loopback bridge is ever exercised end-to-end. Any surprise (RX2 never syncs in loopback, simultaneous mode starves one RX, audio artifacts) is a genuine finding to report plainly, not a testing-process failure.
 
-- [ ] **Step 1: Resolve `<thetis-host>` and deploy the CI build**
+- [x] **Step 1: Resolve `<thetis-host>` and deploy the CI build**
+
+  **2026-08-29 status:** `<thetis-host>` resolved as `192.168.2.12` (LAN, reachable directly as `hermes-pc.w5tsu.net` when on the home network — no VPN alias needed this session). No redeploy was required: the box was already running `b032eb6c` (Task 1's fix plus its immediate doc-comment follow-up), confirmed via `thetisctl cat ... version`.
 
 Resolve the host per Global Constraints (`ssh hl2winbox "echo ok"` first, then `ssh hermes-pc "echo ok"`; the responding alias is `<box>` below, its HostName IP — 192.168.2.12 LAN or 100.117.67.160 VPN — is `<thetis-host>`). Then:
 
@@ -285,7 +287,9 @@ cd Tools/thetis-ai-control && go run ./cmd/thetisctl cat --host <thetis-host> --
 
 Expected: the `git:` short SHA matches Task 1's commit. If not, stop and re-deploy — do not proceed to testing.
 
-- [ ] **Step 2: Arm the radio and RX2**
+- [x] **Step 2: Arm the radio and RX2**
+
+  **2026-08-29 status:** Radio power confirmed on (`ZZPS1`). RX2 armed via the `ZZRS` CAT command directly (`console.RX2Enabled`) rather than a screenshot/click — no need for the visual fallback the plan anticipated. One unexplained one-time revert of `ZZRS` back to `0` was observed and not reproduced on retest (see note at end of Task 2); flagging it here rather than treating it as resolved.
 
 Power the radio on and enable RX2 (`console.RX2Enabled` — main console's "RX2" button; RX2 decode is unobservable with it off). Both can be done over CAT:
 
@@ -336,7 +340,9 @@ s.close()
 
 Pass `--host <thetis-host>` on every invocation below (the bare `python3 scratchpad/cat_roundtrip.py "..."` forms in Steps 3-8 all take it).
 
-- [ ] **Step 3: Scenario 1 — RX1-only regression**
+- [x] **Step 3: Scenario 1 — RX1-only regression**
+
+  **2026-08-29 status: PASS.** `ZZDL1`/`ZZFE0` confirmed. While speaking into the mic, `ZZDZ` read `1+034`, `1+035`, `1+035` across three polls — sync=1, plausible SNR, identical to pre-refactor behavior. Regression gate cleared; the refactor did not break RX1's existing loopback path.
 
 RX1 mode = RADE V1, RX1 loopback on, RX2 loopback off:
 
@@ -352,7 +358,7 @@ python3 scratchpad/cat_roundtrip.py "GET:ZZDZ" "GET:ZZDZ" "GET:ZZDZ"
 
 Expected: `ZZDL -> 1`, `ZZFE -> 0`, and `ZZDZ` shows sync=1 with a plausible SNR while speaking — identical to pre-change behavior. **This is the regression gate: if RX1 loopback no longer works, stop here** — the refactor broke the existing path and that finding outranks everything below.
 
-- [ ] **Step 4: Scenario 2 — RX2-only loopback (the headline new capability)**
+- [ ] **Step 4: Scenario 2 — RX2-only loopback (the headline new capability)** — IN PROGRESS, not yet passed
 
 RX1 loopback off; RX2 mode = RADE V1, RX2 loopback on:
 
@@ -367,6 +373,10 @@ python3 scratchpad/cat_roundtrip.py "GET:ZZFG" "GET:ZZFG" "GET:ZZFG"
 ```
 
 Expected: `ZZDL -> 0`, `ZZFE -> 1`, and `ZZFG` (RX2 RADE sync/SNR, sub-project 3's CAT command) flips to sync=1 with a plausible SNR. Decoded audio should be audible on RX2's output. Before this change, `SET:ZZFE1` round-tripped at the CAT layer but the native guard discarded it — sync staying 0 here forever was the old symptom.
+
+**2026-08-29 status — plan gap found, not yet resolved:** The command sequence as written above is insufficient on its own. `ZZFC` (RX2's mode selector) never enables the shared TX-side RADE encoder — that's a single resource armed only by `ZZEX` (RX1's mode selector; see `ZZFC`'s own comment in `CATCommands.cs`, "TX encode is a single shared resource controlled only via RX1's Mode selector"). Scenario 1 leaves `ZZEX2` set, and the plan implicitly relies on that carrying over into Scenario 2 — it does not spell out `SET:ZZEX2` in Scenario 2's own command block. In this session `ZZEX` had reverted to `0` between Scenario 1 and Scenario 2 (exact cause not identified — possibly an app relaunch during the session gap), so the encoder was off and neither `ZZFG` nor `ZZDZ` could ever show sync regardless of loopback wiring; this is a **test-sequencing gap, not a Task 1 code defect**. Re-adding `SET:ZZEX2` before Scenario 2's block restored the correct preconditions (`ZZDL0`/`ZZFE1`/`ZZFC2`/`ZZRS1`/`ZZEX2` all confirmed simultaneously), but a live sync confirmation via `ZZFG` while someone is actually speaking into the mic was not obtained before this session ended — coordinating "poll exactly while a human is talking" over separate turns proved unreliable. **Next session: re-run this step's command block with `SET:ZZEX2` prepended, and get a `ZZFG` sync=1 read while mic input is actually flowing before calling this passed.**
+
+A secondary, unreproduced oddity: `ZZRS` (RX2 enabled) was observed to have reverted from `1` back to `0` on its own at one point with no `SET:ZZRS0` issued in between; re-setting it held stable through further testing (including a repeat `SET:ZZEX2`) and it did not happen again. Worth a wary eye next session but not chased further given it didn't reproduce under isolated testing.
 
 - [ ] **Step 5: Scenario 3 — simultaneous RX1 + RX2 loopback**
 
