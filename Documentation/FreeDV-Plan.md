@@ -1074,6 +1074,73 @@ folded quietly into the earlier entry, matching this log's own convention
 for self-corrections. Still not yet deployed/tested for actual
 sync/decode — this closes the RF-safety gap, not the "does it work" one.
 
+### 🔴 First live sync/decode test (2026-08-29): PTT/safety mechanics confirmed clean, but no sync across two well-instrumented real key-downs
+
+`hl2winbox` (reached this session as `hermes-pc.w5tsu.net` / `192.168.2.12`
+directly on the LAN) was already running a build containing both `04927f76`
+and `7098040a` — no redeploy needed. Armed the zero-RF-risk preconditions
+via CAT (`ZZEF1` TX encoder, `ZZEG1` loopback bridge, `ZZDV1` RX1 decode,
+mode DIGU), confirmed `ZZNR0`/`ZZSO0`/`NB0` (noise reduction, squelch, noise
+blanker all off — the leading suspect class from the original 700E
+bench-decode saga, Phase 3 above) so that class of false negative is ruled
+out here too.
+
+**Safety mechanics: clean.** Real PTT was keyed via `thetisctl ptt on
+--confirm-tx=... --hold Ns` (the standard Kenwood `TX;`/`RX;` pair, same as
+any hardware PTT) for three separate holds (20s, 25.8s, 12s), and every
+single time it auto-unkeyed correctly (`TX: false` confirmed after each) —
+one status read immediately after the second hold's `RX;` momentarily
+showed `TX: true`, but a second read a moment later showed `false`,
+consistent with the drain-before-unkey arbiter's documented ≤2000ms cap
+(`d9e82adb` above), not a stuck key. No sign the fix's RF silencing has any
+gap.
+
+**Sync: negative, twice, with the confounds from earlier sessions
+deliberately ruled out.** First hold (20s) only got one `ZZDS` poll in near
+the start (background-process dispatch latency ate the rest of the window)
+— inconclusive on its own. Built a single-process combined
+key+poll+unkey script (`scratchpad/ptt_poll_zzds.py`, mirrors `thetisctl`'s
+own `--confirm-tx` gate rather than bypassing it) to remove that latency:
+- **25.8s hold, 16 polls at ~1.5s intervals, operator confirmed talking
+  throughout: `ZZDS` read `sync=0` on every single poll.**
+- Immediately after, `ZZEG` (loopback) read back `0` — reverted on its own
+  sometime during/after that cycle, with no `SET:ZZEG0` issued. Re-armed
+  and re-ran a second, shorter hold (12s, 9 polls at ~1.2s) **polling
+  `ZZEG`/`ZZEF` alongside `ZZDS` at every step this time**: both held at
+  `1` continuously through the entire hold and after it — **still `sync=0`
+  on every poll**, so the first run's `ZZEG` revert (cause not identified;
+  possibly a transient race, did not reproduce) is not the explanation —
+  a run with both preconditions genuinely confirmed armed throughout still
+  never synced.
+
+**Not yet chased**: an ANF/notch CAT mnemonic search was in progress when
+this session ended (harder to find than `ZZNR`/`ZZSO`/`NB` — not at the
+usual naming pattern); filter width (`FW` bare-get) returned a parser
+error, so RX1's actual filter passband during this test is unconfirmed.
+No debug-log instrumentation equivalent to `fdv.c`'s own
+`fdv_debug.txt`/`fdv_debug_resamp.raw` (Phase 3 above) exists yet for the
+*encoder* side or for `pipe.c`'s loopback bridge itself — the only native
+diagnostic is `OutputDebugStringA` messages (`[FDVLOOP] ...`) that were
+never captured this session (no DebugView-equivalent set up on the box).
+
+**Read this in light of Phase 3's own history above**: nearly every past
+700E "no sync" symptom in this exact codebase turned out to be a
+test-environment bug (`Enabled` stuck false, wrong Quick-Play file, AGC
+red herring, CFO red herring) rather than a real `fdv.c`/codec2 defect.
+This session ruled out the specific classes that bit those investigations
+before (NR/ANF-adjacent/squelch state, precondition-not-actually-armed,
+stale CAT-vs-native state) more thoroughly than any single prior attempt,
+and the result held anyway — but ANF and filter width are still
+unconfirmed, and no one has yet independently verified that the loopback
+bridge is *actually delivering nonzero I/Q* into RX1's decode input (the
+`pipe.c` equivalent of the `fdv_debug_resamp.raw` diff that finally
+cracked the original RX-side bug). Given that history, treat this as a
+strong negative result worth taking seriously, not yet a confirmed root
+cause — the next session's highest-value move is almost certainly adding
+a debug tap on the loopback bridge itself (does `g_fdvloop_bridge_n` ever
+go non-zero during a real key-down?) before reaching for a codec2-level
+hypothesis.
+
 ## Stage C — RADE neural mode *(external dependency)*
 
 - ⬜ Watch upstream: David Rowe's RADE V2 C port is in progress (classical DSP ported
